@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Importing relavant libraries
+#Importing relevant libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
