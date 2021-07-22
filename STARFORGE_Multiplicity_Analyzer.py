@@ -35,27 +35,27 @@ def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelf
 #Remove the brown dwarfs for a data
 def Remove_Brown_Dwarfs(data,minmass = 0.08):
     '''
-Remove the Brown Dwarfs from the initial data file
+    Remove the Brown Dwarfs from the initial data file
 
-Inputs
-----------
-data : list of sinkdata objects
-The file that needs to be filtered
+    Inputs
+    ----------
+    data : list of sinkdata objects
+    The file that needs to be filtered
 
-Parameters
-----------
-minmass : float,int,optional
-The mass limit for Brown Dwarfs.
+    Parameters
+    ----------
+    minmass : float,int,optional
+    The mass limit for Brown Dwarfs.
 
-Returns
--------
-data : list of sinkdata objects
-The original file but the brown dwarfs are removed from the x,v,id,formation_time and m parameters
+    Returns
+    -------
+    data : list of sinkdata objects
+    The original file but the brown dwarfs are removed from the x,v,id,formation_time and m parameters
 
-Example
--------
-M2e4_C_M_J_2e7 = Remove_Brown_Dwarfs(M2e4_C_M_J_2e7,minmass = 0.08)
-            '''
+    Example
+    -------
+    M2e4_C_M_J_2e7 = Remove_Brown_Dwarfs(M2e4_C_M_J_2e7,minmass = 0.08)
+    '''
     #Get the lowest snapshot in which there are any stars.
     lowest = 0
     for i in range(len(data)):
@@ -78,35 +78,35 @@ M2e4_C_M_J_2e7 = Remove_Brown_Dwarfs(M2e4_C_M_J_2e7,minmass = 0.08)
 #Simple function that can return the closest index or value to another one
 def closest(lst,element,param = 'value'):
     '''
-Get the closest value to a target element in a given list
+    Get the closest value to a target element in a given list
 
-Inputs
-----------
-lst : list,array
-The list to find the value from
-    
-element: int,float
-The target element to find the closest value to in the list
+    Inputs
+    ----------
+    lst : list,array
+    The list to find the value from
+        
+    element: int,float
+    The target element to find the closest value to in the list
 
-Parameters
-----------
-param : string,optional
-The param can be set to value, which returns the closest value in the list or index, which returns the index of the closest value in the list. By default, it returns the value.
+    Parameters
+    ----------
+    param : string,optional
+    The param can be set to value, which returns the closest value in the list or index, which returns the index of the closest value in the list. By default, it returns the value.
 
-Returns
--------
-closest_ele : int,float
-Either the closest element (if param is value) or the index of the closest element(if param is index)
+    Returns
+    -------
+    closest_ele : int,float
+    Either the closest element (if param is value) or the index of the closest element(if param is index)
 
-Example
--------
-1) closest([1,2,3,4],3.6,param = 'value')
+    Example
+    -------
+    1) closest([1,2,3,4],3.6,param = 'value')
 
-This returns the value of the element in the list closest to the given element. (4)
+    This returns the value of the element in the list closest to the given element. (4)
 
-2) closest([1,2,3,4],3.6,param = 'index')
+    2) closest([1,2,3,4],3.6,param = 'index')
 
-This returns the index of the list element closest to the given element. (3)
+    This returns the index of the list element closest to the given element. (3)
     '''
     lst = np.asarray(lst) 
     idx = (np.abs(lst - element)).argmin() 
@@ -148,7 +148,7 @@ def first_snap_finder(ide,file):
 
 #This finds the first snapshot that a star is in a certain mass range
 def first_snap_mass_finder(ide,file,lower_limit,upper_limit):
-        'Find the first snapshot where an id is present in the file in a certain mass range.'
+    'Find the first snapshot where an id is present in the file in a certain mass range.'
         for i,j in enumerate(file):
             if ide in j.id and lower_limit<=j.m[j.id == ide][0]<=upper_limit:
                 return i
@@ -173,27 +173,27 @@ def Lsigma(n,k):
 
 def load_files(filenames,brown_dwarfs = False):
     '''
-Initialize data from the provided filenames.
+    Initialize data from the provided filenames.
 
-Inputs
-----------
-filenames : string (single file) or list of strings (multiple files)
-Input the file name(s) that you would like to initialize data from.
+    Inputs
+    ----------
+    filenames : string (single file) or list of strings (multiple files)
+    Input the file name(s) that you would like to initialize data from.
 
-Parameters
-----------
-brown_dwarfs : bool,optional
-Removes all Brown Dwarfs from the file if False.
+    Parameters
+    ----------
+    brown_dwarfs : bool,optional
+    Removes all Brown Dwarfs from the file if False.
 
-Returns
--------
-Files_List : array
-The files that were requested in an array.
+    Returns
+    -------
+    Files_List : array
+    The files that were requested in an array.
 
-Example
--------
-files = load_files([filename_1,filename_2,...],brown_dwarfs = False)
-            '''
+    Example
+    -------
+    files = load_files([filename_1,filename_2,...],brown_dwarfs = False)
+    '''
     if isinstance(filenames,str):
         filenames = [filenames] #If the input is a string
     Files_List = []
@@ -250,28 +250,28 @@ def Binding_Energy_Matrix(m,x,v,periodic_edge = False,Lx = None,Ly = None,Lz = N
 #The min and max function is used on the coordinates to get the max x,y and z depending on the dimension
 def min_and_max(x,dimension = 'x'):
     '''
-Find the minimum and maximum value along a dimension 
-Inputs
-----------
-x : list,array
-The array of positions.
+    Find the minimum and maximum value along a dimension 
+    Inputs
+    ----------
+    x : list,array
+    The array of positions.
 
-Parameters
-----------
-dimension : 'x', 'y' or 'z', string
-The dimension along which to find the minimum or maxium. 
+    Parameters
+    ----------
+    dimension : 'x', 'y' or 'z', string
+    The dimension along which to find the minimum or maxium. 
 
-Returns
--------
-min_x : float,int
-The minimum position along the given dimension.
-    
-max_x : float,int
-The maximum position along the given dimension.
+    Returns
+    -------
+    min_x : float,int
+    The minimum position along the given dimension.
+        
+    max_x : float,int
+    The maximum position along the given dimension.
 
-Example
--------
-min_x,max_x = min_and_max(data[snapshot].x,dimension = 'x')
+    Example
+    -------
+    min_x,max_x = min_and_max(data[snapshot].x,dimension = 'x')
 
     '''
     if dimension == 'x':
@@ -291,32 +291,32 @@ min_x,max_x = min_and_max(data[snapshot].x,dimension = 'x')
 
 def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-Splitting the given files data into bins of a defined length. This would put the masses,positions, velocities and ids into different regions corresponding to
-the split regions.
-Inputs
-----------
-file : list of sinkdata
-The data file to which the splitting will be applied
-    
-snapshot: int
-The snapshot to which to apply splitting
-    
-seperation_param : float,int
-The size of the box you want to split (in pc). 
-Returns
--------
-m,x,v,ids : lists
-The masses,positions,velocities and ids put into different lists corresponding to different bins.
+    Splitting the given files data into bins of a defined length. This would put the masses,positions, velocities and ids into different regions corresponding to
+    the split regions.
+    Inputs
+    ----------
+    file : list of sinkdata
+    The data file to which the splitting will be applied
+        
+    snapshot: int
+    The snapshot to which to apply splitting
+        
+    seperation_param : float,int
+    The size of the box you want to split (in pc). 
+    Returns
+    -------
+    m,x,v,ids : lists
+    The masses,positions,velocities and ids put into different lists corresponding to different bins.
 
-Example
--------
-1) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7_BOX,snapshot = -1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    Example
+    -------
+    1) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7_BOX,snapshot = -1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
 
-This is for a box file with side lengths 1 and the splitting happening every 2 pc.
+    This is for a box file with side lengths 1 and the splitting happening every 2 pc.
 
-2) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7,snapshot = -1,periodic_edge = False)
+    2) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7,snapshot = -1,periodic_edge = False)
 
-This is for a non box file and the splitting happening every 2 pc.
+    This is for a non box file and the splitting happening every 2 pc.
 
     '''
     # Using the max_and_min function
@@ -404,69 +404,69 @@ This is for a non box file and the splitting happening every 2 pc.
 ## Most crucial function of the program (Program's runtime comes mainly from here)
 def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = None,Lz = None): 
     '''
-Find the minimum value in the Binding Energy Matrix and changes the masses, positions, velocities and ids of that node.
+    Find the minimum value in the Binding Energy Matrix and changes the masses, positions, velocities and ids of that node.
 
-Inputs
-----------
-matrix : list, nested list
-The binding energy matrix to be analyzed.
-    
-m: list, array
-The masses to be changed.
-    
-x : list, array
-The positions to be changed.
-    
-v : list, array
-The velocities to be changed.
-    
-ids : list, array
-The ids to be changed.
-    
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    Inputs
+    ----------
+    matrix : list, nested list
+    The binding energy matrix to be analyzed.
+        
+    m: list, array
+    The masses to be changed.
+        
+    x : list, array
+    The positions to be changed.
+        
+    v : list, array
+    The velocities to be changed.
+        
+    ids : list, array
+    The ids to be changed.
+        
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Returns
--------
+    Returns
+    -------
 
-new_matrix : list,nested list
-    The new matrix with the rows and columns corresponding to the minimum element deleted.
-    
-indexes : list
-    The new ids with the previous min element's ids replaced with one list with both the ids.
+    new_matrix : list,nested list
+        The new matrix with the rows and columns corresponding to the minimum element deleted.
+        
+    indexes : list
+        The new ids with the previous min element's ids replaced with one list with both the ids.
 
-new_masses: list
-    The new masses with the previous min element's masses replaced with one mass that is the sum of the ids.
+    new_masses: list
+        The new masses with the previous min element's masses replaced with one mass that is the sum of the ids.
 
-new_x : list
-    The new ids with the previous min element's positions replaced with the position of the center of mass.
+    new_x : list
+        The new ids with the previous min element's positions replaced with the position of the center of mass.
 
-new_v: list
-    The new ids with the previous min element's velocities replaced with the velocity of the center of mass.
+    new_v: list
+        The new ids with the previous min element's velocities replaced with the velocity of the center of mass.
 
-Example
--------
-1) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    Example
+    -------
+    1) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
 
-This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
+    This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
 
-2) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = False)
+    2) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = False)
 
-This is for a pre determined matrix,m,x,v and ids for a non-box file.
+    This is for a pre determined matrix,m,x,v and ids for a non-box file.
 
     '''
-#Optimized version of the remove_and_replace. This first finds the minimum element using a function(thus not looping through
-#the entire matrix) and then checks for two things, first, if its greater than 0 (unbound), then it stops the while loop or if the system it
-#is working on fits the criteria of 4 or less objects, it stops the while loop
+    #Optimized version of the remove_and_replace. This first finds the minimum element using a function(thus not looping through
+    #the entire matrix) and then checks for two things, first, if its greater than 0 (unbound), then it stops the while loop or if the system it
+    #is working on fits the criteria of 4 or less objects, it stops the while loop
     indexes = list(ids)
     most_bound_element = 0
     most_bound_element_indices = [0,0]
@@ -483,8 +483,8 @@ This is for a pre determined matrix,m,x,v and ids for a non-box file.
             comp_matrix[most_bound_element_indices[1]][most_bound_element_indices[0]] = np.inf
         else:
             flag = 1
-#If the most bound element is infinity, that means that we couldn't find any other
-#objects that fit the 4 objects criteria because we've replaced them all, so instead we return the input back
+    #If the most bound element is infinity, that means that we couldn't find any other
+    #objects that fit the 4 objects criteria because we've replaced them all, so instead we return the input back
     if most_bound_element > 0:
         return matrix,ids,m,x,v
     else:
@@ -539,51 +539,51 @@ This is for a pre determined matrix,m,x,v and ids for a non-box file.
 # clustering happening 
 def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-Perform the remove and replace until it is no longer possible (because there are no more bound systems of less than 4 stars).
+    Perform the remove and replace until it is no longer possible (because there are no more bound systems of less than 4 stars).
 
-Inputs
-----------
-binding_energy_matrix : list, nested list
-The binding energy matrix to be analyzed.
+    Inputs
+    ----------
+    binding_energy_matrix : list, nested list
+    The binding energy matrix to be analyzed.
 
-ids : list, array
-The ids to be changed.
-    
-m: list, array
-The masses to be changed.
-    
-x : list, array
-The positions to be changed.
-    
-v : list, array
-The velocities to be changed.
+    ids : list, array
+    The ids to be changed.
+        
+    m: list, array
+    The masses to be changed.
+        
+    x : list, array
+    The positions to be changed.
+        
+    v : list, array
+    The velocities to be changed.
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Returns
--------
-ids: nested list
-The new ids containing the ids arranged by system.
+    Returns
+    -------
+    ids: nested list
+    The new ids containing the ids arranged by system.
 
-Example
--------
-1) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    Example
+    -------
+    1) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
 
-This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
+    This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
 
-2) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = False)
+    2) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = False)
 
-This is for a pre determined matrix,m,x,v and ids for a non-box file.
+    This is for a pre determined matrix,m,x,v and ids for a non-box file.
     '''
     previous_ids = []
     # Wait till no more objects are clustered
@@ -595,46 +595,46 @@ This is for a pre determined matrix,m,x,v and ids for a non-box file.
 #This part of the program makes use of all the previous function definitions and leads to the result
 def clustering_algorithm(file,snapshot_number,seperation_param = 2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-The main algorithm that can perform system assignment after splitting the data into boxes.
-Inputs
-----------
-file : list of sinkdata.
-The input data that will be grouped into systems.
+    The main algorithm that can perform system assignment after splitting the data into boxes.
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
 
-snapshot_number : int
-The snapshot number to use.
+    snapshot_number : int
+    The snapshot number to use.
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Parameters
-----------
-seperation_param : int, float
-The seperation of the boxes. By default, this is 2 pc and that is the separation of the pickle files. 
+    Parameters
+    ----------
+    seperation_param : int, float
+    The seperation of the boxes. By default, this is 2 pc and that is the separation of the pickle files. 
 
-Returns
--------
-Result: list
-The new ids containing the ids arranged by system.
+    Returns
+    -------
+    Result: list
+    The new ids containing the ids arranged by system.
 
-Example
--------
-1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    Example
+    -------
+    1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
 
-This is for a box file with side lengths 1 and split every 2 pc.
+    This is for a box file with side lengths 1 and split every 2 pc.
 
-2) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2)
+    2) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2)
 
-This is for a non-box file that is split every 2 pc.
+    This is for a non-box file that is split every 2 pc.
     '''
     #If the file has one or less stars, we just return the ids as is
     if len(file[snapshot_number].m) <=1:
@@ -655,41 +655,41 @@ This is for a non-box file that is split every 2 pc.
 
 def clustering_algorithm_no_split(file,snapshot_number,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-The main algorithm that can perform system assignment without splitting.
-Inputs
-----------
-file : list of sinkdata.
-The input data that will be grouped into systems.
+    The main algorithm that can perform system assignment without splitting.
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
 
-snapshot_number : int
-The snapshot number to use.
+    snapshot_number : int
+    The snapshot number to use.
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Returns
--------
-Result: list
-The new ids containing the ids arranged by system.
+    Returns
+    -------
+    Result: list
+    The new ids containing the ids arranged by system.
 
-Example
--------
-1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    Example
+    -------
+    1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
 
-This is for a box file with side lengths 1.
+    This is for a box file with side lengths 1.
 
-2) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2)
+    2) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2)
 
-This is for a non-box file.
+    This is for a non-box file.
     '''
     if len(file[snapshot_number].m) <=1:
         return file[snapshot_number].id
@@ -767,53 +767,53 @@ class star_system:
 # Main Function of the program
 def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-The main function that does the system assignment(with splitting) and makes them star system objects.
-Inputs
-----------
-file : list of sinkdata.
-The input data that will be grouped into systems.
+    The main function that does the system assignment(with splitting) and makes them star system objects.
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
 
-snapshot_number : int
-The snapshot number to use.
-    
-Master_File : list of star system lists:
-The file containing already assigned systems to use if you don't want to apply algorithm again.
+    snapshot_number : int
+    The snapshot number to use.
+        
+    Master_File : list of star system lists:
+    The file containing already assigned systems to use if you don't want to apply algorithm again.
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Parameters
-----------
-read_in_result : bool
-Whether to read in the result from pickle files or do system assignment.
+    Parameters
+    ----------
+    read_in_result : bool
+    Whether to read in the result from pickle files or do system assignment.
 
-Returns
--------
-systems: list of star system objects
-The list of star system objects.
+    Returns
+    -------
+    systems: list of star system objects
+    The list of star system objects.
 
-Example
--------
-1) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = False)
+    Example
+    -------
+    1) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = False)
 
-This is the example of creating the systems for a non-boxed file with the systems already made (in the form of Master_File)
+    This is the example of creating the systems for a non-boxed file with the systems already made (in the form of Master_File)
 
-2) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = True,Lx = L,Ly = L,Lz = L)
+    2) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = True,Lx = L,Ly = L,Lz = L)
 
-This is the example of creating the systems for a boxed file with the systems already made (in the form of Master_File)
+    This is the example of creating the systems for a boxed file with the systems already made (in the form of Master_File)
 
-3) systems = system_creation(M2e4_C_M_2e7,-1,'placeholder_text',read_in_result = False,periodic_edge = False)
+    3) systems = system_creation(M2e4_C_M_2e7,-1,'placeholder_text',read_in_result = False,periodic_edge = False)
 
-This is the example of creating the systems for a non-boxed file where the systems aren't already made.
+    This is the example of creating the systems for a non-boxed file where the systems aren't already made.
 
     '''
     systems = []
@@ -833,41 +833,41 @@ This is the example of creating the systems for a non-boxed file where the syste
 
 def system_creation_no_splitting(data,snapshot_num,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-The main function that does the system assignment(without splitting) and makes them star system objects.
-Inputs
-----------
-data : list of sinkdata.
-The input data that will be grouped into systems.
+    The main function that does the system assignment(without splitting) and makes them star system objects.
+    Inputs
+    ----------
+    data : list of sinkdata.
+    The input data that will be grouped into systems.
 
-snapshot_number : int
-The snapshot number to use.
+    snapshot_number : int
+    The snapshot number to use.
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Returns
--------
-systems: list of star system objects
-The list of star system objects.
+    Returns
+    -------
+    systems: list of star system objects
+    The list of star system objects.
 
-Example
--------
-1) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = False)
+    Example
+    -------
+    1) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = False)
 
-This is the example of creating the systems for a non-boxed file without splitting.
+    This is the example of creating the systems for a non-boxed file without splitting.
 
-2) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = True,Lx = L,Ly = L,Lz = L)
+    2) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = True,Lx = L,Ly = L,Lz = L)
 
-This is the example of creating the systems for a boxed file of side length L without splitting.
+    This is the example of creating the systems for a boxed file of side length L without splitting.
 
 
     '''
@@ -914,60 +914,60 @@ def Mass_Creation_Finder(file,min_mass = 1):
 
 def system_initialization(file,file_name,read_in_result = True,full_assignment = False,snapshot_num = -1,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     '''
-This function initializes the systems for a given file.
-Inputs
-----------
-file : list of sinkdata.
-The input data that will be grouped into systems.
-    
-file_name: string
-The name of the file which will be matched to the system pickle file.
+    This function initializes the systems for a given file.
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
+        
+    file_name: string
+    The name of the file which will be matched to the system pickle file.
 
-Parameters
-----------
-read_in_result : bool,optional
-Whether to read in the result from pickle files or do system assignment.
+    Parameters
+    ----------
+    read_in_result : bool,optional
+    Whether to read in the result from pickle files or do system assignment.
 
-full_assignment: bool,optional
-Whether to perform system assignment on all snapshots.
-    
-snapshot_num: int,optional
-The snapshot to perform assignment if you only want to do it for one snap (i.e full_assignment = False).
+    full_assignment: bool,optional
+    Whether to perform system assignment on all snapshots.
+        
+    snapshot_num: int,optional
+    The snapshot to perform assignment if you only want to do it for one snap (i.e full_assignment = False).
 
-periodic_edge : bool,optional
-If you are using the box simulation with periodic edges.
+    periodic_edge : bool,optional
+    If you are using the box simulation with periodic edges.
 
-Lx: int,float,optional
-The length of periodic box in the x direction.
+    Lx: int,float,optional
+    The length of periodic box in the x direction.
 
-Ly: int,float,optional
-The length of periodic box in the y direction.
+    Ly: int,float,optional
+    The length of periodic box in the y direction.
 
-Lz: int,float,optional
-The length of periodic box in the z direction.
+    Lz: int,float,optional
+    The length of periodic box in the z direction.
 
-Returns
--------
-systems: list of star system objects,list of list of star system objects
-The list of all star systems from each snap or for one snap in the file. Note: The best variable name to save this is something like 'filename_systems'.
+    Returns
+    -------
+    systems: list of star system objects,list of list of star system objects
+    The list of all star systems from each snap or for one snap in the file. Note: The best variable name to save this is something like 'filename_systems'.
 
-Example
--------
-1) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True)
+    Example
+    -------
+    1) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True)
 
-This is the example of creating the systems for a non-boxed file where the systems are already made.
+    This is the example of creating the systems for a non-boxed file where the systems are already made.
 
-2) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True,periodic_edge = True, Lx = L,Ly = L,Lz = L)
+    2) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True,periodic_edge = True, Lx = L,Ly = L,Lz = L)
 
-This is the example of creating the systems for a boxed file of length L where the systems are already made.
+    This is the example of creating the systems for a boxed file of length L where the systems are already made.
 
-3) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = False,snapshot_num = -1)
+    3) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = False,snapshot_num = -1)
 
-This is the example of creating the systems for a single snapshot for a non-boxed file where the systems are not already made.
+    This is the example of creating the systems for a single snapshot for a non-boxed file where the systems are not already made.
 
-4) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = False,full_assignment = True)
+    4) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = False,full_assignment = True)
 
-This is the example of creating all the systems for a non-boxed file where the systems are not already made.
+    This is the example of creating all the systems for a non-boxed file where the systems are not already made.
 
 
 
@@ -1185,44 +1185,44 @@ def t_ff(mass,R):
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000):
     '''
-The count of new stars or all stars of a certain mass range formed at different snapshots.
-Inputs
-----------
-file : list of sinkdata.
-The input data that will be grouped into systems.
+    The count of new stars or all stars of a certain mass range formed at different snapshots.
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
 
-Parameters
-----------
-plot : bool,optional
-Whether to plot the number of stars.
+    Parameters
+    ----------
+    plot : bool,optional
+    Whether to plot the number of stars.
 
-time: bool,optional
-Whether to have snapshot number or time as the x axis.
-    
-all_stars: bool,optional
-Whether to calculate all stars at a snapshot or just the new stars.
+    time: bool,optional
+    Whether to have snapshot number or time as the x axis.
+        
+    all_stars: bool,optional
+    Whether to calculate all stars at a snapshot or just the new stars.
 
-lower_limit: int,float,optional
-The lower limit of the mass range
+    lower_limit: int,float,optional
+    The lower limit of the mass range
 
-upper_limit: int,float,optional
-The upper limit of the mass range
+    upper_limit: int,float,optional
+    The upper limit of the mass range
 
-Returns
--------
-no_of_stars: list
-Either the list of number of new stars or the number of total stars at each snapshot.
+    Returns
+    -------
+    no_of_stars: list
+    Either the list of number of new stars or the number of total stars at each snapshot.
 
-Example
--------
-1) new_stars_count(M2e4_C_M_2e7,time = True)
-Plotting the new stars count over time.
+    Example
+    -------
+    1) new_stars_count(M2e4_C_M_2e7,time = True)
+    Plotting the new stars count over time.
 
-2) new_stars_count(M2e4_C_M_2e7,all_stars = True)
-Plotting the total stars over time.
+    2) new_stars_count(M2e4_C_M_2e7,all_stars = True)
+    Plotting the total stars over time.
 
-3) new_stars_count(M2e4_C_M_2e7,time = True,lower_limit = 0,upper_limit = 1)
-Plotting the new stars count between 0 and 1 solar mass over time.
+    3) new_stars_count(M2e4_C_M_2e7,time = True,lower_limit = 0,upper_limit = 1)
+    Plotting the new stars count between 0 and 1 solar mass over time.
     '''
     no_new_stars = []
     times = []
@@ -1571,45 +1571,45 @@ def smaxis_all(system):
 #smaxes and companion mass ratios.
 def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio'):
     '''
-Returns a list of the property you chose for systems with primaries in a certain mass range.
+    Returns a list of the property you chose for systems with primaries in a certain mass range.
 
-Inputs
-----------
-systems : list of star system objects.
-The systems in a certain snapshot to be looked at.
+    Inputs
+    ----------
+    systems : list of star system objects.
+    The systems in a certain snapshot to be looked at.
 
-Parameters
-----------
-lower limit : int,float,optional
-The lower limit of the primary mass range.
+    Parameters
+    ----------
+    lower limit : int,float,optional
+    The lower limit of the primary mass range.
 
-upper limit : int,float,optional
-The upper limit of the primary mass range.
-    
-all_companions: bool,optional
-Whether to include all companions or just the most massive (for mass ratio) or all subsystems or just the subsystems with the primary and secondary (Semi Major Axis)
+    upper limit : int,float,optional
+    The upper limit of the primary mass range.
+        
+    all_companions: bool,optional
+    Whether to include all companions or just the most massive (for mass ratio) or all subsystems or just the subsystems with the primary and secondary (Semi Major Axis)
 
-attribute: string,optional
-The attribute that you want. Choose from 'System Mass','Primary Mass','Mass Ratio' or 'Semi Major Axis'.
+    attribute: string,optional
+    The attribute that you want. Choose from 'System Mass','Primary Mass','Mass Ratio' or 'Semi Major Axis'.
 
-Returns
--------
-attribute_distribution: list
-The distribution of the property that you requested.
+    Returns
+    -------
+    attribute_distribution: list
+    The distribution of the property that you requested.
 
-Example
--------
-1) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'System Mass')
-Returns the mass of all multi star systems 
+    Example
+    -------
+    1) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'System Mass')
+    Returns the mass of all multi star systems 
 
-2) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Primary Mass')
-Returns the mass of all primaries in multi star systems 
+    2) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Primary Mass')
+    Returns the mass of all primaries in multi star systems 
 
-3) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Mass Ratio',all_companions = True,lower_limit = 0.7,upper_limit = 1.3)
-Returns the mass ratio of all solar type companions.
+    3) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Mass Ratio',all_companions = True,lower_limit = 0.7,upper_limit = 1.3)
+    Returns the mass ratio of all solar type companions.
 
-1) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Semi Major Axis',all_companions = True,lower_limit = 0.7,upper_limit = 1.3)
-Returns the semi major axis of all subsystems in the system.
+    1) primary_total_ratio_axis(M2e4_C_M_2e7_systems[-1],attribute = 'Semi Major Axis',all_companions = True,lower_limit = 0.7,upper_limit = 1.3)
+    Returns the semi major axis of all subsystems in the system.
 
     '''
 
@@ -1644,48 +1644,48 @@ Returns the semi major axis of all subsystems in the system.
 #Multiplicity Fraction over different masses with a selection ratio of companions
 def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute = 'Fraction',bins = 'continous'):
     '''
-Returns the multiplicity fraction or multiplicity properties over a mass range.
+    Returns the multiplicity fraction or multiplicity properties over a mass range.
 
-Inputs
-----------
-systems : list of star system objects.
-The systems in a certain snapshot to be looked at.
+    Inputs
+    ----------
+    systems : list of star system objects.
+    The systems in a certain snapshot to be looked at.
 
-Parameters
-----------
-mass_break : int,float,optional
-The log seperation in masses.
+    Parameters
+    ----------
+    mass_break : int,float,optional
+    The log seperation in masses.
 
-selection_ratio : int,float,optional
-The minimum mass ratio of the companions.
-    
-attribute: string,optional
-The attribute that you want. Choose from 'Fraction'(Primary No/(Primary No+ Single No)),'All Companions'(Primary No/(Primary No+Single No+Companion Number) or 'Properties'.
+    selection_ratio : int,float,optional
+    The minimum mass ratio of the companions.
+        
+    attribute: string,optional
+    The attribute that you want. Choose from 'Fraction'(Primary No/(Primary No+ Single No)),'All Companions'(Primary No/(Primary No+Single No+Companion Number) or 'Properties'.
 
-bins: string,optional
-The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Duchene Krauss bins).
+    bins: string,optional
+    The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Duchene Krauss bins).
 
-Returns
--------
-logmasslist: list
-The list of masses in logspace.
+    Returns
+    -------
+    logmasslist: list
+    The list of masses in logspace.
 
-Multiplicity_Fraction_List or Single & Primary & Companion_Fractions_List: list
-The list of multiplicity fraction or the 3 lists of primary,single or companion fractions.
+    Multiplicity_Fraction_List or Single & Primary & Companion_Fractions_List: list
+    The list of multiplicity fraction or the 3 lists of primary,single or companion fractions.
 
-mult_sys_count: int
-The number of systems with more than one star (When returning multiplicity fraction).
+    mult_sys_count: int
+    The number of systems with more than one star (When returning multiplicity fraction).
 
-sys_count:int
-The number of systems (including single star systems)(When returning multiplicity fraction).
+    sys_count:int
+    The number of systems (including single star systems)(When returning multiplicity fraction).
 
-Example
--------
-1) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Fraction',bins = 'observer') 
-Returns the logmasslist, multiplicity fraction list, count of all multiple star systems and the number of all systems with the Duchene Krauss Bins.
+    Example
+    -------
+    1) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Fraction',bins = 'observer') 
+    Returns the logmasslist, multiplicity fraction list, count of all multiple star systems and the number of all systems with the Duchene Krauss Bins.
 
-2) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Properties',bins = 'continous') 
-Returns the logmasslist, single star fraction list, primary star fraction list and the companion star fraction list.
+    2) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Properties',bins = 'continous') 
+    Returns the logmasslist, single star fraction list, primary star fraction list and the companion star fraction list.
     '''
 
     m = []
@@ -1773,42 +1773,42 @@ Returns the logmasslist, single star fraction list, primary star fraction list a
 #Multiplicity Frequency over different masses with a selection ratio
 def multiplicity_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'continous'):
     '''
-Returns the multiplicity freqeuncy over a mass range.
+    Returns the multiplicity freqeuncy over a mass range.
 
-Inputs
-----------
-systems : list of star system objects.
-The systems in a certain snapshot to be looked at.
+    Inputs
+    ----------
+    systems : list of star system objects.
+    The systems in a certain snapshot to be looked at.
 
-Parameters
-----------
-mass_break : int,float,optional
-The log seperation in masses.
+    Parameters
+    ----------
+    mass_break : int,float,optional
+    The log seperation in masses.
 
-selection_ratio : int,float,optional
-The minimum mass ratio of the companions.
-    
-bins: string,optional
-The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Moe-DiStefano bins).
+    selection_ratio : int,float,optional
+    The minimum mass ratio of the companions.
+        
+    bins: string,optional
+    The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Moe-DiStefano bins).
 
-Returns
--------
-logmasslist: list
-The list of masses in logspace.
+    Returns
+    -------
+    logmasslist: list
+    The list of masses in logspace.
 
-multiplicity_frequency: list
-The list of multiplicity frequencies.
+    multiplicity_frequency: list
+    The list of multiplicity frequencies.
 
-companion_count: int
-The number of companions.
+    companion_count: int
+    The number of companions.
 
-sys_count:int
-The number of systems (including single star systems).
+    sys_count:int
+    The number of systems (including single star systems).
 
-Example
--------
-multiplicity_frequency(M2e4_C_M_2e7_systems[-1],bins = 'observer') 
-Returns the logmasslist, multiplicity frequency list, count of the number of companions and the number of all systems with the Moe DiStefano Bins.
+    Example
+    -------
+    multiplicity_frequency(M2e4_C_M_2e7_systems[-1],bins = 'observer') 
+    Returns the logmasslist, multiplicity frequency list, count of the number of companions and the number of all systems with the Moe DiStefano Bins.
 
     '''
     m = []
@@ -1852,48 +1852,48 @@ Returns the logmasslist, multiplicity frequency list, count of the number of com
 #are randomly distributed or not
 def randomly_distributed_companions(systems,file,snapshot,lower_limit = 1/1.5,upper_limit = 1.5,target_mass = 1,mass_ratio = np.linspace(0,1,num = 11),plot = True):
     '''
-Returns the expected distribution of secondary companions if the drawing was random.
+    Returns the expected distribution of secondary companions if the drawing was random.
 
-Inputs
-----------
-systems : list of star system objects.
-The systems in a certain snapshot to be looked at.
+    Inputs
+    ----------
+    systems : list of star system objects.
+    The systems in a certain snapshot to be looked at.
 
-file: list of sinkdata objects
-The original file before system assignment.
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-snapshot: int
-The snapshot that you want to look at
+    snapshot: int
+    The snapshot that you want to look at
 
-Parameters
-----------
-lower_limit : int,float,optional
-The lower limit of the primary mass range.
+    Parameters
+    ----------
+    lower_limit : int,float,optional
+    The lower limit of the primary mass range.
 
-upper_limit : int,float,optional
-The upper limit of the primary mass range.
+    upper_limit : int,float,optional
+    The upper limit of the primary mass range.
 
-target_mass : int,float,optional
-The target mass of primaries to cut the IMF at.
-    
-mass_ratio: range,list,array,optional
-The bins for the mass ratios. Default is np.linspace(0,1,11)
+    target_mass : int,float,optional
+    The target mass of primaries to cut the IMF at.
+        
+    mass_ratio: range,list,array,optional
+    The bins for the mass ratios. Default is np.linspace(0,1,11)
 
-plot: bool,optional
-Whether to expected distribution or not
+    plot: bool,optional
+    Whether to expected distribution or not
 
-Returns
--------
-Nsystems_with_M_companion_mass: array
-The log number of companions expected at a certain mass ratio.
+    Returns
+    -------
+    Nsystems_with_M_companion_mass: array
+    The log number of companions expected at a certain mass ratio.
 
-Stellar_Mass_PDF: array
-The normalized log IMF until the primary mass
+    Stellar_Mass_PDF: array
+    The normalized log IMF until the primary mass
 
-Example
--------
-1) randomly_distributed_companions(M2e4_C_M_2e7_systems[-1],M2e4_C_M_2e7,-1,attribute = 'Fraction') 
-Plots the expected companion distribution if the stars were randomly drawn from the IMF.
+    Example
+    -------
+    1) randomly_distributed_companions(M2e4_C_M_2e7_systems[-1],M2e4_C_M_2e7,-1,attribute = 'Fraction') 
+    Plots the expected companion distribution if the stars were randomly drawn from the IMF.
     '''
     systems_target = []
     count = 0
@@ -1941,51 +1941,51 @@ Plots the expected companion distribution if the stars were randomly drawn from 
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
 def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True):
     '''
-Returns the evolution of the multiplicity fraction for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
+    Returns the evolution of the multiplicity fraction for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-steps : int,optional
-The number of snapshots to include in one step. By default, it is 1 meaning every snapshot.
+    Parameters
+    ----------
+    steps : int,optional
+    The number of snapshots to include in one step. By default, it is 1 meaning every snapshot.
 
-read_in_result :bool,optional
-Whether to read in results or perform system assignment for each snapshot.
+    read_in_result :bool,optional
+    Whether to read in results or perform system assignment for each snapshot.
 
-start : bool,optional
-First snapshot to look at. By default, it is the first snapshot with stars of the target mass.
-    
-target_mass: int,float,optional
-The target primary mass to consider.
+    start : bool,optional
+    First snapshot to look at. By default, it is the first snapshot with stars of the target mass.
+        
+    target_mass: int,float,optional
+    The target primary mass to consider.
 
-upper_limit: int,float,optional
-The highest allowed mass for the primary.
+    upper_limit: int,float,optional
+    The highest allowed mass for the primary.
 
-lower_limit: int,float,optional
-The lowest allowed mass for the primary.
+    lower_limit: int,float,optional
+    The lowest allowed mass for the primary.
 
-Returns
--------
-time: list
-The times in the simulation (in free fall time).
+    Returns
+    -------
+    time: list
+    The times in the simulation (in free fall time).
 
-fraction: list
-The multiplicity fraction of target mass primaries at any time.
+    fraction: list
+    The multiplicity fraction of target mass primaries at any time.
 
-consistent_fraction: list
-The multiplicity fraction of target mass primaries that stay the same mass at any time.
+    consistent_fraction: list
+    The multiplicity fraction of target mass primaries that stay the same mass at any time.
 
-Example
--------
-Multiplicity_Fraction_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
-Plots the multiplicity time fraction over the runtime of the simulation.
+    Example
+    -------
+    Multiplicity_Fraction_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
+    Plots the multiplicity time fraction over the runtime of the simulation.
     '''
     
     consistent_solar_mass = []
@@ -2059,51 +2059,51 @@ Plots the multiplicity time fraction over the runtime of the simulation.
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
 def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True):
     '''
-Returns the evolution of the multiplicity frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
+    Returns the evolution of the multiplicity frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-steps : int,optional
-The number of snapshots to include in one step. By default, it is 1 meaning every snapshot.
+    Parameters
+    ----------
+    steps : int,optional
+    The number of snapshots to include in one step. By default, it is 1 meaning every snapshot.
 
-read_in_result :bool,optional
-Whether to read in results or perform system assignment for each snapshot.
+    read_in_result :bool,optional
+    Whether to read in results or perform system assignment for each snapshot.
 
-start : bool,optional
-First snapshot to look at. By default, it is the first snapshot with stars of the target mass.
-    
-target_mass: int,float,optional
-The target primary mass to consider.
+    start : bool,optional
+    First snapshot to look at. By default, it is the first snapshot with stars of the target mass.
+        
+    target_mass: int,float,optional
+    The target primary mass to consider.
 
-upper_limit: int,float,optional
-The highest allowed mass for the primary.
+    upper_limit: int,float,optional
+    The highest allowed mass for the primary.
 
-lower_limit: int,float,optional
-The lowest allowed mass for the primary.
+    lower_limit: int,float,optional
+    The lowest allowed mass for the primary.
 
-Returns
--------
-time: list
-The times in the simulation (in free fall time).
+    Returns
+    -------
+    time: list
+    The times in the simulation (in free fall time).
 
-fraction: list
-The multiplicity frequency of target mass primaries at any time.
+    fraction: list
+    The multiplicity frequency of target mass primaries at any time.
 
-consistent_fraction: list
-The multiplicity frequency of target mass primaries that stay the same mass at any time.
+    consistent_fraction: list
+    The multiplicity frequency of target mass primaries that stay the same mass at any time.
 
-Example
--------
-Multiplicity_Frequency_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
-Plots the multiplicity time frequency over the runtime of the simulation.
+    Example
+    -------
+    Multiplicity_Frequency_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
+    Plots the multiplicity time frequency over the runtime of the simulation.
     '''
     consistent_solar_mass = []
     consistent_solar_mass_unb = []
@@ -2173,38 +2173,38 @@ Plots the multiplicity time frequency over the runtime of the simulation.
         return time,fraction,fraction1
 def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     '''
-The multiplicity fraction of all objects in a certain age range.
+    The multiplicity fraction of all objects in a certain age range.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-min_age : int,float,optional
-The minimum age of objects.
+    Parameters
+    ----------
+    min_age : int,float,optional
+    The minimum age of objects.
 
-target_age :int,float,optional
-The maximum age of the objects
+    target_age :int,float,optional
+    The maximum age of the objects
 
-Returns
--------
-multiplicity: list
-The multiplicity fraction of the objects in the age range.
+    Returns
+    -------
+    multiplicity: list
+    The multiplicity fraction of the objects in the age range.
 
-object_count: list
-The number of objects in the age range.
+    object_count: list
+    The number of objects in the age range.
 
-average_mass: list
-The average mass of the objects in the age range.
+    average_mass: list
+    The average mass of the objects in the age range.
 
-Example
--------
-YSO_multiplicity(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    Example
+    -------
+    YSO_multiplicity(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''    
     form = []
     for i in range(0,len(file)):
@@ -2255,80 +2255,80 @@ YSO_multiplicity(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
 #This function tracks the evolution of different stars over their lifetime
 def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,zero = 'Consistent Mass',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
     '''
-The status of stars born in a certain time range tracked throughout their lifetime in the simulation.
+    The status of stars born in a certain time range tracked throughout their lifetime in the simulation.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-T : int,float,optional
-The time that the stars are born at.
+    Parameters
+    ----------
+    T : int,float,optional
+    The time that the stars are born at.
 
-dt :int,float,optional
-The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
+    dt :int,float,optional
+    The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
 
-read_in_result: bool,optional
-Whether to perform system assignment or use the already assigned system.
+    read_in_result: bool,optional
+    Whether to perform system assignment or use the already assigned system.
 
-plot: bool,optional
-Whether to return the times and multiplicities or plot them.
+    plot: bool,optional
+    Whether to return the times and multiplicities or plot them.
 
-target_mass: int,float,optional
-The target mass of primary to look at
+    target_mass: int,float,optional
+    The target mass of primary to look at
 
-upper_limit: int,float,optional
-The upper limit of the target mass range
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
 
-lower_limit: int,float,optional
-The lower limit of the target mass range
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
 
-steps: int,optional
-The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    steps: int,optional
+    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
 
-select_by_time: bool,optional:
-Whether to track all stars or only those in a time frame.
+    select_by_time: bool,optional:
+    Whether to track all stars or only those in a time frame.
 
-random_override: bool,optional:
-If you want to control a random sampling. By default, it does look at a random sample of over the sample size.
+    random_override: bool,optional:
+    If you want to control a random sampling. By default, it does look at a random sample of over the sample size.
 
-manual_random: bool,optional
-Your choice to look at a random sample or not (only for plotting).
+    manual_random: bool,optional
+    Your choice to look at a random sample or not (only for plotting).
 
-sample_size: int,optional
-The amount of random stars to track (only to plot).
+    sample_size: int,optional
+    The amount of random stars to track (only to plot).
 
-zero: string,optional
-Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
 
-Returns
--------
-all_times: list of lists
-The times for each of the stars all in one list.
+    Returns
+    -------
+    all_times: list of lists
+    The times for each of the stars all in one list.
 
-all_status: list of lists
-The status of each of the stars at each time. If the status is -1, it is a companion, 0, it is single, otherwise it is a primary with status denoting the number of companions
+    all_status: list of lists
+    The status of each of the stars at each time. If the status is -1, it is a companion, 0, it is single, otherwise it is a primary with status denoting the number of companions
 
-ids: list
-The id of each of the stars.
+    ids: list
+    The id of each of the stars.
 
-maturity_times: list
-The time that each star stops accreting.
+    maturity_times: list
+    The time that each star stops accreting.
 
-Tend:list
-The end time for each star.
+    Tend:list
+    The end time for each star.
 
-birth_times:list
-The formation times for each star.
+    birth_times:list
+    The formation times for each star.
 
-Example
--------
-star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
+    Example
+    -------
+    star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
     '''    
     consistent_solar_mass = []
     if read_in_result == False:
@@ -2506,62 +2506,62 @@ star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
 #This function gives the multiplicity fraction at different ages
 def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
     '''
-The average multiplicity fraction of stars born in a certain time range tracked throughout their lifetime in the simulation.
+    The average multiplicity fraction of stars born in a certain time range tracked throughout their lifetime in the simulation.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-T : int,float,optional
-The time that the stars are born at.
+    Parameters
+    ----------
+    T : int,float,optional
+    The time that the stars are born at.
 
-dt :int,float,optional
-The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
+    dt :int,float,optional
+    The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
 
-target_mass: int,float,optional
-The target mass of primary to look at
+    target_mass: int,float,optional
+    The target mass of primary to look at
 
-upper_limit: int,float,optional
-The upper limit of the target mass range
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
 
-lower_limit: int,float,optional
-The lower limit of the target mass range
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
 
-read_in_result: bool,optional
-Whether to perform system assignment or use the already assigned system.
+    read_in_result: bool,optional
+    Whether to perform system assignment or use the already assigned system.
 
-select_by_time: bool,optional:
-Whether to track all stars or only those in a time frame.
+    select_by_time: bool,optional:
+    Whether to track all stars or only those in a time frame.
 
-zero: string,optional
-Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
 
-plot: bool,optional
-Whether to return the times and multiplicities or plot them.
+    plot: bool,optional
+    Whether to return the times and multiplicities or plot them.
 
-steps: int,optional
-The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    steps: int,optional
+    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
 
-Returns
--------
-age_bins: array
-The age over which the stars are in.
+    Returns
+    -------
+    age_bins: array
+    The age over which the stars are in.
 
-multiplicity: array
-The average multiplicity fraction of the objects in the bins.
+    multiplicity: array
+    The average multiplicity fraction of the objects in the bins.
 
-birth_times:list
-The birth times of the stars.
+    birth_times:list
+    The birth times of the stars.
 
-Example
--------
-multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    Example
+    -------
+    multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
     times,status,ids,maturity_times,Tend,birth_times = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
@@ -2628,59 +2628,59 @@ multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
 #This function gives the multiplicity fraction at different ages
 def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
     '''
-The average multiplicity frequency of stars born in a certain time range tracked throughout their lifetime in the simulation.
+    The average multiplicity frequency of stars born in a certain time range tracked throughout their lifetime in the simulation.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-T : int,float,optional
-The time that the stars are born at.
+    Parameters
+    ----------
+    T : int,float,optional
+    The time that the stars are born at.
 
-dt :int,float,optional
-The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
+    dt :int,float,optional
+    The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
 
-target_mass: int,float,optional
-The target mass of primary to look at
+    target_mass: int,float,optional
+    The target mass of primary to look at
 
-upper_limit: int,float,optional
-The upper limit of the target mass range
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
 
-lower_limit: int,float,optional
-The lower limit of the target mass range
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
 
-read_in_result: bool,optional
-Whether to perform system assignment or use the already assigned system.
+    read_in_result: bool,optional
+    Whether to perform system assignment or use the already assigned system.
 
-select_by_time: bool,optional:
-Whether to track all stars or only those in a time frame.
+    select_by_time: bool,optional:
+    Whether to track all stars or only those in a time frame.
 
-zero: string,optional
-Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
 
-plot: bool,optional
-Whether to return the times and multiplicities or plot them.
+    plot: bool,optional
+    Whether to return the times and multiplicities or plot them.
 
-steps: int,optional
-The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    steps: int,optional
+    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
 
-Returns
--------
-age_bins: array
-The age over which the stars are in.
+    Returns
+    -------
+    age_bins: array
+    The age over which the stars are in.
 
-multiplicity_frequency: array
-The average multiplicity frequency of the objects in the bins.
+    multiplicity_frequency: array
+    The average multiplicity frequency of the objects in the bins.
 
-Example
--------
-multiplicity_freq_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    Example
+    -------
+    multiplicity_freq_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
     times,status,ids,maturity_times,Tend,birth_times = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
@@ -2822,44 +2822,44 @@ def Orbital_Plot_2D(system,plot = True):
 
 def smaxis_tracker(file,Master_File,system_ids,plot = True,KE_tracker = False):
     '''
-Tracking the semi-major axis between some ids throughout the simulation runtime.
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Tracking the semi-major axis between some ids throughout the simulation runtime.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-system_ids: list
-The ids to track the semi-major axis of.
+    system_ids: list
+    The ids to track the semi-major axis of.
 
-Parameters
-----------
-plot: bool,optional
-Whether to return the values or plot them.
+    Parameters
+    ----------
+    plot: bool,optional
+    Whether to return the values or plot them.
 
-KE_tracker: bool,optional
-Whether to also look at the loss in kinetic energy from the orbital plane projection.
+    KE_tracker: bool,optional
+    Whether to also look at the loss in kinetic energy from the orbital plane projection.
 
-Returns
--------
-smaxes: list
-The semi major axis of the given ids throughout the simulation
+    Returns
+    -------
+    smaxes: list
+    The semi major axis of the given ids throughout the simulation
 
-no_of_stars: list
-The number of stars in the system throughout the simulation
+    no_of_stars: list
+    The number of stars in the system throughout the simulation
 
-KE_tracks: list
-The loss in KE from an orbital projection throughout time. Only returns this if KE_tracker is true.
+    KE_tracks: list
+    The loss in KE from an orbital projection throughout time. Only returns this if KE_tracker is true.
 
-times: list
-The times that the system exists in the simulation.
+    times: list
+    The times that the system exists in the simulation.
 
-Example
--------
-smaxis_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,[112324.0,1233431.0])
-'''  
+    Example
+    -------
+    smaxis_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,[112324.0,1233431.0])
+    '''  
 
     smaxes = []
     times = []
@@ -2928,47 +2928,47 @@ def formation_distance(id_list,file_name,log = True):
 
 def q_with_formation(Master_File,file_name,snapshot,limit = 10000,upper_mass_limit = 1.3,lower_mass_limit = 0.7):
     '''
-Seperating the mass ratios based on formation distance.
-Inputs
-----------
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Seperating the mass ratios based on formation distance.
+    Inputs
+    ----------
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-file_name: str
-The name of the file to check the formation distance from.
+    file_name: str
+    The name of the file to check the formation distance from.
 
-snapshot: int
-The snapshot to check.
+    snapshot: int
+    The snapshot to check.
 
-Parameters
-----------
-limit: int,float,optional
-The formation distance limit that you want to split by.
+    Parameters
+    ----------
+    limit: int,float,optional
+    The formation distance limit that you want to split by.
 
-upper_mass_limit: int,float,optional
-The upper mass limit for the primaries
+    upper_mass_limit: int,float,optional
+    The upper mass limit for the primaries
 
-lower_mass_limit: int,float,optional
-The lower mass limit for the primaries
+    lower_mass_limit: int,float,optional
+    The lower mass limit for the primaries
 
-Returns
--------
-q_list_under: list
-The mass ratios under the formation distance limit
+    Returns
+    -------
+    q_list_under: list
+    The mass ratios under the formation distance limit
 
-distance_list_under: list
-The formation distance distribution under the formation distance limit. 
+    distance_list_under: list
+    The formation distance distribution under the formation distance limit. 
 
-q_list_over: list
-The mass ratios over the formation distance limit
+    q_list_over: list
+    The mass ratios over the formation distance limit
 
-distance_list_over: list
-The formation distance distribution over the formation distance limit. 
+    distance_list_over: list
+    The formation distance distribution over the formation distance limit. 
 
-all_dist: list
-The formation distance for everything.
+    all_dist: list
+    The formation distance for everything.
 
-'''  
+    '''  
     q_list_under = []
     distance_list_under = []
     q_list_over = []
@@ -2991,35 +2991,35 @@ The formation distance for everything.
 #Using np.hist and moving the bins to the center of each bin
 def hist(x,bins = 'auto',log =False,shift = False):
     '''
-Create a histogram
-Inputs
-----------
-x: data
-The data to be binned
+    Create a histogram
+    Inputs
+    ----------
+    x: data
+    The data to be binned
 
-Parameters
-----------
-bins: int,list,str
-The bins to use.
+    Parameters
+    ----------
+    bins: int,list,str
+    The bins to use.
 
-log: bool,optional
-Whether to return number of objects in bin or log number of objects.
+    log: bool,optional
+    Whether to return number of objects in bin or log number of objects.
 
-shift: bool,optional
-Whether to shift the bins to the center or not.
+    shift: bool,optional
+    Whether to shift the bins to the center or not.
 
-Returns
--------
-x_vals: list
-The bins.
+    Returns
+    -------
+    x_vals: list
+    The bins.
 
-weights:list
-The weights of each bin
+    weights:list
+    The weights of each bin
 
-Example
--------
-hist(x)
-'''  
+    Example
+    -------
+    hist(x)
+    '''  
     if x is None:
         return None,None
     if log == True:
@@ -3037,59 +3037,59 @@ Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multip
 
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = 1,zero = 'Formation',multiplicity = 'Fraction',filename = None):
     '''
-The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
+    The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
-Inputs
-----------
-file: list of sinkdata objects
-The original file before system assignment.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
 
-Master_File: list of list of star system objects
-All of the systems for the original file.
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
 
-Parameters
-----------
-T : list,optional
-The time that the stars are born at.
+    Parameters
+    ----------
+    T : list,optional
+    The time that the stars are born at.
 
-dt :list,optional
-The tolerance of the birth time.
+    dt :list,optional
+    The tolerance of the birth time.
 
-target_mass: int,float,optional
-The target mass of primary to look at
+    target_mass: int,float,optional
+    The target mass of primary to look at
 
-upper_limit: int,float,optional
-The upper limit of the target mass range
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
 
-lower_limit: int,float,optional
-The lower limit of the target mass range
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
 
-read_in_result: bool,optional
-Whether to perform system assignment or use the already assigned system.
+    read_in_result: bool,optional
+    Whether to perform system assignment or use the already assigned system.
 
-select_by_time: bool,optional:
-Whether to track all stars or only those in a time frame.
+    select_by_time: bool,optional:
+    Whether to track all stars or only those in a time frame.
 
-zero: string,optional
-Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
 
-plot: bool,optional
-Whether to return the times and multiplicities or plot them.
+    plot: bool,optional
+    Whether to return the times and multiplicities or plot them.
 
-steps: int,optional
-The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    steps: int,optional
+    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
 
-Returns
--------
-age_bins: array
-The age over which the stars are in.
+    Returns
+    -------
+    age_bins: array
+    The age over which the stars are in.
 
-multiplicity: array
-The average multiplicity fraction of the objects in the bins.
+    multiplicity: array
+    The average multiplicity fraction of the objects in the bins.
 
-Example
--------
-multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    Example
+    -------
+    multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
     time_list = []
     mul_list = []
@@ -3144,72 +3144,72 @@ multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
     '''
-Create the plots for one snapshot
-Inputs
-----------
-which_plot: string
-The plot to be made.
+    Create the plots for one snapshot
+    Inputs
+    ----------
+    which_plot: string
+    The plot to be made.
 
-systems: list of star system objects
-The systems you want to analyze (1 snapshot or a filtered snapshot).
+    systems: list of star system objects
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
 
-file:list of sinkdata objects
-The original sinkdata file.
+    file:list of sinkdata objects
+    The original sinkdata file.
 
-Parameters
-----------
-filename:string
-The name of the original file. It will be labelled on the plot if provided.
+    Parameters
+    ----------
+    filename:string
+    The name of the original file. It will be labelled on the plot if provided.
 
-snapshot: int,float
-The snapshot number you want to look at. Only required for IMF comparisons and filter on.
+    snapshot: int,float
+    The snapshot number you want to look at. Only required for IMF comparisons and filter on.
 
-target_mass: int,float,optional
-The mass of the primaries of the systems of interest.
+    target_mass: int,float,optional
+    The mass of the primaries of the systems of interest.
 
-upper_limit: int,float,optional
-The upper mass limit of the primaries of systems of interest.
+    upper_limit: int,float,optional
+    The upper mass limit of the primaries of systems of interest.
 
-lower_limit: int,float,optional
-The lower mass limit of the primaries of systems of interest.
+    lower_limit: int,float,optional
+    The lower mass limit of the primaries of systems of interest.
 
-all_companions: bool,optional
-Whether to include all companions in the mass ratio or semi major axes.
+    all_companions: bool,optional
+    Whether to include all companions in the mass ratio or semi major axes.
 
-bins: int,float,list,array,string,optional
-The bins for the histograms.
+    bins: int,float,list,array,string,optional
+    The bins for the histograms.
 
-log: bool,optional
-Whether to plot the y data on a log scale.
+    log: bool,optional
+    Whether to plot the y data on a log scale.
 
-plot: bool,optional
-Whether to plot the data or just return it.
+    plot: bool,optional
+    Whether to plot the data or just return it.
 
-read_in_result: bool,optional
-Whether to perform system assignment again or just read it in.
+    read_in_result: bool,optional
+    Whether to perform system assignment again or just read it in.
 
-filtered: bool,optional
-Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
+    filtered: bool,optional
+    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
 
-filter_snaps_no: int,float,optional
-The number of snaps to average over in the filter
+    filter_snaps_no: int,float,optional
+    The number of snaps to average over in the filter
 
-min_q:int,float,optional
-The mass ratio to remove companions under with the filter.
+    min_q:int,float,optional
+    The mass ratio to remove companions under with the filter.
 
-Returns
--------
-x_vals: list
-The bins.
+    Returns
+    -------
+    x_vals: list
+    The bins.
 
-weights:list
-The weights of each bin
+    weights:list
+    The weights of each bin
 
-NOTE: See Plots documentation for a better description.
+    NOTE: See Plots documentation for a better description.
 
-Example
--------
-One_Snap_Plots('Mass Ratio',M2e4_C_M_J_2e7_systems[-1],M2e4_C_M_J_2e7)
+    Example
+    -------
+    One_Snap_Plots('Mass Ratio',M2e4_C_M_J_2e7_systems[-1],M2e4_C_M_J_2e7)
     '''
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
@@ -3404,79 +3404,79 @@ One_Snap_Plots('Mass Ratio',M2e4_C_M_J_2e7_systems[-1],M2e4_C_M_J_2e7)
 
 def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
     '''
-Create a plot for the multiplicity over a mass range for a single snapshot.
+    Create a plot for the multiplicity over a mass range for a single snapshot.
 
-Inputs
-----------
+    Inputs
+    ----------
 
-systems: list of star system objects
-The systems you want to analyze (1 snapshot or a filtered snapshot).
+    systems: list of star system objects
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
 
-Parameters
-----------
-Master_File: list of lists of star system objects
-The entire simulation with system assignment. Only required for filter on.
+    Parameters
+    ----------
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment. Only required for filter on.
 
-snapshot: int,float
-The snapshot to look at. It is required with the filter on.
+    snapshot: int,float
+    The snapshot to look at. It is required with the filter on.
 
-filename: string,optional
-The name of the file to look at. It will be put on the plot if provided.
+    filename: string,optional
+    The name of the file to look at. It will be put on the plot if provided.
 
-plot: bool,optional
-Whether to plot or just return the values
+    plot: bool,optional
+    Whether to plot or just return the values
 
-multiplicity: bool,optional
-Whether to plot for the multiplicity properties, multiplicity fraction or multiplicity frequency.
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties, multiplicity fraction or multiplicity frequency.
 
-mass_break:
-The spacing between masses in log space. This is used for the continous bins.
+    mass_break:
+    The spacing between masses in log space. This is used for the continous bins.
 
-bins: int,float,list,array,string,optional
-The bins for the histograms. Use continous or observer.
+    bins: int,float,list,array,string,optional
+    The bins for the histograms. Use continous or observer.
 
-filtered: bool,optional
-Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
+    filtered: bool,optional
+    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
 
-filter_snaps_no: int,float,optional
-The number of snaps to average over in the filter
+    filter_snaps_no: int,float,optional
+    The number of snaps to average over in the filter
 
-min_q:int,float,optional
-The mass ratio to remove companions under with the filter.
+    min_q:int,float,optional
+    The mass ratio to remove companions under with the filter.
 
-Returns
--------
-x_vals: list
-The bins.
+    Returns
+    -------
+    x_vals: list
+    The bins.
 
-weights:list
-The weights of each bins
+    weights:list
+    The weights of each bins
 
-NOTE: Refer to Plots documentation for a better explanation
+    NOTE: Refer to Plots documentation for a better explanation
 
-Returns
--------
-logmasslist: The masses in log space.
+    Returns
+    -------
+    logmasslist: The masses in log space.
 
-o1: The first output. It is the multiplicity fraction, multiplicity frequency or the primary star fraction (depending on the attribute).
+    o1: The first output. It is the multiplicity fraction, multiplicity frequency or the primary star fraction (depending on the attribute).
 
-o2: The second output. It is the number of multistar systems, number of companions or the single star fraction (depending on the attribute).
+    o2: The second output. It is the number of multistar systems, number of companions or the single star fraction (depending on the attribute).
 
-o3: The third output. It is the number of all systems or the companion star fraction (depending on the attribute).
+    o3: The third output. It is the number of all systems or the companion star fraction (depending on the attribute).
 
-NOTE: If filter is on, the filtered output will be returned.
+    NOTE: If filter is on, the filtered output will be returned.
 
-Examples
--------
-1) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Fraction',bins = 'observer')
-Simple multiplicity fraction plot.
+    Examples
+    -------
+    1) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Fraction',bins = 'observer')
+    Simple multiplicity fraction plot.
 
-2) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Frequency',bins = 'observer',filtered = True,snapshot = -1,Master_File = M2e4_C_M_J_2e7_systems)
-Multiplicity Frequency Plot with filter on. 
+    2) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Frequency',bins = 'observer',filtered = True,snapshot = -1,Master_File = M2e4_C_M_J_2e7_systems)
+    Multiplicity Frequency Plot with filter on. 
 
-3) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Properties',bins = 'observer',plot = False)
-Multiplicity properties values being returned.
-'''
+    3) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Properties',bins = 'observer',plot = False)
+    Multiplicity properties values being returned.
+    '''
     if bins is not 'observer' and bins is not 'continous':
         print('Please use the string "observer" or "continous" as the bins')
     if multiplicity == 'Frequency':
@@ -3636,85 +3636,85 @@ Multiplicity properties values being returned.
 
 def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = [1],dt = [0.5],target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True):
     '''
-Create a plot for a property that evolves through the simulation.
+    Create a plot for a property that evolves through the simulation.
 
-Inputs
-----------
-which_plot: string
-The plot to be made.
+    Inputs
+    ----------
+    which_plot: string
+    The plot to be made.
 
-Master_File: list of lists of star system objects
-The entire simulation with system assignment. Only required for time evolution plots and filter on.
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment. Only required for time evolution plots and filter on.
 
-file:list of sinkdata objects
-The original sinkdata file.
+    file:list of sinkdata objects
+    The original sinkdata file.
 
-Parameters
-----------
-steps: int,optional
-The number of snapshots per bin in multiplicity over time.
+    Parameters
+    ----------
+    steps: int,optional
+    The number of snapshots per bin in multiplicity over time.
 
-target_mass: int,float,optional
-The mass of the primaries of the systems of interest.
+    target_mass: int,float,optional
+    The mass of the primaries of the systems of interest.
 
-T: int,float,optional
-The time from end of the simulation to select from
+    T: int,float,optional
+    The time from end of the simulation to select from
 
-dt: int,float,optional
-The tolerance of T. For example, if the total runtime is 10 Myr, T = 2 and dt = 0.2, then it looks at stars formed between 7.9-8.1 Myrs.
+    dt: int,float,optional
+    The tolerance of T. For example, if the total runtime is 10 Myr, T = 2 and dt = 0.2, then it looks at stars formed between 7.9-8.1 Myrs.
 
-target_age:int,float,optional
-The maximum age for the YSO multiplicities.
+    target_age:int,float,optional
+    The maximum age for the YSO multiplicities.
 
-filename:string
-The name of the original file. It will be labelled on the plot if provided.
+    filename:string
+    The name of the original file. It will be labelled on the plot if provided.
 
-min_age:int,float,optional
-The minimum age for the YSO multiplicity
+    min_age:int,float,optional
+    The minimum age for the YSO multiplicity
 
-read_in_result: bool,optional
-Whether to perform system assignment again or just read it in.
+    read_in_result: bool,optional
+    Whether to perform system assignment again or just read it in.
 
-start: int,optional
-Starting point of multiplicity time evolution
+    start: int,optional
+    Starting point of multiplicity time evolution
 
-upper_limit: int,float,optional
-The upper mass limit of the primaries of systems of interest.
+    upper_limit: int,float,optional
+    The upper mass limit of the primaries of systems of interest.
 
-lower_limit: int,float,optional
-The lower mass limit of the primaries of systems of interest.
+    lower_limit: int,float,optional
+    The lower mass limit of the primaries of systems of interest.
 
-plot: bool,optional
-Whether to plot the data or just return it.
+    plot: bool,optional
+    Whether to plot the data or just return it.
 
-multiplicity: bool,optional
-Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
 
-zero: string,optional
-Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
+    zero: string,optional
+    Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
 
-select_by_time: bool,optional
-Whether to look at average multiplicity for all stars or only those in a window.
+    select_by_time: bool,optional
+    Whether to look at average multiplicity for all stars or only those in a window.
 
-Returns
--------
-x_vals: list
-The bins.
+    Returns
+    -------
+    x_vals: list
+    The bins.
 
-weights:list
-The weights of each bin
+    weights:list
+    The weights of each bin
 
-Examples
--------
-1) Time_Evolution_Plots("Multiplicity Time Evolution",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,multiplicity = 'Fraction',target_mass = 1')
-The multiplicity at every time for the given target mass.
+    Examples
+    -------
+    1) Time_Evolution_Plots("Multiplicity Time Evolution",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,multiplicity = 'Fraction',target_mass = 1')
+    The multiplicity at every time for the given target mass.
 
-2)Time_Evolution_Plots("Multiplicity Lifetime Evolution",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,multiplicity = 'Fraction',target_mass = 1,T = [1,2,3],dt = [0.5,0.5,0.5]')
-The multiplicity of stars of the target mass born at the given times.
+    2)Time_Evolution_Plots("Multiplicity Lifetime Evolution",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,multiplicity = 'Fraction',target_mass = 1,T = [1,2,3],dt = [0.5,0.5,0.5]')
+    The multiplicity of stars of the target mass born at the given times.
 
-3)Time_Evolution_Plots("YSO Multiplicity",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,min_age = 0,target_age = 1)
-The multiplicity of stars of younger than the target age and older than the minimum age.
-'''
+    3)Time_Evolution_Plots("YSO Multiplicity",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,min_age = 0,target_age = 1)
+    The multiplicity of stars of younger than the target age and older than the minimum age.
+    '''
     if which_plot == 'Multiplicity Time Evolution':
         if Master_File is None:
             print('provide master file')
@@ -3795,109 +3795,107 @@ The multiplicity of stars of younger than the target age and older than the mini
         plt.ylabel('Average Mass of Young Stars')
 #Function that contains all the plots
 
-#Can split it up into smaller ones and then put those into a mega function as Plots() so it can be called as one but has subparts
-
 def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1): 
     '''
-Create a plot or gives you the values to create a plot for the whole system.
+    Create a plot or gives you the values to create a plot for the whole system.
 
-Inputs
-----------
-which_plot: string
-The plot to be made.
+    Inputs
+    ----------
+    which_plot: string
+    The plot to be made.
 
-systems: list of star system objects
-The systems you want to analyze (1 snapshot or a filtered snapshot).
+    systems: list of star system objects
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
 
-file:list of sinkdata objects
-The original sinkdata file.
+    file:list of sinkdata objects
+    The original sinkdata file.
 
-filename:string
-The name of the original file. It will be labelled on the plot if provided.
+    filename:string
+    The name of the original file. It will be labelled on the plot if provided.
 
-Master_File: list of lists of star system objects
-The entire simulation with system assignment. Only required for time evolution plots and filter on.
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment. Only required for time evolution plots and filter on.
 
-snapshot: int,float
-The snapshot number you want to look at. Only required for IMF comparisons and filter on.
+    snapshot: int,float
+    The snapshot number you want to look at. Only required for IMF comparisons and filter on.
 
-Parameters
-----------
+    Parameters
+    ----------
 
-target_mass: int,float,optional
-The mass of the primaries of the systems of interest.
+    target_mass: int,float,optional
+    The mass of the primaries of the systems of interest.
 
-target_age:int,float,optional
-The maximum age for the YSO multiplicities.
+    target_age:int,float,optional
+    The maximum age for the YSO multiplicities.
 
-upper_limit: int,float,optional
-The upper mass limit of the primaries of systems of interest.
+    upper_limit: int,float,optional
+    The upper mass limit of the primaries of systems of interest.
 
-lower_limit: int,float,optional
-The lower mass limit of the primaries of systems of interest.
+    lower_limit: int,float,optional
+    The lower mass limit of the primaries of systems of interest.
 
-mass_break: int,float,optional
-The spacing between masses in log space (important for multiplicity fraction)
+    mass_break: int,float,optional
+    The spacing between masses in log space (important for multiplicity fraction)
 
-T: list,optional
-The times from end of the simulation to select from. 
+    T: list,optional
+    The times from end of the simulation to select from. 
 
-dt: list,optional
-The tolerance of T. 
+    dt: list,optional
+    The tolerance of T. 
 
-min_age:int,float,optional
-The minimum age for the YSO multiplicity
+    min_age:int,float,optional
+    The minimum age for the YSO multiplicity
 
-all_companions: bool,optional
-Whether to include all companions in the mass ratio or semi major axes.
+    all_companions: bool,optional
+    Whether to include all companions in the mass ratio or semi major axes.
 
-bins: int,float,list,array,string,optional
-The bins for the histograms.
+    bins: int,float,list,array,string,optional
+    The bins for the histograms.
 
-log: bool,optional
-Whether to plot the y data on a log scale.
+    log: bool,optional
+    Whether to plot the y data on a log scale.
 
-compare: bool,optional
-Whether to include the IMF for comparison.
+    compare: bool,optional
+    Whether to include the IMF for comparison.
 
-plot: bool,optional
-Whether to plot the data or just return it.
+    plot: bool,optional
+    Whether to plot the data or just return it.
 
-multiplicity: bool,optional
-Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
 
-steps: int,optional
-The number of snapshots per bin in multiplicity over time.
+    steps: int,optional
+    The number of snapshots per bin in multiplicity over time.
 
-read_in_result: bool,optional
-Whether to perform system assignment again or just read it in.
+    read_in_result: bool,optional
+    Whether to perform system assignment again or just read it in.
 
-start: int,optional
-Starting point of multiplicity time evolution
+    start: int,optional
+    Starting point of multiplicity time evolution
 
-zero: string,optional
-Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
+    zero: string,optional
+    Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
 
-select_by_time: bool,optional
-Whether to look at average multiplicity for all stars or only those in a window.
+    select_by_time: bool,optional
+    Whether to look at average multiplicity for all stars or only those in a window.
 
-filtered: bool,optional
-Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
+    filtered: bool,optional
+    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
 
-filter_snaps_no: int,float,optional
-The number of snaps to average over in the filter
+    filter_snaps_no: int,float,optional
+    The number of snaps to average over in the filter
 
-min_q:int,float,optional
-The mass ratio to remove companions under with the filter.
+    min_q:int,float,optional
+    The mass ratio to remove companions under with the filter.
 
-Returns
--------
-x_vals: list
-The bins.
+    Returns
+    -------
+    x_vals: list
+    The bins.
 
-weights:list
-The weights of each bin
-'''
+    weights:list
+    The weights of each bin
+    '''
     One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Mass Ratio','Semi Major Axis vs q']
     Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','YSO Multiplicity']
     if which_plot in One_System_Plots:
@@ -3918,62 +3916,62 @@ The weights of each bin
 
 def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass'):
     '''
-Creates distribution plots for more than one file
-Inputs
-----------
-which_plot: string
-The plot to be made.
+    Creates distribution plots for more than one file
+    Inputs
+    ----------
+    which_plot: string
+    The plot to be made.
 
-Systems: list of list of star system objects
-All of the Systems from all of the files you want to see.
+    Systems: list of list of star system objects
+    All of the Systems from all of the files you want to see.
 
-Files:list of list of sinkdata objects
-The list of all the files you want to see.
+    Files:list of list of sinkdata objects
+    The list of all the files you want to see.
 
-Filenames: list of strings
-The names of the files that you want to see.
+    Filenames: list of strings
+    The names of the files that you want to see.
 
-Snapshots: int,float
-The snapshot number you want to look at. By default, it looks at the last one.
+    Snapshots: int,float
+    The snapshot number you want to look at. By default, it looks at the last one.
 
-Parameters
-----------
+    Parameters
+    ----------
 
-log: bool,optional
-Whether to plot the y data on a log scale.
+    log: bool,optional
+    Whether to plot the y data on a log scale.
 
-upper_limit: int,float,optional
-The upper mass limit of the primaries of systems of interest.
+    upper_limit: int,float,optional
+    The upper mass limit of the primaries of systems of interest.
 
-lower_limit: int,float,optional
-The lower mass limit of the primaries of systems of interest.
+    lower_limit: int,float,optional
+    The lower mass limit of the primaries of systems of interest.
 
-target_mass: int,float,optional
-The mass of the primaries of the systems of interest.
+    target_mass: int,float,optional
+    The mass of the primaries of the systems of interest.
 
-multiplicity: bool,optional
-Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or multiplicity frequency.
 
-all_companions: bool,optional
-Whether to include all companions in the mass ratio or semi major axes.
+    all_companions: bool,optional
+    Whether to include all companions in the mass ratio or semi major axes.
 
-filtered: bool,optional:
-Whether to include the filtered results or the unfiltered results
+    filtered: bool,optional:
+    Whether to include the filtered results or the unfiltered results
 
-normalized:bool,optional:
-Whether to normalize the systems to a certain number
+    normalized:bool,optional:
+    Whether to normalize the systems to a certain number
 
-norm_no: int,optional:
-The number of systems to normalize to.
+    norm_no: int,optional:
+    The number of systems to normalize to.
 
-time_plot:str,optional: = 'consistent mass'
-Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
-Examples
-----------
-1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
+    time_plot:str,optional: = 'consistent mass'
+    Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
+    Examples
+    ----------
+    1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
 
 
-'''  
+    '''  
     if Snapshots == None:
         Snapshots = [[-1]]*len(Filenames)
     Snapshots = list(flatten(Snapshots))
