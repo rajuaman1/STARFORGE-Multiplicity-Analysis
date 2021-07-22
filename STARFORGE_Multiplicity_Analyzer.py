@@ -14,6 +14,8 @@ import random
 import matplotlib.patches as mpatches
 import copy
 import itertools
+from scipy import stats, optimize
+from sys import exit
 
 #Convert the simulation time to Myrs
 time_to_Myr = 978.461942384
@@ -23,6 +25,15 @@ m_to_AU = 149597870700.0
 
 #Convert pc to AU
 pc_to_AU = 206264.806
+
+#Convert pc to m
+pc_to_m = 3.08567758e16
+
+#G in SI Units
+G = 6.67e-11
+
+#Solar Mass to kg
+sm_to_kg = 1.9891e30
 
 #List of the Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
@@ -227,7 +238,7 @@ def load_files(filenames,brown_dwarfs = False):
 def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     'Calculate the Binding Energy (in J) from given masses,positions and velocities. If using a box file, provide the lengths to modify it.'
     mu = (m1*m2)/(m1+m2)
-    KE = 1.9891e30 * 0.5 * ((v1[0]-v2[0])**2+(v1[1]-v2[1])**2 +(v1[2]-v2[2])**2) * mu
+    KE = sm_to_kg * 0.5 * ((v1[0]-v2[0])**2+(v1[1]-v2[1])**2 +(v1[2]-v2[2])**2) * mu
     dx = x1[0]-x2[0];dy = x1[1]-x2[1];dz = x1[2]-x2[2]
     #If the edge is periodic, we replace the long distance with the short distance in 1D.
     if periodic_edge is True:
@@ -237,7 +248,7 @@ def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,L
             dy = Ly - dy
         if dz > Lz/2:
             dz = Lz - dz
-    PE = ((1.9891e30)**2 *6.67e-11*(m1+m2)*mu)/((3.08567758e16)*np.sqrt(dx**2+dy**2+dz**2))
+    PE = (sm_to_kg**2*G*(m1+m2)*mu)/(pc_to_m*np.sqrt(dx**2+dy**2+dz**2))
     E = KE - PE
     return E
 
@@ -770,9 +781,9 @@ class star_system:
             vel_sec = self.v[sec_ind]
             x_sec = self.x[sec_ind]
             binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-            mu = 1.9891e30*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+            mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
             eps = binding_energy/mu
-            mu2 = 1.9891e30*6.67e-11*(primary_mass+secondary_mass)
+            mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
             self.smaxis = - (mu2/(2*eps))
         else:
             self.smaxis = 0
@@ -1181,6 +1192,7 @@ def file_properties(filename,param = 'm'):
         return alpha
     elif param == 'res':
         return npar
+
 def t_ff(mass,R):
     '''Calculate the freefall time'''
     G_code=4325.69
@@ -1237,7 +1249,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         new = len(i.m[(lower_limit<=i.m) & (upper_limit>=i.m)])
         no_new_stars.append(new-previous)
         previous = new
-        times.append(i.t*978.461942384)
+        times.append(i.t*time_to_Myr)
         no_of_stars.append(new)
     if all_stars == False:
         if plot == True and time == True:
@@ -1262,6 +1274,44 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
+def star_formation_rate(file,plot = True,time = True,filename = None,time_norm = True):
+    '''Average star formation rate[dM/dt] (at every snapshot in Myr) of all stars'''
+    time_step = (file[-1].t - file[-2].t)*time_to_Myr
+    SFR = []
+    times = []
+    for i in range(1,len(file)):
+        current_time = file[i].t*time_to_Myr
+        current_mass = sum(file[i].m)
+        previous_time = file[i-1].t*time_to_Myr
+        previous_mass = sum(file[i-1].m)
+        dm = current_mass - previous_mass
+        dt = current_time - previous_time
+        SFR.append(dm/dt)
+        if time_norm == True:
+            ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
+            time = (file[i].t/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
+            times.append(time)
+        else:
+            times.append(current_time)
+    if plot ==True:
+        plt.figure(figsize = (10,10))
+        plt.plot(times,SFR)
+        if time_norm is False:
+            plt.xlabel('Time [Myrs]')
+        else:
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+        plt.ylabel(r'Star Formation Rate [$\frac{M_\odot}{Myr}$]')
+        if filename is not None:
+            if filename is not 'M2e4_C_M_J_RT_W_R30_2e7':
+                plt.text(times[-1]*0.5,max(SFR)*0.9,filename)
+            else:
+                plt.text(1.4,max(SFR)*0.9,filename)
+            
+        plt.yscale('log')
+        adjust_font(ax_fontsize=14,labelfontsize=14)
+    else:
+        return SFR
+
 def average_star_age(file,plot = True,time = True):
     '''Average age (at every snapshot in Myr) of all stars'''
     average_ages = []
@@ -1278,6 +1328,211 @@ def average_star_age(file,plot = True,time = True):
         plt.plot(times,average_ages)
     else:
         return average_ages
+
+def slope_to_mean_lim(slope,limits,num=50):
+    'Converts slope to mean'
+    x=np.linspace(limits[0],limits[1],num=num)
+    return np.trapz(x**(slope+1),x=x)/np.trapz(x**(slope),x=x)
+    
+def diff_mean_lim(slope,target,limits):
+    'Slope to mean mass - Target'
+    return slope_to_mean_lim(slope,limits)-target
+
+def mean_lim_to_slope(mass,limits):
+    'Converts a mean mass into the IMF slope'
+    slope_est = optimize.root(diff_mean_lim, -2.3, args=(mass,limits))['x'][0] 
+    return np.clip(slope_est,-6,0)
+
+def primary_stars_slope(file,systems,snapshot,lower_limit = 1,upper_limit = 10,slope = True,no_of_stars = False):
+    '''
+    Finds the slope (or mean mass) of stars with mass within the lower and upper limit for a single snapshot.
+    
+    Inputs
+    ----------
+    file : list of sinkdatas.
+    The input data that isn't grouped into systems.
+    
+    systems: list of star systems
+    The input data that is grouped into systems.
+    
+    snapshot: int
+    The snapshot to look at
+
+    Parameters
+    ----------
+    lower_limit: int,float,optional
+    The lower limit of the mass range
+
+    upper_limit: int,float,optional
+    The upper limit of the mass range
+    
+    slope: bool,optional
+    Whether to return the slope or the mean mass
+    
+    no_of_stars:bool,optional
+    Whether to return the no of stars (that are primaries and the total number also)
+
+    Returns
+    -------
+    slope_all: int
+    The slope of all stars within the mass range.
+    
+    slope_prim:int
+    The slope of all primary stars within the mass range
+    
+    no_all:int
+    The number of stars withing the mass range.
+    
+    no_prim:int
+    The number of primaries within the mass range.
+
+    Example
+    -------
+    1) primary_stars_slope(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,-1,upper_limit = 10,lower_limit = 1)
+    Returns the slopes of all the stars and the primaries in the mass range of [1,10].
+
+    2) primary_stars_slope(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,-1,upper_limit = 10,lower_limit = 1,slope = False,no_of_stars = True)
+    Returns the average mass of all the stars and the primaries in the mass range of [1,10], as well as their counts.
+    
+    '''
+    total_mass_all = 0
+    no_all = 0
+    for i in file[snapshot].m:
+        if lower_limit<=i<=upper_limit:
+            total_mass_all += i
+            no_all+=1
+    if no_all>0:
+        avg_all = total_mass_all/no_all
+    else:
+        avg_all = np.nan
+    total_mass_prim = 0
+    no_prim = 0
+    for i in systems[snapshot]:
+        if lower_limit<=i.primary<=upper_limit:
+            total_mass_prim += i.primary
+            no_prim+=1
+    if no_prim>0:
+        avg_prim = total_mass_prim/no_prim
+    else:
+        avg_prim = np.nan
+    if slope is True:
+        if avg_all is np.nan and avg_prim is np.nan:
+            if no_of_stars is False:
+                return np.nan,np.nan
+            else:
+                return np.nan,np.nan,np.nan,np.nan
+        elif avg_all is np.nan:
+            if no_of_stars is False:
+                return np.nan,avg_prim
+            else:
+                return np.nan,avg_prim,np.nan,no_prim
+        elif avg_prim is np.nan:
+            if no_of_stars is False:
+                return avg_all,np.nan
+            else:
+                return avg_all,np.nan,no_all,np.nan
+        slope_all = mean_lim_to_slope(avg_all,[lower_limit,upper_limit])
+        slope_prim = mean_lim_to_slope(avg_prim,[lower_limit,upper_limit])
+        if no_of_stars is True:
+            return slope_all,slope_prim,no_all,no_prim
+        else:
+            return slope_all,slope_prim
+
+def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of_stars = False,min_no = 1,plot = True):
+    '''
+    Tracks the slope of stars with mass within the lower and upper limit throughout the simulation runtime.
+    
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that isn't grouped into systems.
+    
+    systems: list of star systems
+    The input data that is grouped into systems.
+    
+    filename: string
+    The name of the file.
+
+    Parameters
+    ----------
+    lower_limit: int,float,optional
+    The lower limit of the mass range
+
+    upper_limit: int,float,optional
+    The upper limit of the mass range
+    
+    no_of_stars:bool,optional
+    Whether to return the no of stars (that are primaries and the total number also) plot also
+    
+    min_no: int,optional
+    The minimum number of stars at the start of the plot time.
+    
+    plot: bool,optional
+    Whether to plot the quantities or return the slopes lists.
+
+    Returns
+    -------
+    slope_all: int
+    The slope of all stars within the mass range.
+    
+    slope_prim:int
+    The slope of all primary stars within the mass range
+    
+    no_all:int
+    The number of stars withing the mass range.
+    
+    no_prim:int
+    The number of primaries within the mass range.
+
+    Example
+    -------
+    1) primary_stars_slope(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,-1,upper_limit = 10,lower_limit = 1)
+    Returns the slopes of all the stars and the primaries in the mass range of [1,10].
+
+    2) primary_stars_slope(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,-1,upper_limit = 10,lower_limit = 1,slope = False,no_of_stars = True)
+    Returns the average mass of all the stars and the primaries in the mass range of [1,10], as well as their counts.
+    
+    '''
+    all_stars_slopes = []
+    primary_stars_slopes = []
+    times = []
+    nos_prim = []
+    nos_all = []
+    for i in range(len(file)):
+        slope_all,slope_prim,no_all,no_prim = primary_stars_slope(file,systems,i,lower_limit=lower_limit,upper_limit=upper_limit,slope = True,no_of_stars=True)
+        nos_prim.append(no_prim)
+        nos_all.append(no_all)
+        all_stars_slopes.append(slope_all)
+        primary_stars_slopes.append(slope_prim)
+        ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
+        time = (file[i].t/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
+        times.append(time)
+    all_stars_slopes = np.array(all_stars_slopes);primary_stars_slopes = np.array(primary_stars_slopes)
+    nos_prim = np.array(nos_prim);nos_all = np.array(nos_all)
+    times = np.array(times)
+    if plot is True:
+        plt.figure(figsize = (10,10))
+        plt.plot(times[nos_all>min_no],all_stars_slopes[nos_all>min_no],label = 'Slope All')
+        plt.plot(times[nos_all>min_no],primary_stars_slopes[nos_all>min_no],label = 'Slope Primary',linestyle = '--')
+        plt.plot(times[nos_all>min_no],[-2.3]*len(times[nos_all>min_no]),label = '-2.3',linestyle = ':')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+        plt.ylabel('Slope')
+        plt.text((times[-1]+times[nos_all>min_no][0])/2,primary_stars_slopes[-1],filename)
+        plt.legend(fontsize = 14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        plt.show()
+        if no_of_stars is True:
+            plt.figure(figsize = (10,10))
+            plt.plot(times[nos_all>min_no],nos_all[nos_all>min_no],label = 'Number All')
+            plt.plot(times[nos_all>min_no],nos_prim[nos_all>min_no],label = 'Number Primary',linestyle = '--')
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.ylabel('Number of Stars')
+            plt.legend(fontsize = 14)
+            plt.text((times[-1]+times[nos_all>min_no][0])/2,nos_all[-1],filename)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            plt.show()
+    else:
+        return all_stars_slopes,primary_stars_slopes
 
 #Calculating the semi major axis for every possible configuration of these systems
 def smaxis(system):
@@ -1422,9 +1677,9 @@ def smaxis(system):
     vel_prim = list(flatten(vel_prim))
     vel_sec= list(flatten(vel_sec))
     binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = 1.9891e30*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
     eps = binding_energy/mu
-    mu2 = 1.9891e30*6.67e-11*(primary_mass+secondary_mass)
+    mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
     smaxis = - (mu2/(2*eps))
     if isinstance(smaxis,np.ndarray):
         smaxis = smaxis[0]
@@ -1437,9 +1692,9 @@ def semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec):
     vel_prim = list(flatten(vel_prim))
     vel_sec= list(flatten(vel_sec))
     binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = 1.9891e30*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
     eps = binding_energy/mu
-    mu2 = 1.9891e30*6.67e-11*(primary_mass+secondary_mass)
+    mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
     semiax = - (mu2/(2*eps))
     if isinstance(semiax,np.ndarray):
         semiax = semiax[0]
@@ -2047,7 +2302,7 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
     time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
     if plot == True:
-        plt.xlabel(r'Time $[\frac{t}{t_{ff}}]$')
+        plt.xlabel(r'Time $[\frac{t}{\sqrt{\alpha}t_{ff}}]$')
         plt.ylabel('Multiplicity Fraction')
         plt.ylim([-0.1,1.1])
         plt.plot(time,fraction,label = 'Multiplicity Fraction for '+str(target_mass)+' Solar Mass Stars at any time')
@@ -2164,7 +2419,7 @@ def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
     time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
     if plot == True:
-        plt.xlabel(r'Time $[\frac{t}{t_{ff}}]$')
+        plt.xlabel(r'Time $[\frac{t}{\sqrt{\alpha}t_{ff}}]$')
         plt.ylabel('Multiplicity Frequency')
         plt.ylim([-0.1,3.1])
         plt.plot(time,fraction,label = 'Multiplicity Frequency for '+str(target_mass)+' Solar Mass Stars at any time')
@@ -2352,19 +2607,13 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     for i in last_snap:
         if lower_limit<=i.primary<=upper_limit and i.no>1:
             consistent_solar_mass.append(i.primary_id)  
-            if 'ProtoStellarAge' in file[-1].extra_data_labels:
-                birth_time = (file[-1].t - file[-1].val('ProtoStellarAge')[file[-1].id == i.primary_id])*time_to_Myr
-            else:
-                first_snap = first_snap_finder(i.primary_id,file)
-                birth_time = file[first_snap].t*time_to_Myr
+            first_snap = first_snap_finder(i.primary_id,file)
+            birth_time = file[first_snap].t*time_to_Myr
             birth_times.append(birth_time)
         elif i.no==1 and lower_limit<=i.m[0]<=upper_limit:
             consistent_solar_mass.append(i.ids)
-            if 'ProtoStellarAge' in file[-1].extra_data_labels:
-                birth_time = (file[-1].t - file[-1].val('ProtoStellarAge')[file[-1].id == i.primary_id])*time_to_Myr
-            else:
-                first_snap = first_snap_finder(i.primary_id,file)
-                birth_time = file[first_snap].t*time_to_Myr
+            first_snap = first_snap_finder(i.primary_id,file)
+            birth_time = file[first_snap].t*time_to_Myr
             birth_times.append(birth_time)
     if select_by_time == True:
         Tend = file[-1].t*time_to_Myr
@@ -2373,11 +2622,8 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         og = len(consistent_solar_mass)
         copy = consistent_solar_mass.copy()
         for i in tqdm(copy,desc = 'Selecting By Maturity Time',position=0):
-            if 'ProtoStellarAge' in file[-1].extra_data_labels:
-                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == i]
-            else:
-                first_snap = first_snap_finder(i,file)
-                birth_time = file[first_snap].t
+            first_snap = first_snap_finder(i,file)
+            birth_time = file[first_snap].t
             if birth_time*time_to_Myr>(Tend-T)+dt/2 or birth_time*time_to_Myr<(Tend-T)-dt/2:
                 consistent_solar_mass.remove(i)
                 kicked += 1
@@ -2386,6 +2632,9 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         print('Kept = '+str(kept))
         print('Removed = '+str(kicked))
         print('Original Total = '+str(og))
+        if kept == 0:
+            print('No Stars in Given Range, please try a different range instead')
+            exit()
     all_times = []
     all_status = []
     first_snaps = []
@@ -3040,7 +3289,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = 1,zero = 'Formation',multiplicity = 'Fraction',filename = None):
+def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3096,26 +3345,36 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     -------
     multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
+    if target_mass is None:
+        target_mass = (upper_limit+lower_limit)/2
     time_list = []
     mul_list = []
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
-            time,mul,birth_times = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=1.3,lower_limit = 0.7,target_mass = 1,plot = False)
+            time,mul,birth_times = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         elif multiplicity == 'Frequency':
-            time,mul,birth_times = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=1.3,lower_limit = 0.7,target_mass = 1,plot = False)
+            time,mul,birth_times = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=lower_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
         mul_list.append(mul)
     times = []
     for i in file:
         times.append(i.t*time_to_Myr)
     birth_times = np.array(birth_times)
-    times,new_stars_co = hist(birth_times,bins = times)
+    if min(dt_list)<min_time_bin:
+        min_time_bin = min(dt_list)
+    if min_time_bin < (file[-1].t-file[-2].t)*time_to_Myr:
+        min_time_bin = len(times)
+    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
     times = np.array(times)
-    plt.plot((times[1:]+times[:-1])/2,new_stars_co)
+    new_stars_co = np.insert(new_stars_co,0,0)
+    plt.step(times,new_stars_co)
     for i in range(len(T_list)):
         plt.fill_between([(times[-1]-T_list[i])-dt_list[i]/2,(times[-1]-T_list[i])+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i]))
     plt.legend()
-    plt.xlabel('Age [Myr]')
+    if filename is not None:
+        plt.text(max(times)/2,max(new_stars_co),filename)
+    plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
+    plt.xlabel('Time [Myr]')
     plt.ylabel('Number of New Stars')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     plt.figure(figsize = (10,10))
@@ -3131,9 +3390,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
             plt.errorbar(max(list(flatten(time_list))),0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         elif multiplicity == 'Frequency':
             plt.errorbar(max(list(flatten(time_list))),1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        
     plt.legend()
-
     plt.xlabel('Age [Myr]')
     plt.ylabel('Multiplicity Fraction')
     if multiplicity == 'Fraction':
@@ -3141,7 +3398,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     elif multiplicity == 'Frequency':
         plt.ylim([-0.05,3.05])
         plt.ylabel('Multiplicity Frequency')
-    plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = $1 M_\odot$')
+    plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
     if filename is not None:
         plt.text(max(list(flatten(time_list)))/2,0.5,filename)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -3743,7 +4000,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if plot is False:
             print('Use Plot == True')
             return
-        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity)
+        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,filename = filename)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
@@ -3777,7 +4034,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
         plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
         
-        plt.xlabel(r'Time [$\frac{t}{t_ff}$]')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('YSO Multiplicity Fraction')
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
         plt.xlim((left_limit,right_limit))
@@ -3788,7 +4045,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.legend()
         
         plt.yscale('log')
-        plt.xlabel(r'Time [$\frac{t}{t_ff}$]')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Number of Young Stars')
         #plt.legend()
         plt.figure()
@@ -3796,7 +4053,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         #[start_snap:end_snap]
         plt.yscale('log')
         #plt.plot(times,av2,label = 'Consistent Mass')
-        plt.xlabel(r'Time [$\frac{t}{t_ff}$]')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Average Mass of Young Stars')
 #Function that contains all the plots
 
@@ -4150,7 +4407,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             for i in range(len(Files)):
                 plt.plot(times[i],avg_mass[i],label = Filenames[i])
             plt.ylabel('Average Mass of YSOs')
-            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
         plt.legend()
         plt.legend()
