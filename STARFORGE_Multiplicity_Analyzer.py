@@ -173,7 +173,7 @@ def Lsigma(n,k):
 
 def load_files(filenames,brown_dwarfs = False):
     '''
-Initialize data from provided filenames.
+Initialize data from the provided filenames.
 
 Inputs
 ----------
