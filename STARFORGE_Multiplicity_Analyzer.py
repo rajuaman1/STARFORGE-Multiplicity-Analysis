@@ -64,14 +64,14 @@ M2e4_C_M_J_2e7 = Remove_Brown_Dwarfs(M2e4_C_M_J_2e7,minmass = 0.08)
         lowest = i
     #Change the data to remove the points corresponding to Brown Dwarfs
     for i in range(lowest,len(data)):
-        data[i].x = data[i].x[data[i].m>0.08]
-        data[i].v = data[i].v[data[i].m>0.08]
-        data[i].id = data[i].id[data[i].m>0.08]
-        data[i].formation_time = data[i].formation_time[data[i].m>0.08]
+        data[i].x = data[i].x[data[i].m>minmass]
+        data[i].v = data[i].v[data[i].m>minmass]
+        data[i].id = data[i].id[data[i].m>minmass]
+        data[i].formation_time = data[i].formation_time[data[i].m>minmass]
         for label_no in range(len(data[i].extra_data_labels)):
             if data[i].extra_data_labels[label_no] == 'ProtoStellarStage' or data[i].extra_data_labels[label_no] == 'ProtoStellarAge':
-                data[i].extra_data[label_no] = data[i].extra_data[label_no][data[i].m>0.08]
-        data[i].m = data[i].m[data[i].m>0.08]
+                data[i].extra_data[label_no] = data[i].extra_data[label_no][data[i].m>minmass]
+        data[i].m = data[i].m[data[i].m>minmass]
 
     return data
 
