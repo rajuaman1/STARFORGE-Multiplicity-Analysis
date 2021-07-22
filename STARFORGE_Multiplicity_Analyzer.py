@@ -162,9 +162,10 @@ def first_snap_finder(ide,file):
 #This finds the first snapshot that a star is in a certain mass range
 def first_snap_mass_finder(ide,file,lower_limit,upper_limit):
     'Find the first snapshot where an id is present in the file in a certain mass range.'
-        for i,j in enumerate(file):
-            if ide in j.id and lower_limit<=j.m[j.id == ide][0]<=upper_limit:
-                return i
+    for i,j in enumerate(file):
+        if ide in j.id and lower_limit<=j.m[j.id == ide][0]<=upper_limit:
+            return i
+    
 def IGamma(k,n):
     '''The Incomplete Gamma Function'''
     return GammaInc(k,n)*Gamma(k)
@@ -1264,6 +1265,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
 def average_star_age(file,plot = True,time = True):
     '''Average age (at every snapshot in Myr) of all stars'''
     average_ages = []
+    times = []
     for i in file:
         current_time = i.t*time_to_Myr
         ages = copy.copy(i.formation_time)
@@ -1271,6 +1273,8 @@ def average_star_age(file,plot = True,time = True):
         average_age = np.average(ages)
         average_ages.append(average_age)
     if plot ==True:
+        for i in range(len(file)):
+            times.append(file[i].t*time_to_Myr)
         plt.plot(times,average_ages)
     else:
         return average_ages
@@ -1995,7 +1999,7 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
     consistent_solar_mass = []
     consistent_solar_mass_unb = []
     if read_in_result == False:
-        last_snap = system_creation(file,snapshot) #Getting the primaries in the last snap
+        last_snap = system_creation(file,-1) #Getting the primaries in the last snap
         steps = steps
     elif read_in_result == True:
         last_snap = Master_File[-1]
@@ -2112,7 +2116,7 @@ def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read
     consistent_solar_mass = []
     consistent_solar_mass_unb = []
     if read_in_result == False:
-        last_snap = system_creation(file,snapshot) #Getting the primaries in the last snap
+        last_snap = system_creation(file,-1) #Getting the primaries in the last snap
         steps = steps
     elif read_in_result == True:
         last_snap = Master_File[-1]
@@ -2598,7 +2602,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.ylabel('No of New Stars')
             plt.show()
             plt.figure()
-            new_stars_count_mass(file,lower_limit=lower_limit,upper_limit=upper_limit)
+            new_stars_count(file,lower_limit=lower_limit,upper_limit=upper_limit)
             plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],8,-2,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('Change in # of Target Mass Stars')
@@ -2714,7 +2718,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.ylabel('No of New Stars')
             plt.show()
             plt.figure()
-            new_stars_count_mass(file,lower_limit=lower_limit,upper_limit=upper_limit)
+            new_stars_count(file,lower_limit=lower_limit,upper_limit=upper_limit)
             plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],8,-2,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('Change in # of Target Mass Stars')
