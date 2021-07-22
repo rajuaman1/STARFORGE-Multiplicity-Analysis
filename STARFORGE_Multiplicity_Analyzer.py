@@ -15,6 +15,19 @@ import matplotlib.patches as mpatches
 import copy
 import itertools
 
+#Convert the simulation time to Myrs
+time_to_Myr = 978.461942384
+
+#Convert AU to m (divide by this if you have a result in m)
+m_to_AU = 149597870700.0
+
+#Convert pc to AU
+pc_to_AU = 206264.806
+
+#List of the Plot Names for Plots() and Multi_Plot()
+Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
+'Multiplicity Lifetime Evolution','YSO Multiplicity','Semi-Major Axis vs q']
+
 def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,right = True,top = True):
     '''Change the font and handle sizes'''
     #Changing the legend size
@@ -152,7 +165,6 @@ def first_snap_mass_finder(ide,file,lower_limit,upper_limit):
         for i,j in enumerate(file):
             if ide in j.id and lower_limit<=j.m[j.id == ide][0]<=upper_limit:
                 return i
-
 def IGamma(k,n):
     '''The Incomplete Gamma Function'''
     return GammaInc(k,n)*Gamma(k)
@@ -987,15 +999,6 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
         else:#Returning just one snapshot
             return system_creation(file,snapshot_num,Master_File = file,read_in_result = False,periodic_edge = False,Lx = None,Ly = None,Lz = None)
 
-#Convert the simulation time to Myrs
-time_to_Myr = 978.461942384
-
-#Convert AU to m (divide by this if you have a result in m)
-m_to_AU = 149597870700.0
-
-#Convert pc to AU
-pc_to_AU = 206264.806
-
 #This is a filter for minimum q for one snapshot
 def q_filter_one_snap(systems,min_q = 0.1):
     #Change Master_File to file snapshot
@@ -1271,6 +1274,7 @@ def average_star_age(file,plot = True,time = True):
         plt.plot(times,average_ages)
     else:
         return average_ages
+
 #Calculating the semi major axis for every possible configuration of these systems
 def smaxis(system):
     '''Calculate the semi major axis (in m) between the secondary and primary in a system.'''
@@ -3031,9 +3035,6 @@ def hist(x,bins = 'auto',log =False,shift = False):
     else:
         xvals = bins
     return xvals,weights
-
-Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
-'Multiplicity Lifetime Evolution','YSO Multiplicity','Semi-Major Axis vs q']
 
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = 1,zero = 'Formation',multiplicity = 'Fraction',filename = None):
     '''
