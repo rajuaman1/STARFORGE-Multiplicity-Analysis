@@ -1274,7 +1274,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
-def formation_time_histogram(file,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True):
+def formation_time_histogram(file,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2):
     '''Plot or return a histogram of formation of all stars within the limits'''
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
