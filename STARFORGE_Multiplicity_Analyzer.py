@@ -1274,6 +1274,36 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
+def formation_time_histogram(file,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True):
+    '''Plot or return a histogram of formation of all stars within the limits'''
+    if target_mass is None:
+        target_mass = (upper_limit+lower_limit)/2
+    birth_times = []
+    for i in range(len(file[-1].id)):
+        this_mass = file[-1].m[file[-1].id == file[-1].id[i]]
+        if lower_limit<=this_mass[0]<=upper_limit:
+            birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == file[-1].id[i]][0]*time_to_Myr
+            birth_times.append(birth_time)
+    times = []
+    for i in file:
+        times.append(i.t*time_to_Myr)
+    birth_times = np.array(birth_times)
+    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
+    times = np.array(times)
+    new_stars_co = np.insert(new_stars_co,0,0)
+    if plot == True:
+        plt.step(times,new_stars_co)
+        plt.legend()
+        if filename is not None:
+            plt.text(max(times)/2,max(new_stars_co),filename)
+        plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        plt.xlabel('Time [Myr]')
+        plt.ylabel('Number of New Stars')
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        plt.figure(figsize = (10,10))
+    else:
+        return times,new_stars_co
+
 def star_formation_rate(file,plot = True,time = True,filename = None,time_norm = True):
     '''Average star formation rate[dM/dt] (at every snapshot in Myr) of all stars'''
     time_step = (file[-1].t - file[-2].t)*time_to_Myr
@@ -1516,7 +1546,7 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
         plt.plot(times[nos_all>min_no],primary_stars_slopes[nos_all>min_no],label = 'Slope Primary',linestyle = '--')
         plt.plot(times[nos_all>min_no],[-2.3]*len(times[nos_all>min_no]),label = '-2.3',linestyle = ':')
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.ylabel('Slope')
+        plt.ylabel('Slope of Stars in Mass Range')
         plt.text((times[-1]+times[nos_all>min_no][0])/2,primary_stars_slopes[-1],filename)
         plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -1526,7 +1556,7 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
             plt.plot(times[nos_all>min_no],nos_all[nos_all>min_no],label = 'Number All')
             plt.plot(times[nos_all>min_no],nos_prim[nos_all>min_no],label = 'Number Primary',linestyle = '--')
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-            plt.ylabel('Number of Stars')
+            plt.ylabel('Number of Stars in Mass Range')
             plt.legend(fontsize = 14)
             plt.text((times[-1]+times[nos_all>min_no][0])/2,nos_all[-1],filename)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
