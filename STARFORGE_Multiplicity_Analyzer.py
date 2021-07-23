@@ -1274,16 +1274,66 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
-def formation_time_histogram(file,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2):
-    '''Plot or return a histogram of formation of all stars within the limits'''
+def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2,only_primaries_and_singles = False):
+    '''
+    Create or return a histogram of the formation times of stars in the given mass range.
+    
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The initial data file
+    
+    systems:list of starsystem objects
+    The data file made into systems.
+    
+    Parameters
+    ----------
+    upper_limit: int,float,opt
+    The upper limit of the mass range.
+
+    lower_limit: int,float,opt
+    The lower limit of the mass range.
+    
+    target_mass:string,int,opt
+    The target mass to print out on the plot.
+
+    filename: string,opt
+    The filename to print out on the plot.
+    
+    plot:bool,opt
+    Whether to plot or return the data.
+
+    Returns
+    -------
+    times: list
+    The list of times in the simulation.
+    
+    new_stars_co:list
+    The number of new stars in each bin.
+
+    Example
+    -------
+    formation_time_histogram(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,only_primaries_and_singles = True)
+    '''
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     birth_times = []
-    for i in range(len(file[-1].id)):
-        this_mass = file[-1].m[file[-1].id == file[-1].id[i]]
-        if lower_limit<=this_mass[0]<=upper_limit:
-            birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == file[-1].id[i]][0]*time_to_Myr
-            birth_times.append(birth_time)
+    if only_primaries_and_singles is True:
+        if systems is None:
+            print('Please provide systems')
+            return
+        for i in range(len(systems[-1])):
+            this_mass = systems[-1][i].primary
+            if lower_limit<=this_mass<=upper_limit:
+                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == systems[-1][i].primary_id][0]*time_to_Myr
+                birth_times.append(birth_time)
+    else:
+        for i in range(len(file[-1].m)):
+            this_id = file[-1].id[i]
+            this_mass = file[-1].m[i]
+            if lower_limit<=this_mass<=upper_limit:
+                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == this_id][0]*time_to_Myr
+                birth_times.append(birth_time)
     times = []
     for i in file:
         times.append(i.t*time_to_Myr)
@@ -1293,10 +1343,9 @@ def formation_time_histogram(file,upper_limit=1.3,lower_limit = 0.7,target_mass 
     new_stars_co = np.insert(new_stars_co,0,0)
     if plot == True:
         plt.step(times,new_stars_co)
-        plt.legend()
         if filename is not None:
             plt.text(max(times)/2,max(new_stars_co),filename)
-        plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        plt.text(max(times)/2,max(new_stars_co)*0.9,'Star Mass = '+str(target_mass)+' $M_\odot$')
         plt.xlabel('Time [Myr]')
         plt.ylabel('Number of New Stars')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -2546,6 +2595,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     return multiplicity,bin_count,average_mass
 
 #This function tracks the evolution of different stars over their lifetime
+#This function tracks the evolution of different stars over their lifetime
 def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,zero = 'Consistent Mass',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
     '''
     The status of stars born in a certain time range tracked throughout their lifetime in the simulation.
@@ -2619,6 +2669,9 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     birth_times:list
     The formation times for each star.
 
+    kept:int
+    The number of stars in the selected range
+
     Example
     -------
     star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
@@ -2654,7 +2707,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         for i in tqdm(copy,desc = 'Selecting By Maturity Time',position=0):
             first_snap = first_snap_finder(i,file)
             birth_time = file[first_snap].t
-            if birth_time*time_to_Myr>(Tend-T)+dt/2 or birth_time*time_to_Myr<(Tend-T)-dt/2:
+            if birth_time*time_to_Myr>T+dt/2 or birth_time*time_to_Myr<T-dt/2:
                 consistent_solar_mass.remove(i)
                 kicked += 1
             else:
@@ -2664,7 +2717,6 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         print('Original Total = '+str(og))
         if kept == 0:
             print('No Stars in Given Range, please try a different range instead')
-            exit()
     all_times = []
     all_status = []
     first_snaps = []
@@ -2786,9 +2838,11 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
 
     if plot == False:
         placeholder = 0
+        placeholder2 = 0
         if select_by_time == True:
             placeholder = Tend
-        return all_times,all_status,ids,maturity_times,placeholder,birth_times
+            placeholder2 = kept
+        return all_times,all_status,ids,maturity_times,placeholder,birth_times,placeholder2
 
 #This function gives the multiplicity fraction at different ages
 def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
@@ -2846,11 +2900,14 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     birth_times:list
     The birth times of the stars.
 
+    kept:int
+    The number of stars in the age range.
+
     Example
     -------
     multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
-    times,status,ids,maturity_times,Tend,birth_times = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
+    times,status,ids,maturity_times,Tend,birth_times,kept = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
     is_primary_all = []
     time_all = []; status_all = []
@@ -2876,13 +2933,13 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         if select_by_time == True:
             plt.figure()
             new_stars_count(file)
-            plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],16,alpha = 0.3)
+            plt.fill_between([T-dt/2,T+dt/2],16,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('No of New Stars')
             plt.show()
             plt.figure()
             new_stars_count(file,lower_limit=lower_limit,upper_limit=upper_limit)
-            plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],8,-2,alpha = 0.3)
+            plt.fill_between([T-dt/2,T+dt/2],8,-2,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('Change in # of Target Mass Stars')
             plt.show()
@@ -2909,10 +2966,10 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times
+        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept
     #return age_bins_mean,multiplicity_in_bin
 
-#This function gives the multiplicity fraction at different ages
+#This function gives the multiplicity frequency at different ages
 def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
     '''
     The average multiplicity frequency of stars born in a certain time range tracked throughout their lifetime in the simulation.
@@ -2965,15 +3022,24 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     multiplicity_frequency: array
     The average multiplicity frequency of the objects in the bins.
 
+    birth_times:list
+    The formation times of each of the stars.
+
+    kept:int
+    The number of stars in the bins.
+
     Example
     -------
     multiplicity_freq_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
-    times,status,ids,maturity_times,Tend,birth_times = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
+    times,status,ids,maturity_times,Tend,birth_times,kept = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
     is_primary_all = []
     time_all = []; status_all = []
     lengths = []
+    #plt.figure(figsize = (15,10))
+    #for t,s in zip(times,status):
+    #    plt.plot(t,s)
     for t,s in zip(times,status):
         time_all += t;status_all += s
         lengths.append(len(t))
@@ -2992,13 +3058,13 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         if select_by_time == True:
             plt.figure()
             new_stars_count(file)
-            plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],16,alpha = 0.3)
+            plt.fill_between([T-dt/2,T+dt/2],16,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('No of New Stars')
             plt.show()
             plt.figure()
             new_stars_count(file,lower_limit=lower_limit,upper_limit=upper_limit)
-            plt.fill_between([max(times)-(T-dt/2),max(times)-(T+dt/2)],8,-2,alpha = 0.3)
+            plt.fill_between([T-dt/2,T+dt/2],8,-2,alpha = 0.3)
             plt.xlabel('Simulation Time [Myr]')
             plt.ylabel('Change in # of Target Mass Stars')
             plt.show()
@@ -3007,9 +3073,9 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         else:
             plt.plot(age_bins_mean,multiplicity_in_bin)
         #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
-        plt.ylim([-0.1,3.1])
+        plt.ylim([-0.1,1.1])
         plt.xlabel('Age in Myrs')
-        plt.ylabel('Average Multiplicity Frequency')
+        plt.ylabel('Average Multiplicity Fraction')
         #plt.text(0.1,0.8,Files_key[n],transform = plt.gca().transAxes)
         plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
         #plt.legend()
@@ -3025,8 +3091,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times
-    #return age_bins_mean,multiplicity_in_bin
+        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept
 
 def Orbital_Plot_2D(system,plot = True):
     '''Create an orbital plane projection plot of any system'''
@@ -3333,10 +3398,10 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
 
     Parameters
     ----------
-    T : list,optional
+    T_list : list,optional
     The time that the stars are born at.
 
-    dt :list,optional
+    dt_list :list,optional
     The tolerance of the birth time.
 
     target_mass: int,float,optional
@@ -3379,13 +3444,15 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
         target_mass = (upper_limit+lower_limit)/2
     time_list = []
     mul_list = []
+    kept_list = []
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
-            time,mul,birth_times = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         elif multiplicity == 'Frequency':
-            time,mul,birth_times = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=lower_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
         mul_list.append(mul)
+        kept_list.append(kept)
     times = []
     for i in file:
         times.append(i.t*time_to_Myr)
@@ -3399,7 +3466,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
-        plt.fill_between([(times[-1]-T_list[i])-dt_list[i]/2,(times[-1]-T_list[i])+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i]))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i]))
     plt.legend()
     if filename is not None:
         plt.text(max(times)/2,max(new_stars_co),filename)
@@ -3409,17 +3476,18 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     plt.figure(figsize = (10,10))
     for i in range(len(time_list)):
-        plt.plot(time_list[i],np.array(mul_list[i]),label = str(T_list[i])+' Myr')
+        plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = str(T_list[i])+' Myr')
+        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars')
     if target_mass == 1:
         if multiplicity == 'Fraction':
-            plt.errorbar(max(list(flatten(time_list))),0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif multiplicity == 'Frequency':
-            plt.errorbar(max(list(flatten(time_list))),0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
     elif target_mass == 10:
         if multiplicity == 'Fraction':
-            plt.errorbar(max(list(flatten(time_list))),0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         elif multiplicity == 'Frequency':
-            plt.errorbar(max(list(flatten(time_list))),1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
     plt.legend()
     plt.xlabel('Age [Myr]')
     plt.ylabel('Multiplicity Fraction')
