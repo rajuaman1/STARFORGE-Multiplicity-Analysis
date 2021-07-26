@@ -3579,7 +3579,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i]))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = str(T_list[i])+' Myr, dt = '+str(dt_list[i]))
     plt.legend()
     if filename is not None:
         plt.text(max(times)/2,max(new_stars_co),filename)
