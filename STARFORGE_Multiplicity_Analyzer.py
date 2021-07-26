@@ -55,6 +55,16 @@ def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelf
             ax1.minorticks_on()
             ax1.tick_params(axis='both',which='both', direction='in',top=top,right=right)
 
+def rolling_average(List,rolling_window = 10):
+    '''Create a rolling average of a List with a given window'''
+    rolling_list = []
+    for i in range(rolling_window-1,len(List)):
+        rollingsum = 0
+        for j in range(rolling_window):
+            rollingsum += List[i-j]
+        rollingsum = rollingsum/rolling_window
+        rolling_list.append(rollingsum)
+    return rolling_list
 
 #Remove the brown dwarfs for a data
 def Remove_Brown_Dwarfs(data,minmass = 0.08):
@@ -1209,7 +1219,7 @@ def initial_local_density(ID,file,distance = 0.5):
             no+= 1
     return no-1
 
-def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000):
+def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window = 5):
     '''
     The count of new stars or all stars of a certain mass range formed at different snapshots.
     Inputs
@@ -1233,6 +1243,12 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
 
     upper_limit: int,float,optional
     The upper limit of the mass range
+
+    rolling_avg: bool,optional
+    Whether to use a rolling average.
+
+    rolling_window: int,optional
+    The number of points to use in a rolling average.
 
     Returns
     -------
@@ -1263,7 +1279,10 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         no_of_stars.append(new)
     if all_stars == False:
         if plot == True and time == True:
-            plt.plot(times,no_new_stars)
+            if rolling_avg is False:
+                plt.plot(times,no_new_stars)
+            else:
+                plt.plot(rolling_average(times,rolling_window = rolling_window),rolling_average(no_new_stars,rolling_window = rolling_window))
             plt.xlabel('Time[Myr]')
             plt.ylabel('Number of New Stars')
         elif plot == True and time == False:
@@ -1274,7 +1293,10 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
             return no_new_stars
     elif all_stars == True:
         if plot == True and time == True:
-            plt.plot(times,no_of_stars)
+            if rolling_avg is True:
+                plt.plot(rolling_average(times,rolling_window = rolling_window),rolling_average(no_of_stars,rolling_window = rolling_window))
+            else:
+                plt.plot(times,no_of_stars)
             plt.xlabel('Time[Myr]')
             plt.ylabel('Number of Stars')
         elif plot == True and time == False:
@@ -1363,8 +1385,45 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     else:
         return times,new_stars_co
 
-def star_formation_rate(file,plot = True,time = True,filename = None,time_norm = True):
-    '''Average star formation rate[dM/dt] (at every snapshot in Myr) of all stars'''
+def star_formation_rate(file,plot = True,time = True,filename = None,time_norm = True,rolling_avg = False,rolling_window = 5):
+    '''
+    Average star formation rate[dM/dt] (at every snapshot in Myr) of all stars
+    
+    Inputs
+    ----------
+    file : list of sinkdata.
+    The input data that will be grouped into systems.
+
+    Parameters
+    ----------
+    plot : bool,optional
+    Whether to plot the number of stars.
+
+    time: bool,optional
+    Whether to have snapshot number or time as the x axis.
+
+    time_norm: bool,optional
+    Whether to normalize the time by ff_time or not
+
+    rolling_avg: bool,optional
+    Whether to include a rolling average instead of every data point.
+    
+    rolling_window: int,float,optional
+    The number of points to include into the rolling average window.
+
+    Returns
+    -------
+    SFR: list
+    The SFR at each time.
+
+    Example
+    -------
+    1) star_formation_rate(M2e4_C_M_2e7,time = True)
+    Plotting the SFR over time.
+
+    2) star_formation_rate(M2e4_C_M_2e7,time = True,rolling_avg = True,rolling_window = 10)
+    Plotting the star formation rate over a rolling window.
+    '''
     time_step = (file[-1].t - file[-2].t)*time_to_Myr
     SFR = []
     times = []
@@ -1384,7 +1443,10 @@ def star_formation_rate(file,plot = True,time = True,filename = None,time_norm =
             times.append(current_time)
     if plot ==True:
         plt.figure(figsize = (10,10))
-        plt.plot(times,SFR)
+        if rolling_avg is True:
+            plt.plot(rolling_average(times,rolling_window = rolling_window),rolling_average(SFR,rolling_window = rolling_window))
+        else:
+            plt.plot(times,SFR)
         if time_norm is False:
             plt.xlabel('Time [Myrs]')
         else:
@@ -1401,7 +1463,7 @@ def star_formation_rate(file,plot = True,time = True,filename = None,time_norm =
     else:
         return SFR
 
-def average_star_age(file,plot = True,time = True):
+def average_star_age(file,plot = True,time = True,rolling_avg = True,rolling_window = 10):
     '''Average age (at every snapshot in Myr) of all stars'''
     average_ages = []
     times = []
@@ -1411,10 +1473,12 @@ def average_star_age(file,plot = True,time = True):
         ages = (current_time - ages*time_to_Myr)
         average_age = np.average(ages)
         average_ages.append(average_age)
+        times.append(i.t*time_to_Myr)
     if plot ==True:
-        for i in range(len(file)):
-            times.append(file[i].t*time_to_Myr)
-        plt.plot(times,average_ages)
+        if rolling_avg is False:
+            plt.plot(times,average_ages)
+        else:
+            plt.plot(rolling_average(times,rolling_window),rolling_average(average_ages,rolling_window))
     else:
         return average_ages
 
@@ -1527,7 +1591,7 @@ def primary_stars_slope(file,systems,snapshot,lower_limit = 1,upper_limit = 10,s
         else:
             return slope_all,slope_prim
 
-def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of_stars = False,min_no = 1,plot = True):
+def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of_stars = False,min_no = 1,plot = True,rolling_avg = False,rolling_window = 5):
     '''
     Tracks the slope of stars with mass within the lower and upper limit throughout the simulation runtime.
     
@@ -1558,6 +1622,12 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
     
     plot: bool,optional
     Whether to plot the quantities or return the slopes lists.
+    
+    rolling_avg:bool,optional
+    Whether to use a rolling average or not.
+    
+    rolling_window:int,optional
+    How many data points to use the rolling average.
 
     Returns
     -------
@@ -1600,20 +1670,26 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
     nos_prim = np.array(nos_prim);nos_all = np.array(nos_all)
     times = np.array(times)
     if plot is True:
+        if rolling_avg is True:
+            times = np.array(rolling_average(times,rolling_window))
+            all_stars_slopes = np.array(rolling_average(all_stars_slopes,rolling_window))
+            primary_stars_slopes = np.array(rolling_average(primary_stars_slopes,rolling_window))
+            nos_all = np.array(rolling_average(nos_all,rolling_window))
+            nos_prim = np.array(rolling_average(nos_prim,rolling_window))
         plt.figure(figsize = (10,10))
-        plt.plot(times[nos_all>min_no],all_stars_slopes[nos_all>min_no],label = 'Slope All')
-        plt.plot(times[nos_all>min_no],primary_stars_slopes[nos_all>min_no],label = 'Slope Primary',linestyle = '--')
+        plt.plot(times[nos_all>min_no],all_stars_slopes[nos_all>min_no],label = 'Slope for All')
+        plt.plot(times[nos_all>min_no],primary_stars_slopes[nos_all>min_no],label = 'Slope for Primary',linestyle = '--')
         plt.plot(times[nos_all>min_no],[-2.3]*len(times[nos_all>min_no]),label = '-2.3',linestyle = ':')
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.ylabel('Slope of Stars in Mass Range')
+        plt.ylabel('Slope of stars in Mass Range')
         plt.text((times[-1]+times[nos_all>min_no][0])/2,primary_stars_slopes[-1],filename)
         plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
         plt.show()
         if no_of_stars is True:
             plt.figure(figsize = (10,10))
-            plt.plot(times[nos_all>min_no],nos_all[nos_all>min_no],label = 'Number All')
-            plt.plot(times[nos_all>min_no],nos_prim[nos_all>min_no],label = 'Number Primary',linestyle = '--')
+            plt.plot(times[nos_all>min_no],nos_all[nos_all>min_no],label = 'Number for All')
+            plt.plot(times[nos_all>min_no],nos_prim[nos_all>min_no],label = 'Number for Primary',linestyle = '--')
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.ylabel('Number of Stars in Mass Range')
             plt.legend(fontsize = 14)
@@ -2291,7 +2367,7 @@ def randomly_distributed_companions(systems,file,snapshot,lower_limit = 1/1.5,up
 
 #Describes the time evolution of the multiplicity fraction of different masses with two lines, one that
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
-def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True):
+def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window = 10):
     '''
     Returns the evolution of the multiplicity fraction for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
@@ -2322,6 +2398,12 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
 
     lower_limit: int,float,optional
     The lowest allowed mass for the primary.
+
+    rolling_avg: bool,optional
+    Whether to employ a rolling average.
+
+    rolling_window: int,optional
+    How many points to include in the rolling window.
 
     Returns
     -------
@@ -2391,15 +2473,19 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
     time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
     if plot == True:
-        plt.xlabel(r'Time $[\frac{t}{\sqrt{\alpha}t_{ff}}]$')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Multiplicity Fraction')
         plt.ylim([-0.1,1.1])
+        if rolling_avg is True:
+            time = rolling_average(time,rolling_window)
+            fraction = rolling_average(fraction,rolling_window)
+            fraction1 = rolling_average(fraction1,rolling_window)
         plt.plot(time,fraction,label = 'Multiplicity Fraction for '+str(target_mass)+' Solar Mass Stars at any time')
         plt.plot(time,fraction1,label = 'Multiplicity Fraction for Stars that remain '+str(target_mass)+' solar mass')
         if target_mass == 1:
-            plt.errorbar(max(time)-1,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
-            plt.errorbar(max(time)-1,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         plt.legend(loc = (0.3,0.9))
         plt.text(0.5,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
@@ -2407,9 +2493,9 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
     elif plot == False:
         return time,fraction,fraction1
 
-#Describes the time evolution of the multiplicity fraction of different masses with two lines, one that
+#Describes the time evolution of the multiplicity frequency of different masses with two lines, one that
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
-def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True):
+def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window = 10):
     '''
     Returns the evolution of the multiplicity frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
@@ -2440,6 +2526,12 @@ def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read
 
     lower_limit: int,float,optional
     The lowest allowed mass for the primary.
+
+    rolling_avg: bool,optional
+    Whether to employ a rolling average.
+
+    rolling_window: int,optional
+    How many points to include in the rolling window.
 
     Returns
     -------
@@ -2508,21 +2600,26 @@ def Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
     time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
     if plot == True:
-        plt.xlabel(r'Time $[\frac{t}{\sqrt{\alpha}t_{ff}}]$')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Multiplicity Frequency')
         plt.ylim([-0.1,3.1])
+        if rolling_avg is True:
+            time = rolling_average(time,rolling_window)
+            fraction = rolling_average(fraction,rolling_window)
+            fraction1 = rolling_average(fraction1,rolling_window)
         plt.plot(time,fraction,label = 'Multiplicity Frequency for '+str(target_mass)+' Solar Mass Stars at any time')
         plt.plot(time,fraction1,label = 'Multiplicity Frequency for Stars that remain '+str(target_mass)+' solar mass')
         if target_mass == 1:
-            plt.errorbar(max(time)-1,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
-            plt.errorbar(max(time)-1,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         plt.legend(loc = (0.3,0.9))
         plt.text(0.7,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
     else:
         return time,fraction,fraction1
+
 def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     '''
     The multiplicity fraction of all objects in a certain age range.
@@ -3394,7 +3491,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2):
+def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window = 10):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3408,10 +3505,10 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
 
     Parameters
     ----------
-    T_list : list,optional
+    T : list,optional
     The time that the stars are born at.
 
-    dt_list :list,optional
+    dt :list,optional
     The tolerance of the birth time.
 
     target_mass: int,float,optional
@@ -3438,6 +3535,12 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     steps: int,optional
     The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
 
+    rolling_avg:bool,optional
+    Whether to use a rolling average
+    
+    rolling_window:int,optional
+    How many points to include in the rolling average window.
+    
     Returns
     -------
     age_bins: array
@@ -3484,6 +3587,10 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     plt.xlabel('Time [Myr]')
     plt.ylabel('Number of New Stars')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    if rolling_avg is True:
+        for i in range(len(time_list)):
+            time_list[i] = np.array(rolling_average(time_list[i],rolling_window))
+            mul_list[i] = np.array(rolling_average(mul_list[i],rolling_window))
     plt.figure(figsize = (10,10))
     for i in range(len(time_list)):
         plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = str(T_list[i])+' Myr')
@@ -3510,8 +3617,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     if filename is not None:
         plt.text(max(list(flatten(time_list)))/2,0.5,filename)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    plt.show()
-    
+    plt.show()    
+
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
     '''
     Create the plots for one snapshot
@@ -3771,7 +3878,6 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.show()
 
-
 def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
@@ -4004,7 +4110,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filen
             else:
                 return logmasslist,o1,o2,o3
 
-def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = [1],dt = [0.5],target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True):
+def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = [1],dt = [0.5],target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 10):
     '''
     Create a plot for a property that evolves through the simulation.
 
@@ -4066,6 +4172,12 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
     select_by_time: bool,optional
     Whether to look at average multiplicity for all stars or only those in a window.
 
+    rolling_avg: bool,optional
+    Whether to use a rolling average or not.
+
+    rolling_window: int,optional
+    How many points to include in the rolling average.
+
     Returns
     -------
     x_vals: list
@@ -4093,14 +4205,14 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             print('Provide the filename')
         if multiplicity == 'Fraction':
             if plot == True:
-                Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True)
+                Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window)
             elif plot == False:
-                return Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
+                return Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window)
         if multiplicity == 'Frequency':
             if plot == True:
-                Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True)
+                Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window)
             elif plot == False:
-                return Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
+                return Multiplicity_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window)
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -4108,7 +4220,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if plot is False:
             print('Use Plot == True')
             return
-        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,filename = filename)
+        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window=rolling_window)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
@@ -4129,6 +4241,12 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         prop_times = np.array(prop_times)
         ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
         prop_times = (prop_times/ff_t)
+        
+        if rolling_avg is True:
+            prop_times = rolling_average(prop_times,rolling_window)
+            mul1 = rolling_average(mul1,rolling_window)
+            cou1 = rolling_average(cou1,rolling_window)
+            av1 = rolling_average(av1,rolling_window)
         
         plt.plot(prop_times,mul1,label ='< '+str(target_age)+' Myr stars in simulation')
         
@@ -4163,9 +4281,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         #plt.plot(times,av2,label = 'Consistent Mass')
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Average Mass of Young Stars')
-#Function that contains all the plots
 
-def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1): 
+#Function that contains all the plots
+def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window = 10): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -4258,6 +4376,12 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     min_q:int,float,optional
     The mass ratio to remove companions under with the filter.
 
+    rolling_avg: bool,optional
+    Whether to use a rolling average or not.
+
+    rolling_window: int,optional
+    The number of points in the rolling window.
+
     Returns
     -------
     x_vals: list
@@ -4280,11 +4404,11 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
             return Multiplicity_One_Snap_Plots(systems,Master_File,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
-            Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time)
+            Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window)
         else:
-            return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time)
+            return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass'):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=10):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -4334,13 +4458,18 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     norm_no: int,optional:
     The number of systems to normalize to.
 
-    time_plot:str,optional: = 'consistent mass'
+    time_plot:str,optional:
     Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
+    
+    rolling_avg: bool,optional:
+    Whether to use a rolling average or not.
+    
+    rolling_window: int,optional:
+    How many points to include in the rolling average window.
+    
     Examples
     ----------
     1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
-
-
     '''  
     if Snapshots == None:
         Snapshots = [[-1]]*len(Filenames)
@@ -4412,8 +4541,14 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             time = np.array(time)
             ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
             time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
+            if rolling_avg is True:
+                time = rolling_average(time,rolling_window)
             times.append(time)
             fraction,no,am = YSO_multiplicity(Files[i],Systems[i],min_age = min_age,target_age = target_age)
+            if rolling_avg is True:
+                fraction = rolling_average(fraction,rolling_window)
+                no = rolling_average(no,rolling_window)
+                am = rolling_average(am,rolling_window)
             fractions.append(fraction)
             nos.append(no)
             avg_mass.append(am)
@@ -4488,8 +4623,16 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     elif which_plot == 'Multiplicity Time Evolution' or which_plot == 'YSO Multiplicity':
         for i in range(len(Files)):
             if time_plot == 'consistent mass' and which_plot == 'Multiplicity Time Evolution':
+                if rolling_avg is True:
+                    times[i] = rolling_average(times[i],rolling_window)
+                    cons_fracs[i] = rolling_average(cons_fracs[i],rolling_window)
                 plt.plot(times[i],cons_fracs[i],label = Filenames[i])
-            elif (time_plot == 'all' and which_plot == 'Multiplicity Time Evolution') or which_plot == 'YSO Multiplicity':
+            elif (time_plot == 'all' and which_plot == 'Multiplicity Time Evolution'):
+                if rolling_avg is True:
+                    times[i] = rolling_average(times[i],rolling_window)
+                    fractions[i] = rolling_average(fractions[i],rolling_window)
+                plt.plot(times[i],fractions[i],label = Filenames[i])
+            elif which_plot == 'YSO Multiplicity':
                 plt.plot(times[i],fractions[i],label = Filenames[i])
         plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
         if multiplicity == 'Fraction':
