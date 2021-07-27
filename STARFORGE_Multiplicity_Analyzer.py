@@ -35,7 +35,7 @@ G = 6.67e-11
 #Solar Mass to kg
 sm_to_kg = 1.9891e30
 
-#List of the Plot Names for Plots() and Multi_Plot()
+#List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
 'Multiplicity Lifetime Evolution','YSO Multiplicity','Semi-Major Axis vs q']
 
