@@ -3609,6 +3609,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     -------
     multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
+    #In case there's no target mass
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     time_list = []
@@ -3622,6 +3623,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
         time_list.append(time)
         mul_list.append(mul)
         kept_list.append(kept)
+    #Creating a plot of formation times
     times = []
     for i in file:
         times.append(i.t*time_to_Myr)
@@ -3635,7 +3637,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = str(T_list[i])+' Myr, dt = '+str(dt_list[i]))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
     plt.legend()
     if filename is not None:
         plt.text(max(times)/2,max(new_stars_co),filename)
@@ -3643,13 +3645,29 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     plt.xlabel('Time [Myr]')
     plt.ylabel('Number of New Stars')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    #Creating the plot of stellar densities
+    densities = []
+    times = []
+    for i in range(len(file[-1].m)):
+        if lower_limit<=file[-1].m[i]<=upper_limit:
+            density,formation_time = initial_local_density(file[-1].id[i],file)
+            densities.append(density);times.append(formation_time)
+    the_times,the_densities,the_errors = density_evolution(densities,times,filename = filename,plot = False)
+    plt.figure()
+    density_evolution(densities,times,filename = filename)
+    for i in range(len(T_list)):
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(the_densities)*1.1,alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
+    plt.legend()
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    #Using rolling average
     if rolling_avg is True:
         for i in range(len(time_list)):
             time_list[i] = np.array(rolling_average(time_list[i],rolling_window))
             mul_list[i] = np.array(rolling_average(mul_list[i],rolling_window))
+    #Plotting the multiplicity over age
     plt.figure(figsize = (10,10))
     for i in range(len(time_list)):
-        plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = str(T_list[i])+' Myr')
+        plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
         plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars')
     if target_mass == 1:
         if multiplicity == 'Fraction':
@@ -3673,7 +3691,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     if filename is not None:
         plt.text(max(list(flatten(time_list)))/2,0.5,filename)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    plt.show()    
+    plt.show()
 
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
     '''
