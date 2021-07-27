@@ -56,16 +56,14 @@ def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelf
             ax1.tick_params(axis='both',which='both', direction='in',top=top,right=right)
 
 def rolling_average(List,rolling_window = 10):
-    '''Create a rolling average of a List with a given window'''
-    rolling_list = []
-    for i in range(rolling_window-1,len(List)):
-        rollingsum = 0
-        for j in range(rolling_window):
-            rollingsum += List[i-j]
-        rollingsum = rollingsum/rolling_window
-        rolling_list.append(rollingsum)
-    return rolling_list
-
+    '''Rolling Average function'''
+    x = List
+    N = rolling_window
+    valid_ind1=(int)((N-1)/2);valid_ind2=len(x)-(int)((N-1)/2)
+    x_avg=np.convolve(x, np.ones((N,))/N, mode='valid')
+    #return x_avg, valid_ind1, valid_ind2
+    return x_avg
+    
 #Remove the brown dwarfs for a data
 def Remove_Brown_Dwarfs(data,minmass = 0.08):
     '''
