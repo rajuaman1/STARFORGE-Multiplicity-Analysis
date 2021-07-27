@@ -1217,7 +1217,7 @@ def initial_local_density(ID,file,distance = 0.5):
     for i in range(len(file[first_snap].id)):
         if np.linalg.norm(file[first_snap].x[i] - formation_pos) <= distance:
             no+= 1
-    return no-1
+    return no-1,file[first_snap].t*time_to_Myr
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window = 5):
     '''
@@ -1698,6 +1698,62 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
             plt.show()
     else:
         return all_stars_slopes,primary_stars_slopes
+
+def density_evolution(densities,times,bins = 10,plot = True,filename = None):
+    '''
+    A plot of the mean local density throughout formation times in the simulation
+    
+    Inputs
+    ----------
+    densities : list,array
+    The list of densities (calculated from the inital density function)
+    
+    times: list,array
+    The list of formation times of stars.
+
+    Parameters
+    ----------
+    bins: int,string,list
+    The bins used.
+    
+    plot: bool,optional
+    Whether to plot the quantities or return the times,mean densities and the standard deviations.
+    
+    filename: string
+    The name of the file.
+
+    Returns
+    -------
+    binned_times: array
+    The formation times.
+    
+    means:int
+    The mean local density in each bin.
+    
+    stds:int
+    The standard deviation in each bin.
+
+    Example
+    -------
+    1) density_evolution(densities,times,'M2e4_C_M_2e7')
+    Plots the average formation local density over time.
+
+    2) density_evolution(densities,times,'M2e4_C_M_2e7',plot = False)
+    Returns the times, the average formation local density over time and the standard deviation of local density over time.
+    '''
+    times = np.insert(times,0,0)
+    densities = np.insert(densities,0,0)
+    means,binned_times,bindices = stats.binned_statistic(times,densities,statistic='mean',bins = bins)
+    stds,binned_times,bindices = stats.binned_statistic(times,densities,statistic='std',bins = bins)
+    if plot == True:
+        plt.plot((binned_times[1:]+binned_times[:-1])/2,means,marker = 'o',color = 'indianred')
+        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,means+stds,means-stds,alpha = 0.15,color = 'indianred')
+        plt.xlabel('Times [Myr]')
+        plt.ylabel('Mean Local Density [/0.5 pc]')
+        if filename is not None:
+            plt.text(max(binned_times)*0.9,max(binned_times)*0.5,filename)
+    else:
+        return binned_times,means,stds
 
 #Calculating the semi major axis for every possible configuration of these systems
 def smaxis(system):
