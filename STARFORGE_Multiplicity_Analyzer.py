@@ -63,7 +63,19 @@ def rolling_average(List,rolling_window = 10):
     x_avg=np.convolve(x, np.ones((N,))/N, mode='valid')
     #return x_avg, valid_ind1, valid_ind2
     return x_avg
-    
+
+def snaps_to_time(n,file):
+    '''Convert snapshots into time'''
+    time_per_snap = (file[1].t-file[0].t)*time_to_Myr
+    total_time = time_per_snap*n
+    return total_time
+
+def time_to_snaps(time,file):
+    '''Convert a time into number of snapshots'''
+    time_per_snap = (file[1].t-file[0].t)*time_to_Myr
+    no_of_snaps = (time/time_per_snap).round(0)
+    return no_of_snaps
+
 #Remove the brown dwarfs for a data
 def Remove_Brown_Dwarfs(data,minmass = 0.08):
     '''
