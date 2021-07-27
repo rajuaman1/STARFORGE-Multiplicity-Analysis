@@ -4582,8 +4582,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     rolling_avg: bool,optional:
     Whether to use a rolling average or not.
     
-    rolling_window: int,float,optional:
-    Time to include in the rolling average window.[in Myr]
+    rolling_window: int,optional:
+    How many points to include in the rolling average window.[in Myr]
     
     Examples
     ----------
@@ -4624,6 +4624,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     cons_fracs = []
     nos = []
     avg_mass = []
+    og_rolling_window = copy.copy(rolling_window)
     for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
         if which_plot == 'Multiplicity':
             a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
@@ -4644,14 +4645,19 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         elif which_plot == 'Multiplicity Time Evolution':
             if multiplicity == 'Fraction':
                 time,fraction,cons_frac = Multiplicity_Fraction_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
-                times.append(time)
-                fractions.append(fraction)
-                cons_fracs.append(cons_frac)
             elif multiplicity == 'Frequency':
-                time,fraction,cons_frac = Multiplicity_Frequency_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
-                times.append(time)
-                fractions.append(fraction)
-                cons_fracs.append(cons_frac)
+                time,fraction,cons_frac = Multiplicity_Frequency_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)    
+            if rolling_avg is True:
+                rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                if rolling_window%2 == 0:
+                    rolling_window -= 1
+                rolling_window = int(rolling_window)
+                time = rolling_average(time,rolling_window)
+                fraction = rolling_average(fraction,rolling_window)
+                cons_frac = rolling_average(cons_frac,rolling_window)
+            times.append(time)
+            fractions.append(fraction)
+            cons_fracs.append(cons_frac)
         elif which_plot == 'YSO Multiplicity':
             time = []
             for j in range(len(Files[i])):
@@ -4660,7 +4666,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
             time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
             if rolling_avg is True:
-                rolling_window = time_to_snaps(rolling_window,Files[i])
+                rolling_window = time_to_snaps(og_rolling_window,Files[i])
                 if rolling_window%2 == 0:
                     rolling_window -= 1
                 rolling_window = int(rolling_window)
@@ -4742,47 +4748,42 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
             plt.ylim([-0.01,3.01])
         plt.legend()
-    elif which_plot == 'Multiplicity Time Evolution' or which_plot == 'YSO Multiplicity':
+    elif which_plot == 'Multiplicity Time Evolution':
         for i in range(len(Files)):
-            if time_plot == 'consistent mass' and which_plot == 'Multiplicity Time Evolution':
-                if rolling_avg is True:
-                    times[i] = rolling_average(times[i],rolling_window)
-                    cons_fracs[i] = rolling_average(cons_fracs[i],rolling_window)
+            if time_plot == 'consistent mass':
                 plt.plot(times[i],cons_fracs[i],label = Filenames[i])
-            elif (time_plot == 'all' and which_plot == 'Multiplicity Time Evolution'):
-                if rolling_avg is True:
-                    times[i] = rolling_average(times[i],rolling_window)
-                    fractions[i] = rolling_average(fractions[i],rolling_window)
+            elif time_plot == 'all':
                 plt.plot(times[i],fractions[i],label = Filenames[i])
-            elif which_plot == 'YSO Multiplicity':
-                plt.plot(times[i],fractions[i],label = Filenames[i])
-        plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         if multiplicity == 'Fraction':
             plt.ylabel('Multiplicity Fraction')
+            plt.ylim(bottom = 0,top = 1.01)
         if multiplicity == 'Frequency':
             plt.ylabel('Multiplicity Frequency')
-        elif which_plot == 'YSO Multiplicity':
-            plt.ylabel('YSO Multiplicity Fraction')
-            plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
-            plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
-            plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
-            plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
-            plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
-            plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
-            plt.legend()
-            plt.figure()
-            for i in range(len(Files)):
-                plt.plot(times[i],nos[i],label = Filenames[i])
-            plt.ylabel('Number of YSOs')
-            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            plt.legend()
-            plt.figure()
-            for i in range(len(Files)):
-                plt.plot(times[i],avg_mass[i],label = Filenames[i])
-            plt.ylabel('Average Mass of YSOs')
-            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-            plt.legend()
         plt.legend()
+    elif which_plot == 'YSO Multiplicity':
+        for i in range(len(Files)):
+            plt.plot(times[i],fractions[i],label = Filenames[i])
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+        plt.ylabel('YSO Multiplicity Fraction')
+        plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
+        plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
+        plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
+        plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
+        plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
+        plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
+        plt.legend()
+        plt.figure()
+        for i in range(len(Files)):
+            plt.plot(times[i],nos[i],label = Filenames[i])
+        plt.ylabel('Number of YSOs')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+        plt.legend()
+        plt.figure()
+        for i in range(len(Files)):
+            plt.plot(times[i],avg_mass[i],label = Filenames[i])
+        plt.ylabel('Average Mass of YSOs')
+        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.legend()
     else:
         for i in range(0,len(Filenames)):
