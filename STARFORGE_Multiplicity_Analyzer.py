@@ -2,6 +2,7 @@
 # coding: utf-8
 
 #Importing relevant libraries
+#from #platform #import #dist
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -1230,7 +1231,7 @@ def initial_local_density(ID,file,distance = 0.5,density = 'number'):
                 dens+= 1
             elif density == 'mass':
                 dens+= file[first_snap].m[i]
-    return dens,file[first_snap].t*time_to_Myr
+    return dens/distance,file[first_snap].t*time_to_Myr
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window = 0.1):
     '''
@@ -1783,9 +1784,9 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
         plt.fill_between((binned_times[1:]+binned_times[:-1])/2,np.log10(means+stds),lower_limits,alpha = 0.15,color = 'indianred')
         plt.xlabel('Times [Myr]')
         if density == 'number':
-            plt.ylabel(r'Log Mean Local Density [$(0.5pc)^{-3}$]')
+            plt.ylabel(r'Log Mean Local Density [$pc^{-3}$]')
         else:
-            plt.ylabel(r'Log Mean Local Mass Density [$\frac{M_\odot}{{(0.5pc)}^{3}}$]')
+            plt.ylabel(r'Log Mean Local Mass Density [$\frac{M_\odot}{pc^{3}}$]')
         if filename is not None:
             plt.text(max(binned_times)*0.5,np.log10(max(means))*0.9,filename)
         adjust_font(fig = plt.gcf())
