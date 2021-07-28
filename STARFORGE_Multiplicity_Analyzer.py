@@ -1728,7 +1728,7 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
     else:
         return all_stars_slopes,primary_stars_slopes
 
-def density_evolution(densities,times,bins = 10,plot = True,filename = None):
+def density_evolution(densities,times,bins = 10,plot = True,filename = None,density = 'number'):
     '''
     A plot of the mean local density throughout formation times in the simulation
     
@@ -1750,6 +1750,9 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None):
     
     filename: string
     The name of the file.
+    
+    density:string
+    Either mass density or number density
 
     Returns
     -------
@@ -1770,17 +1773,24 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None):
     2) density_evolution(densities,times,'M2e4_C_M_2e7',plot = False)
     Returns the times, the average formation local density over time and the standard deviation of local density over time.
     '''
-    times = np.insert(times,0,0)
-    densities = np.insert(densities,0,0)
     means,binned_times,bindices = stats.binned_statistic(times,densities,statistic='mean',bins = bins)
     stds,binned_times,bindices = stats.binned_statistic(times,densities,statistic='std',bins = bins)
+    count_per_bin,binned_times,bindices = stats.binned_statistic(times,densities,statistic='count',bins = bins)
+    lower_limits = np.log10(means-stds)
+    lower_limits[lower_limits!=lower_limits] = -1.5
     if plot == True:
-        plt.plot((binned_times[1:]+binned_times[:-1])/2,means,marker = 'o',color = 'indianred')
-        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,means+stds,means-stds,alpha = 0.15,color = 'indianred')
+        plt.plot((binned_times[1:]+binned_times[:-1])/2,np.log10(means),marker = 'o',color = 'indianred')
+        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,np.log10(means+stds),lower_limits,alpha = 0.15,color = 'indianred')
         plt.xlabel('Times [Myr]')
-        plt.ylabel('Mean Local Density [/0.5 pc]')
+        if density == 'number':
+            plt.ylabel(r'Log Mean Local Density [$(0.5pc)^{-3}$]')
+        else:
+            plt.ylabel(r'Log Mean Local Mass Density [$\frac{M_\odot}{{(0.5pc)}^{3}}$]')
         if filename is not None:
             plt.text(max(binned_times)*0.9,max(binned_times)*0.5,filename)
+        adjust_font(fig = plt.gcf())
+        #plt.yscale('log')
+        print(count_per_bin)
     else:
         return binned_times,means,stds
 
