@@ -1219,15 +1219,18 @@ def t_ff(mass,R):
     tff = np.sqrt(3.0*np.pi/( 32*G_code*( mass/(4.0*np.pi/3.0*(R**3)) ) ) )
     return tff
 
-def initial_local_density(ID,file,distance = 0.5):
+def initial_local_density(ID,file,distance = 0.5,density = 'number'):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
     first_snap = first_snap_finder(ID,file)
     formation_pos = file[first_snap].x[file[first_snap].id == ID]
-    no = 0
+    dens = 0
     for i in range(len(file[first_snap].id)):
-        if np.linalg.norm(file[first_snap].x[i] - formation_pos) <= distance:
-            no+= 1
-    return no-1,file[first_snap].t*time_to_Myr
+        if 0<np.linalg.norm(file[first_snap].x[i] - formation_pos) <= distance:
+            if density == 'number':
+                dens+= 1
+            elif density == 'mass':
+                dens+= file[first_snap].m[i]
+    return dens,file[first_snap].t*time_to_Myr
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window = 0.1):
     '''
