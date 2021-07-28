@@ -1787,7 +1787,7 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
         else:
             plt.ylabel(r'Log Mean Local Mass Density [$\frac{M_\odot}{{(0.5pc)}^{3}}$]')
         if filename is not None:
-            plt.text(max(binned_times)*0.9,max(binned_times)*0.5,filename)
+            plt.text(max(binned_times)*0.5,np.log10(max(means))*0.9,filename)
         adjust_font(fig = plt.gcf())
         #plt.yscale('log')
         print(count_per_bin)
@@ -2929,14 +2929,14 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
                 kicked += 1
             else:
                 kept += 1
-                average_dens+= initial_local_density(i,file,density='number')
-                average_mass_dens += initial_local_density(i,file,density='mass')
+                average_dens+= initial_local_density(i,file,density='number')[0]
+                average_mass_dens += initial_local_density(i,file,density='mass')[0]
         print('Kept = '+str(kept))
         print('Removed = '+str(kicked))
         print('Original Total = '+str(og))
         if kept == 0:
             print('No Stars in Given Range, please try a different range instead')
-        average_dens = average_dens / kept
+        average_dens = average_dens/kept
         average_mass_dens = average_mass_dens/kept
     all_times = []
     all_status = []
@@ -3668,8 +3668,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     rolling_avg:bool,optional
     Whether to use a rolling average
     
-    rolling_window:int,optional
-    How much time to include in the rolling average window.[in Myr]
+    rolling_window:int,float,optional
+    How much time to include in the rolling average window.
     
     Returns
     -------
@@ -3689,6 +3689,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     time_list = []
     mul_list = []
     kept_list = []
+    dens_list = []
+    mass_dens_list = []
     rolling_window = time_to_snaps(rolling_window,file)
     if rolling_window%2 == 0:
         rolling_window -= 1
@@ -3701,6 +3703,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
         time_list.append(time)
         mul_list.append(mul)
         kept_list.append(kept)
+        dens_list.append(average_dens)
+        mass_dens_list.append(average_mass_dens)
     #Creating a plot of formation times
     times = []
     for i in file:
@@ -3724,17 +3728,28 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     plt.ylabel('Number of New Stars')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     #Creating the plot of stellar densities
-    densities = []
+    number_densities = []
+    mass_densities = []
     times = []
     for i in range(len(file[-1].m)):
         if lower_limit<=file[-1].m[i]<=upper_limit:
-            density,formation_time = initial_local_density(file[-1].id[i],file)
-            densities.append(density);times.append(formation_time)
-    the_times,the_densities,the_errors = density_evolution(densities,times,filename = filename,plot = False)
+            number_density,formation_time = initial_local_density(file[-1].id[i],file,density = 'number')
+            mass_density,formation_time = initial_local_density(file[-1].id[i],file,density = 'mass')
+            number_densities.append(number_density);times.append(formation_time);mass_densities.append(mass_density)
+    the_times,the_number_densities,the_errors = density_evolution(number_densities,times,filename = filename,plot = False)
+    the_times,the_mass_densities,the_errors = density_evolution(mass_densities,times,filename = filename,plot = False)
+    #Number density Plots
     plt.figure()
-    density_evolution(densities,times,filename = filename)
+    density_evolution(number_densities,times,filename = filename)
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(the_densities)*1.1,alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_number_densities)),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
+    plt.legend()
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    #Mass Density Plots
+    plt.figure()
+    density_evolution(mass_densities,times,filename = filename)
+    for i in range(len(T_list)):
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_mass_densities)),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
     plt.legend()
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     #Using rolling average
