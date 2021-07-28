@@ -3692,6 +3692,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     kept_list = []
     dens_list = []
     mass_dens_list = []
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     rolling_window = time_to_snaps(rolling_window,file)
     if rolling_window%2 == 0:
         rolling_window -= 1
@@ -3741,14 +3742,14 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     the_times,the_mass_densities,the_errors = density_evolution(mass_densities,times,filename = filename,plot = False)
     #Number density Plots
     plt.figure()
-    density_evolution(number_densities,times,filename = filename)
+    density_evolution(number_densities,times,filename = filename,density= 'number')
     for i in range(len(T_list)):
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_number_densities)),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
     plt.legend()
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     #Mass Density Plots
     plt.figure()
-    density_evolution(mass_densities,times,filename = filename)
+    density_evolution(mass_densities,times,filename = filename,density = 'mass')
     for i in range(len(T_list)):
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_mass_densities)),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
     plt.legend()
@@ -3762,7 +3763,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     plt.figure(figsize = (10,10))
     for i in range(len(time_list)):
         plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
-        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars')
+        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars',color = colors[i])
+        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.9,r'%.3g $pc^{-3}$'%(dens_list[i]),color = colors[i])
+        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.8,r'%.3g $\frac{M_\odot}{pc^{3}}$'%(mass_dens_list[i]),color = colors[i])
     if target_mass == 1:
         if multiplicity == 'Fraction':
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
