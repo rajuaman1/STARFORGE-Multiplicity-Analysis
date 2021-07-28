@@ -2805,7 +2805,6 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     return multiplicity,bin_count,average_mass
 
 #This function tracks the evolution of different stars over their lifetime
-#This function tracks the evolution of different stars over their lifetime
 def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,zero = 'Consistent Mass',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
     '''
     The status of stars born in a certain time range tracked throughout their lifetime in the simulation.
@@ -2882,6 +2881,12 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     kept:int
     The number of stars in the selected range
 
+    average_dens: int,float
+    The average density in the selected range
+    
+    average_mass_dens: int,float
+    The average mass density in the selected range
+
     Example
     -------
     star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
@@ -2914,6 +2919,8 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         kept = 0
         og = len(consistent_solar_mass)
         copy = consistent_solar_mass.copy()
+        average_dens = 0
+        average_mass_dens = 0
         for i in tqdm(copy,desc = 'Selecting By Maturity Time',position=0):
             first_snap = first_snap_finder(i,file)
             birth_time = file[first_snap].t
@@ -2922,11 +2929,15 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
                 kicked += 1
             else:
                 kept += 1
+                average_dens+= initial_local_density(i,file,density='number')
+                average_mass_dens += initial_local_density(i,file,density='mass')
         print('Kept = '+str(kept))
         print('Removed = '+str(kicked))
         print('Original Total = '+str(og))
         if kept == 0:
             print('No Stars in Given Range, please try a different range instead')
+        average_dens = average_dens / kept
+        average_mass_dens = average_mass_dens/kept
     all_times = []
     all_status = []
     first_snaps = []
@@ -3049,10 +3060,14 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     if plot == False:
         placeholder = 0
         placeholder2 = 0
+        placeholder3 = 0
+        placeholder4 = 0
         if select_by_time == True:
             placeholder = Tend
             placeholder2 = kept
-        return all_times,all_status,ids,maturity_times,placeholder,birth_times,placeholder2
+            placeholder3 = average_dens
+            placeholder4 = average_mass_dens
+        return all_times,all_status,ids,maturity_times,placeholder,birth_times,placeholder2,placeholder3,placeholder4
 
 #This function gives the multiplicity fraction at different ages
 def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
@@ -3113,11 +3128,17 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     kept:int
     The number of stars in the age range.
 
+    average_dens: int,float
+    The average density in the selected range
+    
+    average_mass_dens: int,float
+    The average mass density in the selected range
+
     Example
     -------
     multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
-    times,status,ids,maturity_times,Tend,birth_times,kept = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
+    times,status,ids,maturity_times,Tend,birth_times,kept,average_dens,average_mass_dens = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
     is_primary_all = []
     time_all = []; status_all = []
@@ -3176,7 +3197,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept
+        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept,average_dens,average_mass_dens
     #return age_bins_mean,multiplicity_in_bin
 
 #This function gives the multiplicity frequency at different ages
@@ -3237,12 +3258,18 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
 
     kept:int
     The number of stars in the bins.
+    
+    average_dens: int,float
+    The average density in the selected range
+    
+    average_mass_dens: int,float
+    The average mass density in the selected range
 
     Example
     -------
     multiplicity_freq_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
-    times,status,ids,maturity_times,Tend,birth_times,kept = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
+    times,status,ids,maturity_times,Tend,birth_times,kept,average_dens,average_mass_dens = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
     counted_all = []
     is_primary_all = []
     time_all = []; status_all = []
@@ -3301,7 +3328,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept
+        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept,average_dens,average_mass_dens
 
 def Orbital_Plot_2D(system,plot = True):
     '''Create an orbital plane projection plot of any system'''
@@ -3668,9 +3695,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     rolling_window = int(rolling_window)
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
-            time,mul,birth_times,kept = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         elif multiplicity == 'Frequency':
-            time,mul,birth_times,kept = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
         mul_list.append(mul)
         kept_list.append(kept)
