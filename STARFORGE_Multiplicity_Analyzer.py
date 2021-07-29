@@ -2305,6 +2305,206 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
     else:
         return None
 
+#Multiplicity Fraction over different masses with a selection ratio of companions
+def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_ratio = 0,attribute = 'Fraction',bins = 'continous'):
+    '''
+    Returns the multiplicity fraction or multiplicity properties over a mass range or the density.
+
+    Inputs
+    ----------
+    systems : list of star system objects.
+    The systems in a certain snapshot to be looked at.
+
+    file: list of sinkdata objects.
+    The file before system assignment to be looked at.
+
+    Parameters
+    ----------
+    mass_break : int,float,optional
+    The log seperation in masses.
+
+    selection_ratio : int,float,optional
+    The minimum mass ratio of the companions.
+
+    attribute: string,optional
+    The attribute that you want. Choose from 'Fraction'(Primary No/(Primary No+ Single No)),'All Companions'(Primary No/(Primary No+Single No+Companion Number), 'Properties','Initial Densities','Initial Mass Densities','Initial Densities Seperate','Initial Mass Densities Seperate'.
+
+    bins: string,optional
+    The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Duchene Krauss bins).
+
+    Returns
+    -------
+    logmasslist: list
+    The list of masses in logspace.
+
+    Multiplicity_Fraction_List or Single & Primary & Companion_Fractions_List: list
+    The list of multiplicity fraction or the 3 lists of single,primary or companion fractions.
+
+    mult_sys_count: int
+    The number of systems with more than one star (When returning multiplicity fraction).
+
+    sys_count:int
+    The number of systems (including single star systems)(When returning multiplicity fraction).
+
+    Example
+    -------
+    1) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Fraction',bins = 'observer') 
+    Returns the logmasslist, multiplicity fraction list, count of all multiple star systems and the number of all systems with the Duchene Krauss Bins.
+
+    2) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Properties',bins = 'continous') 
+    Returns the logmasslist, single star fraction list, primary star fraction list and the companion star fraction list.
+
+    3) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Density',bins = 'observer') 
+    Returns the logmasslist, formation density list, count of all multiple star systems and the number of all systems with the Duchene Krauss Bins.
+
+    4) multiplicity_fraction(M2e4_C_M_2e7_systems[-1],attribute = 'Mass Density Seperate',bins = 'observer') 
+    Returns the logmasslist and the formation mass density lists of solo stars, primary stars and companion stars.
+    '''
+
+    m = []
+    state = []
+    mass_densities = []
+    number_densities = []
+    for i in tqdm(systems,position = 0,desc = 'processing all systems'):
+        if len(i.m) == 1:
+            m.append(i.m[0])
+            state.append(0)
+            mass_densities.append(initial_local_density(i.primary_id,file,density = 'mass')[0])
+            number_densities.append(initial_local_density(i.primary_id,file,density = 'number')[0])
+        elif i.no>1:
+            for j in i.m:
+                if j>=i.primary*selection_ratio and j != i.primary:
+                    m.append(j)
+                    state.append(2)
+                    mass_densities.append(initial_local_density(np.array(i.ids)[np.array(i.m) == j],file,density = 'mass')[0])
+                    number_densities.append(initial_local_density(np.array(i.ids)[np.array(i.m) == j],file,density = 'number')[0])
+            m.append(i.primary)
+            masses = np.array(i.m)
+            mass_densities.append(initial_local_density(i.primary_id,file,density = 'mass')[0])
+            number_densities.append(initial_local_density(i.primary_id,file,density = 'number')[0])
+            if len(masses[masses>=selection_ratio*i.primary])>1:
+                state.append(1)
+            elif len(masses[masses>=selection_ratio*i.primary]) == 1:
+                state.append(0)
+
+    minmass= 0.08 # Because we dont want brown dwarfs
+    maxmass = max(m)
+    if bins == 'continous':
+        logmasslist= np.linspace(np.log10(minmass),np.log10(maxmass+1),num = int((np.log10(maxmass+1)-np.log10(minmass))/(np.log10(mass_break))))
+    elif bins == 'observer':
+        #masslist = np.array([0.08,0.1,0.7,1.5,5,8,16,maxmass+1])
+        masslist = np.array([0.08,0.1,0.7,1.5,5,16,maxmass+1])
+        if maxmass<16:
+            masslist = np.array([0.08,0.1,0.7,1.5,5,16])
+        logmasslist = np.log10(masslist)
+    primary_fraction = np.zeros_like(logmasslist)
+    single_fraction = np.zeros_like(logmasslist)
+    secondary_fraction = np.zeros_like(logmasslist)
+    other_fraction = np.zeros_like(logmasslist)
+    alternative_fraction = np.zeros_like(logmasslist)
+    sys_count = np.zeros_like(logmasslist)
+    mult_sys_count = np.zeros_like(logmasslist)
+    primary_densities = np.zeros_like(logmasslist)
+    primary_mass_densities = np.zeros_like(logmasslist)
+    secondary_densities = np.zeros_like(logmasslist)
+    secondary_mass_densities = np.zeros_like(logmasslist)
+    solo_densities = np.zeros_like(logmasslist)
+    solo_mass_densities = np.zeros_like(logmasslist)
+    other_densities = np.zeros_like(logmasslist)
+    other_mass_densities = np.zeros_like(logmasslist)
+    ind = np.digitize(np.log10(m),logmasslist)
+    bins = [[]]*len(logmasslist)
+    mass_dens_bins = [[]]*len(logmasslist)
+    dens_bins = [[]]*len(logmasslist)
+    for i in range(len(bins)):
+        bins[i] = []
+        mass_dens_bins[i] = []
+        dens_bins[i] = []
+    for i in range(len(m)):
+        bin_no = ind[i]-1 
+        bins[bin_no].append(state[i])
+        mass_dens_bins[bin_no].append(mass_densities[i])
+        dens_bins[bin_no].append(number_densities[i])
+    for i in range(len(bins)):
+        primary_count = 0
+        secondary_count = 0
+        solo_count = 0
+        primary_dens = 0
+        secondary_dens = 0
+        solo_dens = 0
+        primary_mdens = 0
+        secondary_mdens = 0
+        solo_mdens = 0
+        for j in range(len(bins[i])):
+            if bins[i][j]==0:
+                solo_count = solo_count + 1
+                solo_dens += dens_bins[i][j]
+                solo_mdens += mass_dens_bins[i][j]
+            elif bins[i][j] == 1:
+                primary_count = primary_count + 1
+                primary_dens += dens_bins[i][j]
+                primary_mdens += mass_dens_bins[i][j]
+            else:
+                secondary_count = secondary_count + 1
+                secondary_dens += dens_bins[i][j]
+                secondary_mdens += mass_dens_bins[i][j]
+        if len(bins[i])>0:
+            primary_fraction[i] = primary_count/len(bins[i])
+            single_fraction[i] = solo_count/len(bins[i])
+            secondary_fraction[i] = secondary_count/len(bins[i])
+        else:
+            primary_fraction[i] = np.nan
+            single_fraction[i] = np.nan
+            secondary_fraction[i] = np.nan
+        if primary_count+solo_count>0:
+            other_fraction [i] = primary_count/(primary_count+solo_count)
+            mult_sys_count[i] = primary_count
+            other_densities[i] = (primary_dens+solo_dens)/(primary_count+solo_count)
+            other_mass_densities[i] = (primary_mdens+solo_mdens)/(primary_count+solo_count)
+            sys_count[i] = primary_count+solo_count
+        else:
+            other_fraction[i] = np.nan
+            mult_sys_count[i] = np.nan
+            sys_count[i] = np.nan
+        if primary_count+solo_count+secondary_count>0:
+            alternative_fraction[i] = primary_count/(primary_count+solo_count+secondary_count)
+        else:
+            alternative_fraction[i] = np.nan
+        if primary_count>0:
+            primary_densities[i] = primary_dens/primary_count
+            primary_mass_densities[i] = primary_mdens/primary_count
+        else:
+            primary_densities[i] = np.nan
+            primary_mass_densities[i] = np.nan
+        if secondary_count>0:
+            secondary_densities[i] = secondary_dens/secondary_count
+            secondary_mass_densities[i] = secondary_mdens/secondary_count
+        else:
+            secondary_densities[i] = np.nan
+            secondary_mass_densities[i] = np.nan
+        if solo_count>0:
+            solo_densities[i] = solo_dens/solo_count
+            solo_mass_densities[i] = solo_mdens/solo_count
+        else:
+            solo_densities[i] = np.nan
+            solo_mass_densities[i] = np.nan
+    if attribute == 'Fraction':
+        return logmasslist,other_fraction,mult_sys_count,sys_count
+    elif attribute == 'All Companions':
+        return logmasslist,alternative_fraction
+    elif attribute == 'Properties':
+        return logmasslist,single_fraction,primary_fraction,secondary_fraction
+    elif attribute == 'Density':
+        return logmasslist,other_densities,mult_sys_count,sys_count
+    elif attribute == 'Mass Density':
+        return logmasslist,other_mass_densities,mult_sys_count,sys_count
+    elif attribute == 'Density Seperate':
+        return logmasslist,solo_densities,primary_densities,secondary_densities
+    elif attribute == 'Mass Density Seperate':
+        return logmasslist,solo_mass_densities,primary_mass_densities,secondary_mass_densities
+    else:
+        return None
+
 #Multiplicity Frequency over different masses with a selection ratio
 def multiplicity_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'continous'):
     '''
