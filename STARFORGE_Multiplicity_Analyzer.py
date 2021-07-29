@@ -3017,7 +3017,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     return multiplicity,bin_count,average_mass
 
 #This function tracks the evolution of different stars over their lifetime
-def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,zero = 'Consistent Mass',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
+def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.3,lower_limit = 0.7,zero = 'Formation',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
     '''
     The status of stars born in a certain time range tracked throughout their lifetime in the simulation.
 
@@ -3069,7 +3069,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
 
     zero: string,optional
     Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
-
+    
     Returns
     -------
     all_times: list of lists
@@ -3092,7 +3092,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
 
     kept:int
     The number of stars in the selected range
-
+    
     average_dens: int,float
     The average density in the selected range
     
