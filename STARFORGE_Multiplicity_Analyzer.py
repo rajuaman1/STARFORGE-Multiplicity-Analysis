@@ -184,12 +184,23 @@ def checkIfDuplicates(listOfElems):
         return False
     else:
         return True
+
 #This function finds the first snapshot that a star is in
 def first_snap_finder(ide,file):
     'Find the first snapshot where an id is present in the file.'
-    for i,j in enumerate(file):
-        if ide in j.id:
-            return i
+    if 'ProtoStellarAge' in file[-1].extra_data_labels:
+        last_age = file[-1].val('ProtoStellarAge')[file[-1].id == ide]
+        times = []
+        for i in range(len(file)):
+            times.append(file[i].t)
+        snap = closest(times,last_age,param = 'index')
+        for i in range(snap,len(file)):
+            if ide in file[i].id:
+                return i
+    else:
+        for i,j in enumerate(file):
+            if ide in j.id:
+                return i
 
 #This finds the first snapshot that a star is in a certain mass range
 def first_snap_mass_finder(ide,file,lower_limit,upper_limit):
