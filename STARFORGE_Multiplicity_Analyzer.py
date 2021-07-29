@@ -3155,9 +3155,6 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     is_primary_all = []
     time_all = []; status_all = []
     lengths = []
-    #plt.figure(figsize = (15,10))
-    #for t,s in zip(times,status):
-    #    plt.plot(t,s)
     for t,s in zip(times,status):
         time_all += t;status_all += s
         lengths.append(len(t))
@@ -3187,21 +3184,20 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.ylabel('Change in # of Target Mass Stars')
             plt.show()
             plt.figure()
-            plt.plot(age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)])
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],multiplicity_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
         else:
             plt.plot(age_bins_mean,multiplicity_in_bin)
         #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
         plt.ylim([-0.1,1.1])
         plt.xlabel('Age in Myrs')
         plt.ylabel('Average Multiplicity Fraction')
-        #plt.text(0.1,0.8,Files_key[n],transform = plt.gca().transAxes)
         plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
         #plt.legend()
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.show()
         plt.figure()
         if select_by_time == True:
-            plt.plot(age_bins_mean[age_bins_mean<(T-dt/2)],(counted_in_bin)[age_bins_mean<(T-dt/2)])
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],(counted_in_bin)[age_bins_mean<(times[-1]-(T+dt/2))])
         else:
             plt.plot(age_bins_mean,(counted_in_bin))
         plt.xlabel('Age in Myrs')
@@ -3209,7 +3205,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept,average_dens,average_mass_dens
+        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens
     #return age_bins_mean,multiplicity_in_bin
 
 #This function gives the multiplicity frequency at different ages
@@ -3318,7 +3314,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.ylabel('Change in # of Target Mass Stars')
             plt.show()
             plt.figure()
-            plt.plot(age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)])
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],multiplicity_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
         else:
             plt.plot(age_bins_mean,multiplicity_in_bin)
         #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
@@ -3332,7 +3328,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         plt.show()
         plt.figure()
         if select_by_time == True:
-            plt.plot(age_bins_mean[age_bins_mean<(T-dt/2)],(counted_in_bin)[age_bins_mean<(T-dt/2)])
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],(counted_in_bin)[age_bins_mean<(times[-1]-(T+dt/2))])
         else:
             plt.plot(age_bins_mean,(counted_in_bin))
         plt.xlabel('Age in Myrs')
@@ -3340,7 +3336,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean[age_bins_mean<(T-dt/2)],multiplicity_in_bin[age_bins_mean<(T-dt/2)],birth_times,kept,average_dens,average_mass_dens
+        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens
 
 def Orbital_Plot_2D(system,plot = True):
     '''Create an orbital plane projection plot of any system'''
