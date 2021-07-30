@@ -2305,6 +2305,7 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
     else:
         return None
 
+
 #Multiplicity Fraction over different masses with a selection ratio of companions
 def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_ratio = 0,attribute = 'Fraction',bins = 'continous'):
     '''
@@ -2337,7 +2338,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     logmasslist: list
     The list of masses in logspace.
 
-    Multiplicity_Fraction_List or Single & Primary & Companion_Fractions_List: list
+    Multiplicity_Fraction_List or Single & Primary & Companion_Fractions_List or Densities List(s): list
     The list of multiplicity fraction or the 3 lists of single,primary or companion fractions.
 
     mult_sys_count: int
@@ -2412,6 +2413,14 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     solo_mass_densities = np.zeros_like(logmasslist)
     other_densities = np.zeros_like(logmasslist)
     other_mass_densities = np.zeros_like(logmasslist)
+    dens_errors = np.zeros_like(logmasslist)
+    mass_dens_errors = np.zeros_like(logmasslist)
+    dens_prim_errors = np.zeros_like(logmasslist)
+    mass_dens_prim_errors = np.zeros_like(logmasslist)
+    dens_sec_errors = np.zeros_like(logmasslist)
+    mass_dens_sec_errors = np.zeros_like(logmasslist)
+    dens_solo_errors = np.zeros_like(logmasslist)
+    mass_dens_solo_errors = np.zeros_like(logmasslist)
     ind = np.digitize(np.log10(m),logmasslist)
     bins = [[]]*len(logmasslist)
     mass_dens_bins = [[]]*len(logmasslist)
@@ -2435,19 +2444,47 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         primary_mdens = 0
         secondary_mdens = 0
         solo_mdens = 0
+        #dens_errors[i] = np.std(dens_bins[i])
+        #mass_dens_errors[i] = np.std(mass_dens_bins[i])
+        all_dens_error = []
+        all_mdens_error = []
+        prim_dens_error = []
+        prim_mdens_error = []
+        sec_dens_error = []
+        sec_mdens_error = []
+        solo_dens_error = []
+        solo_mdens_error = []
         for j in range(len(bins[i])):
             if bins[i][j]==0:
                 solo_count = solo_count + 1
                 solo_dens += dens_bins[i][j]
                 solo_mdens += mass_dens_bins[i][j]
+                solo_dens_error.append(dens_bins[i][j])
+                solo_mdens_error.append(mass_dens_bins[i][j])
+                all_dens_error.append(dens_bins[i][j])
+                all_mdens_error.append(mass_dens_bins[i][j])
             elif bins[i][j] == 1:
                 primary_count = primary_count + 1
                 primary_dens += dens_bins[i][j]
                 primary_mdens += mass_dens_bins[i][j]
+                prim_dens_error.append(dens_bins[i][j])
+                prim_mdens_error.append(mass_dens_bins[i][j])
+                all_dens_error.append(dens_bins[i][j])
+                all_mdens_error.append(mass_dens_bins[i][j])
             else:
                 secondary_count = secondary_count + 1
                 secondary_dens += dens_bins[i][j]
                 secondary_mdens += mass_dens_bins[i][j]
+                sec_dens_error.append(dens_bins[i][j])
+                sec_mdens_error.append(mass_dens_bins[i][j])
+        dens_errors[i] = np.std(all_dens_error)
+        mass_dens_errors[i] = np.std(all_mdens_error)
+        dens_prim_errors[i] = np.std(prim_dens_error)
+        mass_dens_prim_errors[i] = np.std(prim_mdens_error)
+        dens_sec_errors[i] = np.std(sec_dens_error)
+        mass_dens_sec_errors[i] = np.std(sec_mdens_error)
+        dens_solo_errors[i] = np.std(solo_dens_error)
+        mass_dens_solo_errors[i] = np.std(solo_mdens_error)
         if len(bins[i])>0:
             primary_fraction[i] = primary_count/len(bins[i])
             single_fraction[i] = solo_count/len(bins[i])
@@ -2495,15 +2532,16 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     elif attribute == 'Properties':
         return logmasslist,single_fraction,primary_fraction,secondary_fraction
     elif attribute == 'Density':
-        return logmasslist,other_densities,mult_sys_count,sys_count
+        return logmasslist,other_densities,mass_dens_errors
     elif attribute == 'Mass Density':
-        return logmasslist,other_mass_densities,mult_sys_count,sys_count
+        return logmasslist,other_mass_densities,dens_errors
     elif attribute == 'Density Seperate':
-        return logmasslist,solo_densities,primary_densities,secondary_densities
+        return logmasslist,solo_densities,primary_densities,secondary_densities,dens_solo_errors,dens_prim_errors,dens_sec_errors,
     elif attribute == 'Mass Density Seperate':
-        return logmasslist,solo_mass_densities,primary_mass_densities,secondary_mass_densities
+        return logmasslist,solo_mass_densities,primary_mass_densities,secondary_mass_densities,mass_dens_solo_errors,mass_dens_prim_errors,mass_dens_sec_errors
     else:
         return None
+
 
 #Multiplicity Frequency over different masses with a selection ratio
 def multiplicity_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'continous'):
