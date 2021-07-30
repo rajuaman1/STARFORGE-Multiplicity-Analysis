@@ -2327,7 +2327,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     The minimum mass ratio of the companions.
 
     attribute: string,optional
-    The attribute that you want. Choose from 'Fraction'(Primary No/(Primary No+ Single No)),'All Companions'(Primary No/(Primary No+Single No+Companion Number), 'Properties','Initial Densities','Initial Mass Densities','Initial Densities Seperate','Initial Mass Densities Seperate'.
+    The attribute that you want. Choose from 'Fraction'(Primary No/(Primary No+ Single No)),'All Companions'(Primary No/(Primary No+Single No+Companion Number), 'Properties','Initial Densities','Initial Mass Densities','Initial Densities Separate','Initial Mass Densities Separate'.
 
     bins: string,optional
     The type of bins that you want. Choose from 'continous' (evenly spaced in log space) or 'observer' (Duchene Krauss bins).
@@ -2534,9 +2534,9 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         return logmasslist,other_densities,mass_dens_errors
     elif attribute == 'Mass Density':
         return logmasslist,other_mass_densities,dens_errors
-    elif attribute == 'Density Seperate':
+    elif attribute == 'Density Separate':
         return logmasslist,solo_densities,primary_densities,secondary_densities,dens_solo_errors,dens_prim_errors,dens_sec_errors,
-    elif attribute == 'Mass Density Seperate':
+    elif attribute == 'Mass Density Separate':
         return logmasslist,solo_mass_densities,primary_mass_densities,secondary_mass_densities,mass_dens_solo_errors,mass_dens_prim_errors,mass_dens_sec_errors
     else:
         return None
@@ -4377,7 +4377,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
         if file is None:
             print('Provide file')
             return
-        if multiplicity == 'Mass Density Seperate' or multiplicity == 'Density Seperate':
+        if multiplicity == 'Mass Density Separate' or multiplicity == 'Density Separate':
             logmasslist,o1,o2,o3,o4,o5,o6 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
         else:
             logmasslist,o1,o2 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
@@ -4422,7 +4422,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
         o1_filt = o1_filt/filter_snaps_no
         o2_filt = o2_filt/filter_snaps_no
         o3_filt = o3_filt/filter_snaps_no
-    if multiplicity == 'Properties' or multiplicity == 'Density Seperate' or multiplicity == 'Mass Density Seperate':
+    if multiplicity == 'Properties' or multiplicity == 'Density Separate' or multiplicity == 'Mass Density Separate':
         if plot == True:
             if multiplicity == 'Properties':
                 plt.plot(logmasslist,o1,marker = '*',label = 'Unbound Stars')
@@ -4443,9 +4443,9 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             plt.xlabel('Log Mass [$M_\odot$]')
             if multiplicity == 'Properties':
                 plt.ylabel('Fraction of All Stars')
-            elif multiplicity == 'Density Seperate':
+            elif multiplicity == 'Density Separate':
                 plt.ylabel(r'Number Density [$pc^{-3}$]')
-            elif multiplicity == 'Mass Density Seperate':
+            elif multiplicity == 'Mass Density Separate':
                 plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if filename is not None:
