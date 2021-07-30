@@ -4253,7 +4253,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             ax2.set_xticks(ax1Xs)
             ax2.set_xbound(ax1.get_xbound())
             ax2.set_xticklabels(ax2Xs)
-            if upper_limit == 1.2 and lower_limit == 0.8:
+            if upper_limit == 1.3 and lower_limit == 0.7:
                 periods = np.linspace(3.5,7.5,num = 5)
                 k = ((10**periods)*24*60*60)
                 smaxes3 = ((6.67e-11*(k**2)*average_pands)/(4*np.pi**2))
