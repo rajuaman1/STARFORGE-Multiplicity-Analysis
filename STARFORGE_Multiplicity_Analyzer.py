@@ -2305,7 +2305,6 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
     else:
         return None
 
-
 #Multiplicity Fraction over different masses with a selection ratio of companions
 def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_ratio = 0,attribute = 'Fraction',bins = 'continous'):
     '''
@@ -2541,7 +2540,6 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         return logmasslist,solo_mass_densities,primary_mass_densities,secondary_mass_densities,mass_dens_solo_errors,mass_dens_prim_errors,mass_dens_sec_errors
     else:
         return None
-
 
 #Multiplicity Frequency over different masses with a selection ratio
 def multiplicity_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'continous'):
@@ -3978,10 +3976,10 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     number_densities = []
     mass_densities = []
     times = []
-    for i in range(len(file[-1].m)):
-        if lower_limit<=file[-1].m[i]<=upper_limit:
-            number_density,formation_time = initial_local_density(file[-1].id[i],file,density = 'number')
-            mass_density,formation_time = initial_local_density(file[-1].id[i],file,density = 'mass')
+    for i in range(len(Master_File[-1])):
+        if lower_limit<=Master_File[-1][i].primary<=upper_limit:
+            number_density,formation_time = initial_local_density(Master_File[-1][i].primary_id,file,density = 'number')
+            mass_density,formation_time = initial_local_density(Master_File[-1][i].primary_id,file,density = 'mass')
             number_densities.append(number_density);times.append(formation_time);mass_densities.append(mass_density)
     the_times,the_number_densities,the_errors = density_evolution(number_densities,times,filename = filename,plot = False)
     the_times,the_mass_densities,the_errors = density_evolution(mass_densities,times,filename = filename,plot = False)
