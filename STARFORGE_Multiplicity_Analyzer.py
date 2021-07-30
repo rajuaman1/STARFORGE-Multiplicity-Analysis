@@ -5108,12 +5108,14 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
         plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
         plt.legend()
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
         plt.figure()
         for i in range(len(Files)):
             plt.plot(times[i],nos[i],label = Filenames[i])
         plt.ylabel('Number of YSOs')
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.legend()
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
         plt.figure()
         for i in range(len(Files)):
             plt.plot(times[i],avg_mass[i],label = Filenames[i])
