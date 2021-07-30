@@ -4292,7 +4292,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.show()
 
-def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
+def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
@@ -4371,8 +4371,16 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filen
         print('Please use the string "observer" or "continous" as the bins')
     if multiplicity == 'Frequency':
         logmasslist,o1,o2,o3 = multiplicity_frequency(systems,mass_break=mass_break,bins = bins)
-    else:
+    elif multiplicity == 'Properties' or multiplicity == 'Fraction':
         logmasslist,o1,o2,o3 = multiplicity_fraction(systems,attribute=multiplicity,mass_break=mass_break,bins = bins)
+    else:
+        if file is None:
+            print('Provide file')
+            return
+        if multiplicity == 'Mass Density Seperate' or multiplicity == 'Density Seperate':
+            logmasslist,o1,o2,o3,o4,o5,o6 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
+        else:
+            logmasslist,o1,o2 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
     if filtered is True:
         if snapshot is None:
             print('Please provide snapshot')
@@ -4414,18 +4422,31 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filen
         o1_filt = o1_filt/filter_snaps_no
         o2_filt = o2_filt/filter_snaps_no
         o3_filt = o3_filt/filter_snaps_no
-    if multiplicity == 'Properties':
+    if multiplicity == 'Properties' or multiplicity == 'Density Seperate' or multiplicity == 'Mass Density Seperate':
         if plot == True:
-            plt.plot(logmasslist,o1,marker = '*',label = 'Primary Stars')
-            plt.plot(logmasslist,o2,marker = 'o', label = 'Unbound Stars')
-            plt.plot(logmasslist,o3,marker = '^',label = 'Non-Primary Stars')
+            if multiplicity == 'Properties':
+                plt.plot(logmasslist,o1,marker = '*',label = 'Unbound Stars')
+                plt.plot(logmasslist,o2,marker = 'o', label = 'Primary Stars')
+                plt.plot(logmasslist,o3,marker = '^',label = 'Non-Primary Stars')
+            else:
+                plt.plot(logmasslist,np.log10(o1),marker = '*',label = 'Unbound Stars')
+                plt.fill_between(logmasslist,np.log10(o1+o4),np.log10(o1)-(np.log10(o1+o4)-np.log10(o1)),alpha = 0.3)
+                plt.plot(logmasslist,np.log10(o2),marker = 'o', label = 'Primary Stars')
+                plt.fill_between(logmasslist,np.log10(o2+o5),np.log10(o2)-(np.log10(o2+o5)-np.log10(o2)),alpha = 0.3)
+                plt.plot(logmasslist,np.log10(o3),marker = '^',label = 'Non-Primary Stars')
+                plt.fill_between(logmasslist,np.log10(o3+o6),np.log10(o3)-(np.log10(o3+o6)-np.log10(o3)),alpha = 0.3)
             if filtered is True:
                 plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-Primary Stars Filt',linestyle = ':')
             plt.legend()
             plt.xlabel('Log Mass [$M_\odot$]')
-            plt.ylabel('Fraction of All Stars')
+            if multiplicity == 'Properties':
+                plt.ylabel('Fraction of All Stars')
+            elif multiplicity == 'Density Seperate':
+                plt.ylabel(r'Number Density [$pc^{-3}$]')
+            elif multiplicity == 'Mass Density Seperate':
+                plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if filename is not None:
                 plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
@@ -4435,34 +4456,45 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filen
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3
-    if multiplicity == 'Fraction':
+    if multiplicity == 'Fraction' or multiplicity == 'Density' or multiplicity == 'Mass Density':
         if plot == True:
             if bins == 'continous':
                 plt.plot(logmasslist,o1,marker = '^',label = 'Raw Data')
                 if filtered is True:
                     plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             elif bins == 'observer':
-                for i in range(len(logmasslist)-1):
-                    if o3[i]>10 and o2[i]>0 and o2[i]<o3[i]:
-                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+sigmabinom(o3[i],o2[i]),o1[i]-sigmabinom(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                    else:
-                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                if filtered is True:
-                    for i in range(len(logmasslist_filt)-1):
-                        if o3_filt[i]>10 and o2_filt[i]>0 and o2_filt[i]<o3_filt[i]:
-                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+sigmabinom(o3_filt[i],o2_filt[i]),o1_filt[i]-sigmabinom(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                if multiplicity == 'Fraction':
+                    for i in range(len(logmasslist)-1):
+                        if o3[i]>10 and o2[i]>0 and o2[i]<o3[i]:
+                            plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+sigmabinom(o3[i],o2[i]),o1[i]-sigmabinom(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
                         else:
-                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                            plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
+                    if filtered is True:
+                        for i in range(len(logmasslist_filt)-1):
+                            if o3_filt[i]>10 and o2_filt[i]>0 and o2_filt[i]<o3_filt[i]:
+                                plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+sigmabinom(o3_filt[i],o2_filt[i]),o1_filt[i]-sigmabinom(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                            else:
+                                plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                else:
+                    plt.plot(logmasslist,np.log10(o1),marker = '^')
+                    plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
+                    if filtered is True:
+                        plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
             error_bins = [0.1,0.3,1.0,3.25,12,16]
             plt.xlabel('Log Mass [$M_\odot$]')
-            plt.ylabel('Multiplicity Fraction')
-            plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
-            plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
+            if multiplicity == 'Fraction':
+                plt.ylabel('Multiplicity Fraction')
+                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
+                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
+            elif multiplicity == 'Density':
+                plt.ylabel(r'Number Density [$pc^{-3}$]')
+            elif multiplicity == 'Mass Density':
+                plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if filename is not None:
                 plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
@@ -4472,7 +4504,8 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,snapshot = None,filen
             if filtered == True:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
-            plt.legend(handles = handles)
+            if multiplicity == 'Fraction':
+                plt.legend(handles = handles)
             plt.show()
         else:
             if filtered == True:
