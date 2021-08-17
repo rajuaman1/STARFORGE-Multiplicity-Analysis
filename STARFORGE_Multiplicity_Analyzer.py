@@ -4859,7 +4859,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,target_mass
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window_Myr)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,stars_to_include  = 'consistent mass',rolling_avg=False,rolling_window_Myr=0.1):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,bins = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,stars_to_include = 'consistent mass',rolling_avg=False,rolling_window_Myr=0.1):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -4884,6 +4884,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
 
     log: bool,optional
     Whether to plot the y data on a log scale.
+    
+    bins: int,string,optional
+    The bins to use for the distributions. It has defaults for all the plots so it is optional.
 
     upper_limit: int,float,optional
     The upper mass limit of the primaries of systems of interest.
@@ -4909,7 +4912,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     norm_no: int,optional:
     The number of systems to normalize to.
 
-    stars_to_include :str,optional:
+    stars_to_include:str,optional:
     Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
     
     rolling_avg: bool,optional:
@@ -4928,30 +4931,34 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     x = []
     y = []
     if which_plot == 'System Mass':
-        bins = np.linspace(-1,3,8)
+        if bins is not None:
+            bins = np.linspace(-1,3,8)
         plt.xlabel('Log System Mass [$M_\odot$]')
         plt.ylabel('Number of Systems')
     if which_plot == 'Primary Mass':
-        bins = np.linspace(-1,3,8)
+        if bins is not None:
+            bins = np.linspace(-1,3,8)
         plt.xlabel('Log Primary Mass [$M_\odot$]')
         plt.ylabel('Number of Systems')
     if which_plot == 'Mass Ratio':
-        bins = np.linspace(0,1,11)
+        if bins is not None:
+            bins = np.linspace(0,1,11)
         plt.xlabel('q (Companion Mass Ratio)')
         plt.ylabel('Number of Systems')
         if all_companions is True:
             plt.ylabel('Number of Companions')
     if which_plot == 'Multiplicity':
-        bins = 'observer'
+        if bins is not None:
+            bins = 'observer'
+        error = []
         plt.xlabel('Log Mass [$M_\odot$]')
         if multiplicity == 'Fraction':
             plt.ylabel('Multiplicity Fraction')
         if multiplicity == 'Frequency':
             plt.ylabel('Multiplicity Frequency')
     if which_plot == 'Semi Major Axis':
-        bins = np.linspace(-1,7,13)
-    if which_plot == 'Multiplicity':
-        error = []
+        if bins is not None:
+            bins = np.linspace(-1,7,13)
     times = []
     fractions = []
     cons_fracs = []
@@ -4960,7 +4967,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     og_rolling_window_Myr = copy.copy(rolling_window_Myr)
     for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
         if which_plot == 'Multiplicity':
-            a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+            a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,Master_File = Systems[i])
             comp_mul_no = c
             sys_no = d
             error_one = []
@@ -5014,7 +5021,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             nos.append(no)
             avg_mass.append(am)
         else:
-            a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+            a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,Master_File = Systems[i])
             if normalized == True:
                 b = b*norm_no/sum(b)
             x.append(a)
@@ -5083,9 +5090,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         plt.legend()
     elif which_plot == 'Multiplicity Time Evolution':
         for i in range(len(Files)):
-            if stars_to_include  == 'consistent mass':
+            if stars_to_include == 'consistent mass':
                 plt.plot(times[i],cons_fracs[i],label = Filenames[i])
-            elif stars_to_include  == 'all':
+            elif stars_to_include == 'all':
                 plt.plot(times[i],fractions[i],label = Filenames[i])
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         if multiplicity == 'Fraction':
