@@ -4859,7 +4859,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,target_mass
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window_Myr)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window_Myr=0.1):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,stars_to_include  = 'consistent mass',rolling_avg=False,rolling_window_Myr=0.1):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -4909,7 +4909,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     norm_no: int,optional:
     The number of systems to normalize to.
 
-    time_plot:str,optional:
+    stars_to_include :str,optional:
     Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
     
     rolling_avg: bool,optional:
@@ -5083,9 +5083,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         plt.legend()
     elif which_plot == 'Multiplicity Time Evolution':
         for i in range(len(Files)):
-            if time_plot == 'consistent mass':
+            if stars_to_include  == 'consistent mass':
                 plt.plot(times[i],cons_fracs[i],label = Filenames[i])
-            elif time_plot == 'all':
+            elif stars_to_include  == 'all':
                 plt.plot(times[i],fractions[i],label = Filenames[i])
         plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         if multiplicity == 'Fraction':
