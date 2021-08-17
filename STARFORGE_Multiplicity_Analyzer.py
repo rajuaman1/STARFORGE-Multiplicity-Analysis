@@ -4736,7 +4736,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window = 0.1): 
+def Plots(which_plot,systems,file,filename = None,Master_File = None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window = 0.1): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -4756,9 +4756,6 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
 
     Master_File: list of lists of star system objects
     The entire simulation with system assignment. Only required for time evolution plots and filter on.
-
-    snapshot: int,float
-    The snapshot number you want to look at. Only required for IMF comparisons and filter on.
 
     Parameters
     ----------
@@ -4843,6 +4840,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     weights:list
     The weights of each bin
     '''
+    snapshot = systems[0].snapshot_num
     One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Mass Ratio','Semi Major Axis vs q']
     Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','YSO Multiplicity']
     if which_plot in One_System_Plots:
