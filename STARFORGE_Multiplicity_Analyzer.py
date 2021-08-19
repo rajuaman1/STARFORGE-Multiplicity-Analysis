@@ -1029,7 +1029,7 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
 
     '''
     if read_in_result == True:
-        infile = open(file_name+str('_Systems.pickle'),'rb')
+        infile = open(file_name+str('_Systems'),'rb')
         Master_File = pickle.load(infile)
         infile.close()
         return Master_File #Simply opening the pickle file
