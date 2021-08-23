@@ -19,7 +19,7 @@ from scipy import stats, optimize
 from sys import exit
 
 #Convert the simulation time to Myrs
-time_to_Myr = 978.461942384
+code_time_to_Myr = 978.461942384
 
 #Convert AU to m (divide by this if you have a result in m)
 m_to_AU = 149597870700.0
@@ -34,7 +34,7 @@ pc_to_m = 3.08567758e16
 G = 6.67e-11
 
 #Solar Mass to kg
-sm_to_kg = 1.9891e30
+msun_to_kg = 1.9891e30
 
 #List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
@@ -67,13 +67,13 @@ def rolling_average(List,rolling_window = 10):
 
 def snaps_to_time(n,file):
     '''Convert snapshots into time'''
-    time_per_snap = (file[1].t-file[0].t)*time_to_Myr
+    time_per_snap = (file[1].t-file[0].t)*code_time_to_Myr
     total_time = time_per_snap*n
     return total_time
 
 def time_to_snaps(time,file):
     '''Convert a time into number of snapshots'''
-    time_per_snap = (file[1].t-file[0].t)*time_to_Myr
+    time_per_snap = (file[1].t-file[0].t)*code_time_to_Myr
     no_of_snaps = (time/time_per_snap).round(0)
     return no_of_snaps
 
@@ -270,7 +270,7 @@ def load_files(filenames,brown_dwarfs = False):
 def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
     'Calculate the Binding Energy (in J) from given masses,positions and velocities. If using a box file, provide the lengths to modify it.'
     mu = (m1*m2)/(m1+m2)
-    KE = sm_to_kg * 0.5 * ((v1[0]-v2[0])**2+(v1[1]-v2[1])**2 +(v1[2]-v2[2])**2) * mu
+    KE = msun_to_kg * 0.5 * ((v1[0]-v2[0])**2+(v1[1]-v2[1])**2 +(v1[2]-v2[2])**2) * mu
     dx = x1[0]-x2[0];dy = x1[1]-x2[1];dz = x1[2]-x2[2]
     #If the edge is periodic, we replace the long distance with the short distance in 1D.
     if periodic_edge is True:
@@ -280,7 +280,7 @@ def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,L
             dy = Ly - dy
         if dz > Lz/2:
             dz = Lz - dz
-    PE = (sm_to_kg**2*G*(m1+m2)*mu)/(pc_to_m*np.sqrt(dx**2+dy**2+dz**2))
+    PE = (msun_to_kg**2*G*(m1+m2)*mu)/(pc_to_m*np.sqrt(dx**2+dy**2+dz**2))
     E = KE - PE
     return E
 
@@ -813,9 +813,9 @@ class star_system:
             vel_sec = self.v[sec_ind]
             x_sec = self.x[sec_ind]
             binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-            mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+            mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
             eps = binding_energy/mu
-            mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
+            mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
             self.smaxis = - (mu2/(2*eps))
         else:
             self.smaxis = 0
@@ -1175,7 +1175,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
     return system
 
 def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
-    if file[selected_snap].t*time_to_Myr<long_ago:
+    if file[selected_snap].t*code_time_to_Myr<long_ago:
         #We cant look at a snapshot before 0.5 Myr 
         print('The selected snapshot is too early to use')
         return np.nan
@@ -1184,8 +1184,8 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
     times = []
     Filtered_Master_File = copy.deepcopy(Master_File)
     for i in tqdm(file,desc = 'Times'):
-        times.append(i.t*time_to_Myr)
-    snap_3 = closest(times,file[selected_snap].t*time_to_Myr - long_ago,param = 'index')
+        times.append(i.t*code_time_to_Myr)
+    snap_3 = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
     
     
     for system_no,system in enumerate(tqdm(Filtered_Master_File[selected_snap],desc = 'Simple Filter Loop',position = 0)):
@@ -1242,7 +1242,7 @@ def initial_local_density(ID,file,distance = 0.5,density = 'number'):
                 dens+= 1
             elif density == 'mass':
                 dens+= file[first_snap].m[i]
-    return dens/distance,file[first_snap].t*time_to_Myr
+    return dens/distance,file[first_snap].t*code_time_to_Myr
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
@@ -1301,7 +1301,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         new = len(i.m[(lower_limit<=i.m) & (upper_limit>=i.m)])
         no_new_stars.append(new-previous)
         previous = new
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
         no_of_stars.append(new)
     if all_stars == False:
         if plot == True and time == True:
@@ -1383,18 +1383,18 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
         for i in range(len(systems[-1])):
             this_mass = systems[-1][i].primary
             if lower_limit<=this_mass<=upper_limit:
-                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == systems[-1][i].primary_id][0]*time_to_Myr
+                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == systems[-1][i].primary_id][0]*code_time_to_Myr
                 birth_times.append(birth_time)
     else:
         for i in range(len(file[-1].m)):
             this_id = file[-1].id[i]
             this_mass = file[-1].m[i]
             if lower_limit<=this_mass<=upper_limit:
-                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == this_id][0]*time_to_Myr
+                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == this_id][0]*code_time_to_Myr
                 birth_times.append(birth_time)
     times = []
     for i in file:
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
     birth_times = np.array(birth_times)
     times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
     times = np.array(times)
@@ -1450,14 +1450,14 @@ def star_formation_rate(file,plot = True,time = True,filename = None,time_norm =
     2) star_formation_rate(M2e4_C_M_2e7,time = True,rolling_avg = True,rolling_window_Myr = 10)
     Plotting the star formation rate over a rolling window.
     '''
-    time_step = (file[-1].t - file[-2].t)*time_to_Myr
+    time_step = (file[-1].t - file[-2].t)*code_time_to_Myr
     SFR = []
     times = []
     rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
     for i in range(1,len(file)):
-        current_time = file[i].t*time_to_Myr
+        current_time = file[i].t*code_time_to_Myr
         current_mass = sum(file[i].m)
-        previous_time = file[i-1].t*time_to_Myr
+        previous_time = file[i-1].t*code_time_to_Myr
         previous_mass = sum(file[i-1].m)
         dm = current_mass - previous_mass
         dt = current_time - previous_time
@@ -1496,12 +1496,12 @@ def average_star_age(file,plot = True,time = True,rolling_avg = True,rolling_win
     times = []
     rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
     for i in file:
-        current_time = i.t*time_to_Myr
+        current_time = i.t*code_time_to_Myr
         ages = copy.copy(i.formation_time)
-        ages = (current_time - ages*time_to_Myr)
+        ages = (current_time - ages*code_time_to_Myr)
         average_age = np.average(ages)
         average_ages.append(average_age)
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
     if plot ==True:
         if rolling_avg is False:
             plt.plot(times,average_ages)
@@ -1937,9 +1937,9 @@ def smaxis(system):
     vel_prim = list(flatten(vel_prim))
     vel_sec= list(flatten(vel_sec))
     binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
     eps = binding_energy/mu
-    mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
+    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
     smaxis = - (mu2/(2*eps))
     if isinstance(smaxis,np.ndarray):
         smaxis = smaxis[0]
@@ -1952,9 +1952,9 @@ def semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec):
     vel_prim = list(flatten(vel_prim))
     vel_sec= list(flatten(vel_sec))
     binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = sm_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
     eps = binding_energy/mu
-    mu2 = sm_to_kg*G*(primary_mass+secondary_mass)
+    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
     semiax = - (mu2/(2*eps))
     if isinstance(semiax,np.ndarray):
         semiax = semiax[0]
@@ -3009,13 +3009,13 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
             age = 0
             for Id in j.ids:
                 if form[k] == -1:
-                    age = (current_time-file[k].val('ProtoStellarAge')[file[k].id == Id])*time_to_Myr
+                    age = (current_time-file[k].val('ProtoStellarAge')[file[k].id == Id])*code_time_to_Myr
                     if min_age<=age<=target_age:
                         age_checker += 1
                 elif form[k] == 1:
                     first_snap = first_snap_finder(Id,file)
                     form_time = file[first_snap].formation_time[file[first_snap].id == Id]
-                    age = (current_time - form_time)*time_to_Myr
+                    age = (current_time - form_time)*code_time_to_Myr
                     if min_age<=age<=target_age:
                         age_checker += 1
             semaxis = smaxis(j)/m_to_AU
@@ -3136,15 +3136,15 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         if lower_limit<=i.primary<=upper_limit and i.no>1:
             consistent_solar_mass.append(i.primary_id)  
             first_snap = first_snap_finder(i.primary_id,file)
-            birth_time = file[first_snap].t*time_to_Myr
+            birth_time = file[first_snap].t*code_time_to_Myr
             birth_times.append(birth_time)
         elif i.no==1 and lower_limit<=i.m[0]<=upper_limit:
             consistent_solar_mass.append(i.ids)
             first_snap = first_snap_finder(i.primary_id,file)
-            birth_time = file[first_snap].t*time_to_Myr
+            birth_time = file[first_snap].t*code_time_to_Myr
             birth_times.append(birth_time)
     if select_by_time == True:
-        Tend = file[-1].t*time_to_Myr
+        Tend = file[-1].t*code_time_to_Myr
         kicked = 0 
         kept = 0
         og = len(consistent_solar_mass)
@@ -3154,7 +3154,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         for i in tqdm(copy,desc = 'Selecting By Maturity Time',position=0):
             first_snap = first_snap_finder(i,file)
             birth_time = file[first_snap].t
-            if birth_time*time_to_Myr>T+dt/2 or birth_time*time_to_Myr<T-dt/2:
+            if birth_time*code_time_to_Myr>T+dt/2 or birth_time*code_time_to_Myr<T-dt/2:
                 consistent_solar_mass.remove(i)
                 kicked += 1
             else:
@@ -3181,12 +3181,12 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             first_snap = first_snap_finder(i,file)
         first_snaps.append(first_snap)
         birth_time = file[first_snap].t
-        maturity_times.append(birth_time*time_to_Myr)
+        maturity_times.append(birth_time*code_time_to_Myr)
         times = []
         status = []
         for j in file:
             if j.t-birth_time>= 0:
-                times.append((j.t-birth_time)*time_to_Myr)
+                times.append((j.t-birth_time)*code_time_to_Myr)
         all_times.append(times)
         time_array = np.array(times)
         time_short.append(list((time_array[1:]+time_array[:-1])/2))
@@ -3386,7 +3386,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     age_bins_mean = (age_bins[1:] + age_bins[:-1])/2
     times = []
     for i in file:
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
     if plot == True:
         if select_by_time == True:
             plt.figure()
@@ -3516,7 +3516,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     age_bins_mean = (age_bins[1:] + age_bins[:-1])/2
     times = []
     for i in file:
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
     if plot == True:
         if select_by_time == True:
             plt.figure()
@@ -3682,7 +3682,7 @@ def smaxis_tracker(file,Master_File,system_ids,plot = True,KE_tracker = False):
     f_tracks = []
     for i in range(len(Master_File)):
         marker = 0
-        times.append(file[i].t*time_to_Myr)
+        times.append(file[i].t*code_time_to_Myr)
         for j in Master_File[i]:
             if(set(system_ids).issubset(set(j.ids))):
                 smaxes.append(np.log10(smaxis(j)/m_to_AU))
@@ -3932,11 +3932,11 @@ def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.
     #Creating a plot of formation times
     times = []
     for i in file:
-        times.append(i.t*time_to_Myr)
+        times.append(i.t*code_time_to_Myr)
     birth_times = np.array(birth_times)
     if min(dt_list)<min_time_bin:
         min_time_bin = min(dt_list)
-    if min_time_bin < (file[-1].t-file[-2].t)*time_to_Myr:
+    if min_time_bin < (file[-1].t-file[-2].t)*code_time_to_Myr:
         min_time_bin = len(times)
     times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
     times = np.array(times)
@@ -4661,9 +4661,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         times = []
         prop_times = []
         start_snap = Mass_Creation_Finder(file,min_mass = 0)
-        start_time = file[start_snap].t*time_to_Myr
+        start_time = file[start_snap].t*code_time_to_Myr
         for i in range(len(file)):
-            times.append(file[i].t*time_to_Myr - start_time)
+            times.append(file[i].t*code_time_to_Myr - start_time)
         for i in range(len(file)):
             prop_times.append(file[i].t)
         end_snap = closest(prop_times,prop_times[-1]-target_age,param = 'index')
