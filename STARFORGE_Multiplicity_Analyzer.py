@@ -3852,7 +3852,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2):
+def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3896,6 +3896,12 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     steps: int,optional
     The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
     
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    adaptive_no: int,optional
+    The number of stars in each bin
+    
     Returns
     -------
     age_bins: array
@@ -3909,6 +3915,24 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
     '''  
     #In case there's no target mass
+    if adaptive_binning is True:
+        form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
+        form_times = np.sort(form_times)
+        indices = np.array(range(0,len(form_times),adaptive_no))
+        #indices = indices - 1
+        #indices[0] = 0
+        print(indices)
+        #adaptive_times = [0]
+        adaptive_times = []
+        for i in range(len(form_times)):
+            if i in indices:
+                adaptive_times.append(form_times[i])
+        adaptive_times = np.array(adaptive_times)
+        T_list = np.zeros(len(adaptive_times)-1)
+        dt_list = np.zeros_like(T_list)
+        for i in range(0,len(adaptive_times)-1):
+            T_list[i] = (adaptive_times[i]+adaptive_times[i+1])/2 
+            dt_list[i] = (-T_list[i]+adaptive_times[i+1])*2
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     time_list = []
@@ -3919,6 +3943,9 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     final_mul_list = []
     max_time = file[-1].t*time_to_Myr
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    print(form_times)
+    print(T_list)
+    print(dt_list)
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
             time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
@@ -3944,7 +3971,7 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i].round(1))+', dt = '+str(dt_list[i].round(1)))
     plt.legend()
     if filename is not None:
         plt.text(max(times)/2,max(new_stars_co),filename)
@@ -3994,7 +4021,6 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     plt.errorbar(T_list,np.log10(mass_dens_list),xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
     plt.xlabel('Formation Time [Myr]')
     plt.ylabel(r'Log Formation Density [$\frac{M_\odot}{pc^{3}}$]')
-
 
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
