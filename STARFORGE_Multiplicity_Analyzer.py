@@ -3919,10 +3919,6 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
         form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
         form_times = np.sort(form_times)
         indices = np.array(range(0,len(form_times),adaptive_no))
-        #indices = indices - 1
-        #indices[0] = 0
-        print(indices)
-        #adaptive_times = [0]
         adaptive_times = []
         for i in range(len(form_times)):
             if i in indices:
@@ -3943,9 +3939,6 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     final_mul_list = []
     max_time = file[-1].t*time_to_Myr
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    print(form_times)
-    print(T_list)
-    print(dt_list)
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
             time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
