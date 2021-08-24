@@ -3847,6 +3847,150 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
+def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2):
+    '''
+    The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
+
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
+
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
+
+    Parameters
+    ----------
+    T : list,optional
+    The time that the stars are born at.
+
+    dt :list,optional
+    The tolerance of the birth time.
+
+    target_mass: int,float,optional
+    The target mass of primary to look at
+
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
+
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
+
+    read_in_result: bool,optional
+    Whether to perform system assignment or use the already assigned system.
+
+    select_by_time: bool,optional:
+    Whether to track all stars or only those in a time frame.
+
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+
+    plot: bool,optional
+    Whether to return the times and multiplicities or plot them.
+
+    steps: int,optional
+    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    
+    Returns
+    -------
+    age_bins: array
+    The age over which the stars are in.
+
+    multiplicity: array
+    The average multiplicity fraction of the objects in the bins.
+
+    Example
+    -------
+    multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    '''  
+    #In case there's no target mass
+    if target_mass is None:
+        target_mass = (upper_limit+lower_limit)/2
+    time_list = []
+    mul_list = []
+    kept_list = []
+    dens_list = []
+    mass_dens_list = []
+    final_mul_list = []
+    max_time = file[-1].t*time_to_Myr
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    for i in range(len(T_list)):
+        if multiplicity == 'Fraction':
+            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+        elif multiplicity == 'Frequency':
+            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+        time_list.append(time)
+        mul_list.append(mul)
+        final_mul_list.append(mul[time<(max_time-T_list[i]-dt_list[i]/2)][-1])
+        kept_list.append(kept)
+        dens_list.append(average_dens)
+        mass_dens_list.append(average_mass_dens)
+    #Creating a plot of formation times
+    times = []
+    for i in file:
+        times.append(i.t*time_to_Myr)
+    birth_times = np.array(birth_times)
+    if min(dt_list)<min_time_bin:
+        min_time_bin = min(dt_list)
+    if min_time_bin < (file[-1].t-file[-2].t)*time_to_Myr:
+        min_time_bin = len(times)
+    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
+    times = np.array(times)
+    new_stars_co = np.insert(new_stars_co,0,0)
+    plt.step(times,new_stars_co)
+    for i in range(len(T_list)):
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i])+', dt = '+str(dt_list[i]))
+    plt.legend()
+    if filename is not None:
+        plt.text(max(times)/2,max(new_stars_co),filename)
+    plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
+    plt.xlabel('Time [Myr]')
+    plt.ylabel('Number of New Stars')
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    
+    #Plotting the multiplicity over age
+    plt.figure(figsize = (10,10))
+    #plt.plot(T_list,final_mul_list)
+    plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
+    plt.xlabel('Formation Time [Myr]')
+    plt.ylabel('Multiplicity '+str(multiplicity))
+    if multiplicity == 'Fraction':
+        plt.ylim([-0.05,1.05])
+    elif multiplicity == 'Frequency':
+        plt.ylim([-0.05,3.05])
+    if target_mass == 1:
+        if multiplicity == 'Fraction':
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+        elif multiplicity == 'Frequency':
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+    elif target_mass == 10:
+        if multiplicity == 'Fraction':
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+        elif multiplicity == 'Frequency':
+            plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+    plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
+    if filename is not None:
+        plt.text(max(T_list)*0.9,0.5,filename)
+    plt.legend()
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    
+    
+    plt.figure(figsize = (10,10))
+    plt.errorbar(T_list,kept_list,xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
+    plt.xlabel('Formation Time [Myr]')
+    plt.ylabel('Number of Stars')
+        
+    plt.figure(figsize = (10,10))
+    plt.errorbar(T_list,np.log10(dens_list),xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
+    plt.xlabel('Formation Time [Myr]')
+    plt.ylabel(r'Log Formation Density [$pc^{-3}$]')
+    
+    plt.figure(figsize = (10,10))
+    plt.errorbar(T_list,np.log10(mass_dens_list),xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
+    plt.xlabel('Formation Time [Myr]')
+    plt.ylabel(r'Log Formation Density [$\frac{M_\odot}{pc^{3}}$]')
+
+
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
