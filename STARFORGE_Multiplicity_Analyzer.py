@@ -1332,7 +1332,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
-def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2,only_primaries_and_singles = False):
+def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2,only_primaries_and_singles = False,full_form_times = False):
     '''
     Create or return a histogram of the formation times of stars in the given mass range.
     
@@ -1360,6 +1360,9 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     
     plot:bool,opt
     Whether to plot or return the data.
+    
+    full_form_times:bool,opt
+    Whether to return all the formation times of all stars
 
     Returns
     -------
@@ -1399,6 +1402,8 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
     times = np.array(times)
     new_stars_co = np.insert(new_stars_co,0,0)
+    if full_form_times is True:
+        return birth_times
     if plot == True:
         plt.step(times,new_stars_co)
         if filename is not None:
@@ -3538,7 +3543,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
         plt.ylim([-0.1,1.1])
         plt.xlabel('Age in Myrs')
-        plt.ylabel('Average Multiplicity Fraction')
+        plt.ylabel('Companion Frequency')
         #plt.text(0.1,0.8,Files_key[n],transform = plt.gca().transAxes)
         plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
         #plt.legend()
