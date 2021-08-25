@@ -3558,7 +3558,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens
+        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
 
 def Orbital_Plot_2D(system,plot = True):
     '''Create an orbital plane projection plot of any system'''
