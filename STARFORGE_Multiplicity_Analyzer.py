@@ -3936,19 +3936,23 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     dens_list = []
     mass_dens_list = []
     final_mul_list = []
+    comp_list = []
+    all_list = []
     max_time = file[-1].t*time_to_Myr
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     for i in range(len(T_list)):
         if multiplicity == 'Fraction':
-            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         elif multiplicity == 'Frequency':
-            time,mul,birth_times,kept,average_dens,average_mass_dens = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
         mul_list.append(mul)
         final_mul_list.append(mul[time<(max_time-T_list[i]-dt_list[i]/2)][-1])
         kept_list.append(kept)
         dens_list.append(average_dens)
         mass_dens_list.append(average_mass_dens)
+        comp_list.append(comp_count)
+        all_list.append(all_count)
     #Creating a plot of formation times
     times = []
     for i in file:
@@ -3975,7 +3979,26 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     #Plotting the multiplicity over age
     plt.figure(figsize = (10,10))
     #plt.plot(T_list,final_mul_list)
-    plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
+    
+    comp_list = np.array(comp_list)
+    all_list = np.array(all_list)
+    yerr = []
+    for i in range(len(comp_list)):
+        if multiplicity == 'Fraction':
+            if all_list[i]>10 and comp_list[i]>0 and comp_list[i]<all_list[i]:
+                yerr.append(sigmabinom(all_list[i],comp_list[i]))
+            else:
+                yerr.append(Psigma(all_list[i],comp_list[i]))
+        if multiplicity == 'Frequency':
+            if all_list[i]>10 and comp_list[i]>0 and comp_list[i]<all_list[i]:
+                yerr.append(sigmabinom(all_list[i],comp_list[i]))
+            else:
+                yerr.append(Lsigma(all_list[i],comp_list[i]))
+    yerr = np.array(yerr)
+    final_mul_list = np.array(final_mul_list)
+    plt.plot(T_list,final_mul_list)
+    plt.fill_between(T_list,final_mul_list+yerr,final_mul_list-yerr,alpha = 0.3)
+    #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
     plt.xlabel('Formation Time [Myr]')
     plt.ylabel('Multiplicity '+str(multiplicity))
     if multiplicity == 'Fraction':
