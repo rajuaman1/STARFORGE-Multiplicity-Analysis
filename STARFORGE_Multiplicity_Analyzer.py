@@ -1485,7 +1485,7 @@ def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,t
         for i in range(len(systems[-1])):
             this_mass = systems[-1][i].primary
             if lower_limit<=this_mass<=upper_limit:
-                birth_density = np.log10(initial_local_density(systems[-1][i].primary,file,density = density)[0])
+                birth_density = np.log10(initial_local_density(systems[-1][i].primary_id,file,density = density)[0])
                 birth_densities.append(birth_density)
     else:
         for i in range(len(file[-1].m)):
