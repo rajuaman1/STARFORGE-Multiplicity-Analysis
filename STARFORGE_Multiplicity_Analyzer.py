@@ -3851,7 +3851,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20):
+def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time'):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3900,6 +3900,9 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     
     adaptive_no: int,optional
     The number of stars in each bin
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
     
     Returns
     -------
@@ -3996,10 +3999,22 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
                 yerr.append(Lsigma(all_list[i],comp_list[i]))
     yerr = np.array(yerr)
     final_mul_list = np.array(final_mul_list)
-    plt.plot(T_list,final_mul_list)
-    plt.fill_between(T_list,final_mul_list+yerr,final_mul_list-yerr,alpha = 0.3)
+    if x_axis == 'time':
+        x = T_list
+        x_label = 'Formation Time[Myr]'
+    elif x_axis == 'density':
+        x = np.log10(dens_list)
+        x_label = r'Log Formation Density [$pc^{-3}$]'
+    elif x_axis == 'mass density':
+        x = np.log10(mass_dens_list)
+        x_label = r'Log Formation Density [$\frac{M_\odot}{pc^3}$]'
+    else:
+        print('Use time or density or mass density as the x axis')
+        return
+    plt.scatter(x,final_mul_list)
+    plt.fill_between(x,final_mul_list+yerr,final_mul_list-yerr,alpha = 0.3)
     #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
-    plt.xlabel('Formation Time [Myr]')
+    plt.xlabel(x_label)
     plt.ylabel('Multiplicity '+str(multiplicity))
     if multiplicity == 'Fraction':
         plt.ylim([-0.05,1.05])
@@ -4007,17 +4022,17 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
         plt.ylim([-0.05,3.05])
     if target_mass == 1:
         if multiplicity == 'Fraction':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(x)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif multiplicity == 'Frequency':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            plt.errorbar(max(x)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
     elif target_mass == 10:
         if multiplicity == 'Fraction':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            plt.errorbar(max(x)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         elif multiplicity == 'Frequency':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-    plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
+            plt.errorbar(max(x)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+    plt.text(max(x)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
     if filename is not None:
-        plt.text(max(T_list)*0.9,0.5,filename)
+        plt.text(max(x)*0.9,0.5,filename)
     plt.legend()
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     
