@@ -1422,6 +1422,99 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     else:
         return times,new_stars_co
 
+def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_dens_bin = 0.2,only_primaries_and_singles = False,full_form_dens = False,density = 'number'):
+    '''
+    Create or return a histogram of the formation times of stars in the given mass range.
+    
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The initial data file
+    
+    systems:list of starsystem objects
+    The data file made into systems.
+    
+    Parameters
+    ----------
+    upper_limit: int,float,opt
+    The upper limit of the mass range.
+
+    lower_limit: int,float,opt
+    The lower limit of the mass range.
+    
+    target_mass:string,int,opt
+    The target mass to print out on the plot.
+
+    filename: string,opt
+    The filename to print out on the plot.
+    
+    plot:bool,opt
+    Whether to plot or return the data.
+    
+    min_dens_bin:float,opt
+    Miminum density to plot in each bin
+    
+    only_primaries_and_singles: bool,opt
+    Whether to include all stars or ignore companions
+    
+    full_form_dens:bool,opt
+    Whether to return all the formation densities of all stars
+    
+    density: string,opt
+    Whether to return 'mass' or 'number' density
+
+    Returns
+    -------
+    times: list
+    The list of times in the simulation.
+    
+    new_stars_co:list
+    The number of new stars in each bin.
+
+    Example
+    -------
+    formation_time_histogram(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,only_primaries_and_singles = True)
+    '''
+    if target_mass is None:
+        target_mass = (upper_limit+lower_limit)/2
+    birth_densities = []
+    if only_primaries_and_singles is True:
+        if systems is None:
+            print('Please provide systems')
+            return
+        for i in range(len(systems[-1])):
+            this_mass = systems[-1][i].primary
+            if lower_limit<=this_mass<=upper_limit:
+                birth_density = np.log10(initial_local_density(systems[-1][i].primary,file,density = density)[0])
+                birth_densities.append(birth_density)
+    else:
+        for i in range(len(file[-1].m)):
+            this_id = file[-1].id[i]
+            this_mass = file[-1].m[i]
+            if lower_limit<=this_mass<=upper_limit:
+                birth_density = np.log10(initial_local_density(this_id,file,density = density)[0])
+                birth_densities.append(birth_density)
+    birth_densities = np.array(birth_densities)
+    densities,new_stars_co = hist(birth_densities,bins = np.linspace(0,max(birth_densities),num = (max(birth_densities))/min_dens_bin))
+    densities = np.array(densities)
+    new_stars_co = np.insert(new_stars_co,0,0)
+    if full_form_dens is True:
+        return birth_densities
+    if plot == True:
+        plt.step(densities,new_stars_co)
+        if filename is not None:
+            plt.text(max(densities)/2,max(new_stars_co),filename)
+        plt.text(max(densities)/2,max(new_stars_co)*0.9,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        if density == 'number':
+            plt.xlabel(r'Density [$pc^{-3}$]')
+        else:
+            plt.xlabel(r'Density [$\frac{M_\odot}{pc^{3}}$]')
+        plt.ylabel('Number of New Stars')
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        plt.figure(figsize = (10,10))
+    else:
+        return densities,new_stars_co
+
 def star_formation_rate(file,plot = True,time = True,filename = None,time_norm = True,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
     Average star formation rate[dM/dt] (at every snapshot in Myr) of all stars
