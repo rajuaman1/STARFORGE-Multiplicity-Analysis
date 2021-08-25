@@ -3428,8 +3428,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend()
         plt.show()
     else:
-        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens
-    #return age_bins_mean,multiplicity_in_bin
+        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
 
 #This function gives the Companion Frequency at different ages
 def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
