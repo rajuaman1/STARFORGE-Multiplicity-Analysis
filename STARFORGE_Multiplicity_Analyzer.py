@@ -1361,6 +1361,12 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     plot:bool,opt
     Whether to plot or return the data.
     
+    min_time_bin:float,opt
+    Miminum time to plot in each bin
+    
+    only_primaries_and_singles: bool,opt
+    Whether to include all stars or ignore companions
+    
     full_form_times:bool,opt
     Whether to return all the formation times of all stars
 
