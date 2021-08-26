@@ -16,6 +16,7 @@ import matplotlib.patches as mpatches
 import copy
 import itertools
 from scipy import stats, optimize
+from scipy.spatial import cKDTree
 from sys import exit
 
 #Convert the simulation time to Myrs
@@ -1231,18 +1232,29 @@ def t_ff(mass,R):
     tff = np.sqrt(3.0*np.pi/( 32*G_code*( mass/(4.0*np.pi/3.0*(R**3)) ) ) )
     return tff
 
-def initial_local_density(ID,file,distance = 0.5,density = 'number'):
+def initial_local_density(ID,file,number = 32,density = 'number'):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
     first_snap = first_snap_finder(ID,file)
     formation_pos = file[first_snap].x[file[first_snap].id == ID]
-    dens = 0
-    for i in range(len(file[first_snap].id)):
-        if 0<np.linalg.norm(file[first_snap].x[i] - formation_pos) <= distance:
-            if density == 'number':
-                dens+= 1
-            elif density == 'mass':
-                dens+= file[first_snap].m[i]
-    return dens/distance,file[first_snap].t*code_time_to_Myr
+    boxsize = 2e4
+    des_ngb=number #number of neighbors to look for
+    boxsize=200
+    N = file[first_snap].x
+    x = file[first_snap].x#position
+    m = file[first_snap].m #mass
+    ids = file[first_snap].id #ids
+    tree = cKDTree(x, boxsize=boxsize)
+    ngbdist, ngb = tree.query(x, des_ngb) #note that it will count the particle itself as its a neighbor
+    ngb_ids =  ids[ngb]
+    ngb_vol =  4*np.pi/3 * (ngbdist[:,-1]**3)
+    ngb_vol_density = des_ngb / ngb_vol
+    ngb_mass_density = np.sum(m[ngb],axis=1) / ngb_vol
+    if density == 'number':
+        dens = ngb_vol_density[file[first_snap].id == ID]
+    elif density == 'mass':
+        dens = ngb_mass_density[file[first_snap].id == ID]
+    
+    return dens[0],file[first_snap].t*code_time_to_Myr
 
 def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit = 0,upper_limit = 10000,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
