@@ -3950,7 +3950,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time'):
+def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time',plot = True):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -4003,6 +4003,9 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     x_axis: string,optional
     Whether to plot the MF/CF with the formation time/density/mass density
     
+    plot: bool,optional
+    Plot or return the values
+    
     Returns
     -------
     age_bins: array
@@ -4017,140 +4020,166 @@ def multiplicity_vs_formation_time(file,Master_File,T_list,dt_list,upper_limit=1
     '''  
     #In case there's no target mass
     if adaptive_binning is True:
-        form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
-        form_times = np.sort(form_times)
-        indices = np.array(range(0,len(form_times),adaptive_no))
-        adaptive_times = []
-        for i in range(len(form_times)):
-            if i in indices:
-                adaptive_times.append(form_times[i])
-        adaptive_times = np.array(adaptive_times)
-        T_list = np.zeros(len(adaptive_times)-1)
-        dt_list = np.zeros_like(T_list)
-        for i in range(0,len(adaptive_times)-1):
-            T_list[i] = (adaptive_times[i]+adaptive_times[i+1])/2 
-            dt_list[i] = (-T_list[i]+adaptive_times[i+1])*2
+        if x_axis == 'time':
+            form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
+            form_times = np.sort(form_times)
+            indices = np.array(range(0,len(form_times),adaptive_no))
+            adaptive_times = []
+            for i in range(len(form_times)):
+                if i in indices:
+                    adaptive_times.append(form_times[i])
+            adaptive_times = np.array(adaptive_times)
+            adaptive_times[-1] = max(form_times)
+            T_list = np.zeros(len(adaptive_times)-1)
+            dt_list = np.zeros_like(T_list)
+            for i in range(0,len(adaptive_times)-1):
+                T_list[i] = (adaptive_times[i]+adaptive_times[i+1])/2 
+                dt_list[i] = (-T_list[i]+adaptive_times[i+1])*2
+        elif x_axis == 'density' or x_axis == 'mass density':
+            if x_axis == 'density':
+                density = 'number'
+            elif x_axis == 'mass density':
+                density = 'mass'
+            form_dens = 10**formation_density_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,filename=filename,plot = False,only_primaries_and_singles=True,min_dens_bin=0.2,full_form_dens=True,density = density)
+            form_dens = np.sort(form_dens)
+            indices = np.array(range(0,len(form_dens),adaptive_no))
+            adaptive_dens = []
+            for i in range(len(form_dens)):
+                if i in indices:
+                    adaptive_dens.append(form_dens[i])
+            adaptive_dens = np.array(adaptive_dens)
+            adaptive_dens[-1] = max(form_dens)
+            T_list = np.zeros(len(adaptive_dens)-1)
+            dt_list = np.zeros_like(T_list)
+            for i in range(0,len(adaptive_dens)-1):
+                T_list[i] = (adaptive_dens[i]+adaptive_dens[i+1])/2.0
+                dt_list[i] = (adaptive_dens[i+1]-T_list[i])*2.0
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     time_list = []
-    mul_list = []
-    kept_list = []
     dens_list = []
     mass_dens_list = []
-    final_mul_list = []
-    comp_list = []
-    all_list = []
-    max_time = file[-1].t*time_to_Myr
+    max_time = file[-1].t*code_time_to_Myr
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    for i in range(len(T_list)):
-        if multiplicity == 'Fraction':
-            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
-        elif multiplicity == 'Frequency':
-            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
-        time_list.append(time)
-        mul_list.append(mul)
-        final_mul_list.append(mul[time<(max_time-T_list[i]-dt_list[i]/2)][-1])
-        kept_list.append(kept)
-        dens_list.append(average_dens)
-        mass_dens_list.append(average_mass_dens)
-        comp_list.append(comp_count)
-        all_list.append(all_count)
-    #Creating a plot of formation times
-    times = []
-    for i in file:
-        times.append(i.t*time_to_Myr)
-    birth_times = np.array(birth_times)
-    if min(dt_list)<min_time_bin:
-        min_time_bin = min(dt_list)
-    if min_time_bin < (file[-1].t-file[-2].t)*time_to_Myr:
-        min_time_bin = len(times)
-    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
-    times = np.array(times)
-    new_stars_co = np.insert(new_stars_co,0,0)
-    plt.step(times,new_stars_co)
-    for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(T_list[i].round(1))+', dt = '+str(dt_list[i].round(1)))
-    plt.legend()
-    if filename is not None:
-        plt.text(max(times)/2,max(new_stars_co),filename)
-    plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
-    plt.xlabel('Time [Myr]')
-    plt.ylabel('Number of New Stars')
-    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    
-    #Plotting the multiplicity over age
-    plt.figure(figsize = (10,10))
-    #plt.plot(T_list,final_mul_list)
-    
-    comp_list = np.array(comp_list)
-    all_list = np.array(all_list)
-    yerr = []
-    for i in range(len(comp_list)):
-        if multiplicity == 'Fraction':
-            if all_list[i]>10 and comp_list[i]>0 and comp_list[i]<all_list[i]:
-                yerr.append(sigmabinom(all_list[i],comp_list[i]))
-            else:
-                yerr.append(Psigma(all_list[i],comp_list[i]))
-        if multiplicity == 'Frequency':
-            if all_list[i]>10 and comp_list[i]>0 and comp_list[i]<all_list[i]:
-                yerr.append(sigmabinom(all_list[i],comp_list[i]))
-            else:
-                yerr.append(Lsigma(all_list[i],comp_list[i]))
-    yerr = np.array(yerr)
-    final_mul_list = np.array(final_mul_list)
+    comp_list = np.zeros(len(T_list))
+    multiprim_list = np.zeros(len(T_list))
+    system_no_list = np.zeros(len(T_list))
+    use_ids = [[]]*len(T_list)
     if x_axis == 'time':
-        x = T_list
+        for i in Master_File[-1]:
+            if lower_limit<=i.primary<=upper_limit:
+                for j in range(len(T_list)):
+                    if round(T_list[j]-dt_list[j]/2,4)<=round(file[first_snap_finder(i.primary_id,file)].t*code_time_to_Myr,4)<round(T_list[j]+dt_list[j]/2,4):
+                        comp_list[j] += i.no-1
+                        system_no_list[j] += 1
+                        if i.no-1 > 0:
+                            multiprim_list[j]+= 1
+                        use_ids[j].append(i.primary_id)
+    elif x_axis == 'density' or x_axis == 'mass density':
+        for i in Master_File[-1]:
+            if lower_limit<=i.primary<=upper_limit:
+                for j in range(len(T_list)):
+                    if round(T_list[j]-(dt_list[j])/2,4)<=round(initial_local_density(i.primary_id,file,density = density)[0],4)<round((T_list[j]+(dt_list[j])/2),4):
+                        comp_list[j] += i.no-1
+                        system_no_list[j] += 1
+                        if i.no-1 > 0:
+                            multiprim_list[j]+= 1
+                        use_ids[j].append(i.primary_id)
+    if multiplicity == 'Fraction':
+        mul_list = multiprim_list/system_no_list
+    else:
+        mul_list = comp_list/system_no_list
+    yerr = []
+    for i in range(len(mul_list)):
+        if multiplicity == 'Fraction':
+            if system_no_list[i]>10 and multiprim_list[i]>0 and multiprim_list[i]<system_no_list[i]:
+                yerr.append(sigmabinom(system_no_list[i],multiprim_list[i]))
+            else:
+                yerr.append(Psigma(system_no_list[i],multiprim_list[i]))
+        if multiplicity == 'Frequency':
+            if system_no_list[i]>10 and comp_list[i]>0 and comp_list[i]<system_no_list[i]:
+                yerr.append(sigmabinom(system_no_list[i],comp_list[i]))
+            else:
+                yerr.append(Lsigma(system_no_list[i],comp_list[i]))
+    yerr = np.array(yerr)
+    if plot == True:
+        #Plotting the multiplicity over age
+        plt.figure(figsize = (10,10))
+        #plt.plot(T_list,final_mul_list)
+        if x_axis == 'time':
+            x_label = 'Formation Time[Myr]'
+        elif x_axis == 'density':
+            T_list = np.log10(T_list)
+            x_label = r'Log Formation Density [$pc^{-3}$]'
+        elif x_axis == 'mass density':
+            T_list = np.log10(T_list)
+            x_label = r'Log Formation Density [$\frac{M_\odot}{pc^3}$]'
+        else:
+            print('Use time or density or mass density as the x axis')
+            return
+        plt.scatter(T_list,mul_list)
+        plt.fill_between(T_list,mul_list+yerr,mul_list-yerr,alpha = 0.3)
+        #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
+        plt.xlabel(x_label)
+        plt.ylabel('Multiplicity '+str(multiplicity))
+        if multiplicity == 'Fraction':
+            plt.ylim([-0.05,1.05])
+        elif multiplicity == 'Frequency':
+            plt.ylim([-0.05,3.05])
+        if target_mass == 1:
+            if multiplicity == 'Fraction':
+                plt.errorbar(max(T_list)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            elif multiplicity == 'Frequency':
+                plt.errorbar(max(T_list)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+        elif target_mass == 10:
+            if multiplicity == 'Fraction':
+                plt.errorbar(max(T_list)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            elif multiplicity == 'Frequency':
+                plt.errorbar(max(T_list)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+        plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        for i in range(len(T_list)):
+            plt.text(T_list[i],mul_list[i]*1.1,str(system_no_list[i]))
+        if filename is not None:
+            plt.text(max(T_list)*0.9,0.5,filename)
+        plt.legend()
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+    else:
+        if x_axis == 'time':
+            return T_list,mul_list,yerr,system_no_list
+        elif x_axis == 'density':
+            return np.log10(T_list),mul_list,yerr,system_no_list
+        elif x_axis == 'mass density':
+            return np.log10(T_list),mul_list,yerr,system_no_list
+
+def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density'):
+    adaptive_no = adaptive_no*len(Files)
+    x_array = []
+    final_mul_list = []
+    yerrs = []
+    sys_nos = []
+    for i in range(len(Files)):
+        x,final_mul,yerr,system_no = multiplicity_vs_formation_time(Files[i],Systems[i],T_list=T_list,dt_list=dt_list,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = False)
+        x_array.append(x);final_mul_list.append(final_mul);yerrs.append(yerr);sys_nos.append(system_no)
+    if x_axis == 'time':
         x_label = 'Formation Time[Myr]'
     elif x_axis == 'density':
-        x = np.log10(dens_list)
         x_label = r'Log Formation Density [$pc^{-3}$]'
     elif x_axis == 'mass density':
-        x = np.log10(mass_dens_list)
         x_label = r'Log Formation Density [$\frac{M_\odot}{pc^3}$]'
-    else:
-        print('Use time or density or mass density as the x axis')
-        return
-    plt.scatter(x,final_mul_list)
-    plt.fill_between(x,final_mul_list+yerr,final_mul_list-yerr,alpha = 0.3)
-    #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
-    plt.xlabel(x_label)
-    plt.ylabel('Multiplicity '+str(multiplicity))
-    if multiplicity == 'Fraction':
-        plt.ylim([-0.05,1.05])
-    elif multiplicity == 'Frequency':
-        plt.ylim([-0.05,3.05])
-    if target_mass == 1:
-        if multiplicity == 'Fraction':
-            plt.errorbar(max(x)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-        elif multiplicity == 'Frequency':
-            plt.errorbar(max(x)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-    elif target_mass == 10:
-        if multiplicity == 'Fraction':
-            plt.errorbar(max(x)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        elif multiplicity == 'Frequency':
-            plt.errorbar(max(x)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-    plt.text(max(x)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
-    if filename is not None:
-        plt.text(max(x)*0.9,0.5,filename)
+    plt.figure(figsize = (10,10))
+    for i in range(len(Files)):
+        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = Filenames[i])
+        plt.plot(x_array[i],final_mul_list[i])
+        for j in range(len(x_array[i])):
+            plt.text(x_array[i][j],final_mul_list[i][j]*1.1,str(sys_nos[i][j]))
     plt.legend()
+    plt.xlabel(x_label)
+    if multiplicity == 'Fraction':
+        plt.ylabel('Multiplicity Fraction')
+    elif multiplicity == 'Frequency':
+        plt.ylabel('Companion Frequency')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     
-    
-    plt.figure(figsize = (10,10))
-    plt.errorbar(T_list,kept_list,xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
-    plt.xlabel('Formation Time [Myr]')
-    plt.ylabel('Number of Stars')
-        
-    plt.figure(figsize = (10,10))
-    plt.errorbar(T_list,np.log10(dens_list),xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
-    plt.xlabel('Formation Time [Myr]')
-    plt.ylabel(r'Log Formation Density [$pc^{-3}$]')
-    
-    plt.figure(figsize = (10,10))
-    plt.errorbar(T_list,np.log10(mass_dens_list),xerr = np.array(dt_list)/2,marker = 'o',capsize = 5,ls = 'none')
-    plt.xlabel('Formation Time [Myr]')
-    plt.ylabel(r'Log Formation Density [$\frac{M_\odot}{pc^{3}}$]')
-
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
