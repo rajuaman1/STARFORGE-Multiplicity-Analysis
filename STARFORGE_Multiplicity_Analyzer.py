@@ -4170,8 +4170,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     for i in range(len(Files)):
         plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = Filenames[i])
         plt.plot(x_array[i],final_mul_list[i])
-        for j in range(len(x_array[i])):
-            plt.text(x_array[i][j],final_mul_list[i][j]*1.1,str(sys_nos[i][j]))
+    plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
     plt.legend()
     plt.xlabel(x_label)
     if multiplicity == 'Fraction':
