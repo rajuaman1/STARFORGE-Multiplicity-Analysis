@@ -4065,6 +4065,19 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
                     adaptive_dens.append(form_dens[i])
             adaptive_dens = np.array(adaptive_dens)
             adaptive_dens[-1] = max(form_dens)
+            inserting_val_list = []
+            inserting_val_indices = []
+            for i in range(len(adaptive_dens)-1):
+                if np.log10(adaptive_dens[i+1])-np.log10(adaptive_dens[i]) > 1:
+                    inserting_values = np.arange(np.log10(adaptive_dens[i]),np.log10(adaptive_dens[i+1]))
+                    inserting_val_list.append(10**inserting_values)
+                    inserting_val_indices.append(i+1)
+                    #for j in inserting_values:
+                        #adaptive_dens = np.insert(adaptive_dens,i+1,10**j)
+            for i in range(len(inserting_val_list)):
+                adaptive_dens = np.insert(adaptive_dens,inserting_val_indices[i],inserting_val_list[i])
+            adaptive_dens = np.array(list(flatten(adaptive_dens)))
+            adaptive_dens = np.unique(adaptive_dens)
             T_list = np.zeros(len(adaptive_dens)-1)
             dt_list = np.zeros_like(T_list)
             for i in range(0,len(adaptive_dens)-1):
@@ -4082,7 +4095,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
     system_no_list = np.zeros(len(T_list))
     use_ids = [[]]*len(T_list)
     if x_axis == 'time':
-        for i in Master_File[-1]:
+        for i in tqdm(Master_File[-1],position = 0):
             if lower_limit<=i.primary<=upper_limit:
                 for j in range(len(T_list)):
                     if round(T_list[j]-dt_list[j]/2,4)<=round(file[first_snap_finder(i.primary_id,file)].t*code_time_to_Myr,4)<round(T_list[j]+dt_list[j]/2,4):
@@ -4092,7 +4105,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
                             multiprim_list[j]+= 1
                         use_ids[j].append(i.primary_id)
     elif x_axis == 'density' or x_axis == 'mass density':
-        for i in Master_File[-1]:
+        for i in tqdm(Master_File[-1],position = 0):
             if lower_limit<=i.primary<=upper_limit:
                 for j in range(len(T_list)):
                     if round(T_list[j]-(dt_list[j])/2,4)<=round(initial_local_density(i.primary_id,file,density = density)[0],4)<round((T_list[j]+(dt_list[j])/2),4):
@@ -4138,10 +4151,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
         plt.ylabel('Multiplicity '+str(multiplicity))
-        if multiplicity == 'Fraction':
-            plt.ylim([-0.05,1.05])
-        elif multiplicity == 'Frequency':
-            plt.ylim([-0.05,3.05])
+        #plt.ylim(bottom = -0.05)
         if target_mass == 1:
             if multiplicity == 'Fraction':
                 plt.errorbar(max(T_list)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
@@ -4153,8 +4163,6 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
             elif multiplicity == 'Frequency':
                 plt.errorbar(max(T_list)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
-        for i in range(len(T_list)):
-            plt.text(T_list[i],mul_list[i]*1.1,str(system_no_list[i]))
         if filename is not None:
             plt.text(max(T_list)*0.9,0.5,filename)
         plt.legend()
