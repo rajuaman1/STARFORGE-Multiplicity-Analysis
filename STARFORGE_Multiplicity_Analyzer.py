@@ -4181,7 +4181,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     final_mul_list = []
     yerrs = []
     sys_nos = []
-    for i in range(len(Files)):
+    for i in tqdm(range(len(Files)),position = 0):
         x,final_mul,yerr,system_no = multiplicity_vs_formation(Files[i],Systems[i],T_list=T_list,dt_list=dt_list,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = False)
         x_array.append(x);final_mul_list.append(final_mul);yerrs.append(yerr);sys_nos.append(system_no)
     if x_axis == 'time':
@@ -4201,8 +4201,8 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         plt.ylabel('Multiplicity Fraction')
     elif multiplicity == 'Frequency':
         plt.ylabel('Companion Frequency')
-    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)    
+
 def multiplicity_and_age_combined(file,Master_File,T_list,dt_list,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
