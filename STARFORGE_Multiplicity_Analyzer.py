@@ -1238,6 +1238,10 @@ def initial_local_density(ID,file,number = 32,density = 'number'):
     formation_pos = file[first_snap].x[file[first_snap].id == ID]
     boxsize = 2e4
     des_ngb=number #number of neighbors to look for
+    if 1<len(file[first_snap].m)<=des_ngb:
+        des_ngb = len(file[first_snap].m)
+    elif len(file[first_snap].m) == 1:
+        return np.nan,file[first_snap].t*code_time_to_Myr
     boxsize=200
     N = file[first_snap].x
     x = file[first_snap].x#position
