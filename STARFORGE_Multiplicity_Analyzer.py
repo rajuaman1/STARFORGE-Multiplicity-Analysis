@@ -4152,7 +4152,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         plt.fill_between(T_list,mul_list+yerr,mul_list-yerr,alpha = 0.3)
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
-        if multiplicity == 'Fraction'
+        if multiplicity == 'Fraction':
             plt.ylabel('Multiplicity '+str(multiplicity))
         elif multiplicity == 'Frequency':
             plt.ylabel('Companion '+str(multiplicity))
