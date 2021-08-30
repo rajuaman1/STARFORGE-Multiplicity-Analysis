@@ -4152,9 +4152,9 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         plt.fill_between(T_list,mul_list+yerr,mul_list-yerr,alpha = 0.3)
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
-        if multiplicity = 'Fraction'
+        if multiplicity == 'Fraction'
             plt.ylabel('Multiplicity '+str(multiplicity))
-        elif multiplicity = 'Frequency':
+        elif multiplicity == 'Frequency':
             plt.ylabel('Companion '+str(multiplicity))
         #plt.ylim(bottom = -0.05)
         if target_mass == 1:
@@ -4172,7 +4172,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
             plt.text(max(T_list)*0.9,0.5,filename)
         plt.legend()
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    else:
+    elif plot == False:
         if x_axis == 'time':
             return T_list,mul_list,yerr,system_no_list
         elif x_axis == 'density':
