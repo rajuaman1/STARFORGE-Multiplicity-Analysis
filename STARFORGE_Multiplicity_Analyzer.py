@@ -39,7 +39,7 @@ msun_to_kg = 1.9891e30
 
 #List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
-'Multiplicity Lifetime Evolution','YSO Multiplicity','Semi-Major Axis vs q']
+'Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity','Semi-Major Axis vs q']
 
 def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,right = True,top = True):
     '''Change the font and handle sizes'''
@@ -3985,35 +3985,32 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
 
     Parameters
     ----------
-    T : list,optional
+    T_list : list,optional
     The time that the stars are born at.
 
-    dt :list,optional
+    dt_list :list,optional
     The tolerance of the birth time.
-
-    target_mass: int,float,optional
-    The target mass of primary to look at
 
     upper_limit: int,float,optional
     The upper limit of the target mass range
 
     lower_limit: int,float,optional
     The lower limit of the target mass range
-
-    read_in_result: bool,optional
-    Whether to perform system assignment or use the already assigned system.
-
-    select_by_time: bool,optional:
-    Whether to track all stars or only those in a time frame.
-
+    
+    target_mass: int,float,optional
+    The target mass of primary to look at
+    
     zero: string,optional
     Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
 
-    plot: bool,optional
-    Whether to return the times and multiplicities or plot them.
-
-    steps: int,optional
-    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties, multiplicity fraction or Companion Frequency.
+    
+    filename: str,optional
+    The name of the file. Will be printed on plot if provided.
+    
+    min_time_bin: int,optional
+    The minimum time bin to plot on the time histogram
     
     adaptive_binning: bool,optional
     Whether to adopt adaptive binning (same no of stars in each bin)
@@ -4037,7 +4034,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
 
     Example
     -------
-    multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    multiplicity_vs_formation(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,adaptive_binning = True,adaptive_no = 20)
     '''  
     #In case there's no target mass
     if adaptive_binning is True:
@@ -4274,7 +4271,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
 
     Example
     -------
-    multiplicity_frac_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
+    multiplicity_and_age_combined(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,rolling_avg = True,adaptive_binning = True,adaptive_no = 20)
     '''  
     #In case there's no target mass
     if target_mass is None:
@@ -4918,7 +4915,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             else:
                 return logmasslist,o1,o2,o3
 
-def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = [1],dt = [0.5],target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft'):
+def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density'):
     '''
     Create a plot for a property that evolves through the simulation.
 
@@ -4988,6 +4985,18 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
     
     time_norm : str,optional
     Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    
+    min_time_bin: int,optional
+    The minimum time bin to plot on the time histogram
+    
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    adaptive_no: int,optional
+    The number of stars in each bin
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
 
     Returns
     -------
@@ -5032,7 +5041,12 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if plot is False:
             print('Use Plot == True')
             return
-        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window=rolling_window)
+        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window=rolling_window,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no)
+    if which_plot == 'Multiplicity vs Formation':
+        if plot == True:
+            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = True)
+        elif plot == False:
+            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = False)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
@@ -5120,7 +5134,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft'): 
+def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density'): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -5221,6 +5235,18 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     
     time_norm : str,optional
     Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    
+    min_time_bin: int,optional
+    The minimum time bin to plot on the time histogram
+    
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    adaptive_no: int,optional
+    The number of stars in each bin
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
 
     Returns
     -------
@@ -5231,7 +5257,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     The weights of each bin
     '''
     One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Mass Ratio','Semi Major Axis vs q']
-    Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','YSO Multiplicity']
+    Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity']
     if which_plot in One_System_Plots:
         if plot == True:
             One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File)
@@ -5244,9 +5270,9 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
             return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
-            Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm)
+            Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis)
         else:
-            return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm)
+            return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis)
 
 def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft'):
     '''
