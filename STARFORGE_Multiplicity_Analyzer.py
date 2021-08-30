@@ -5330,7 +5330,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density'):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation'):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5399,7 +5399,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     
     x_axis: string,optional
     Whether to plot the MF/CF with the formation time/density/mass density
-
+    
     zero: string,optional
     Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
 
@@ -5408,233 +5408,234 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     ----------
     1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
     '''  
-    if Snapshots == None:
-        Snapshots = [[-1]]*len(Filenames)
-    Snapshots = list(flatten(Snapshots))
-    x = []
-    y = []
-    if which_plot == 'System Mass':
-        bins = np.linspace(-1,3,8)
-        plt.xlabel('Log System Mass [$M_\odot$]')
-        plt.ylabel('Number of Systems')
-    if which_plot == 'Primary Mass':
-        bins = np.linspace(-1,3,8)
-        plt.xlabel('Log Primary Mass [$M_\odot$]')
-        plt.ylabel('Number of Systems')
-    if which_plot == 'Mass Ratio':
-        bins = np.linspace(0,1,11)
-        plt.xlabel('q (Companion Mass Ratio)')
-        plt.ylabel('Number of Systems')
-        if all_companions is True:
-            plt.ylabel('Number of Companions')
-    if which_plot == 'Multiplicity':
-        bins = 'observer'
-        plt.xlabel('Log Mass [$M_\odot$]')
-        if multiplicity == 'Fraction':
-            plt.ylabel('Multiplicity Fraction')
-        if multiplicity == 'Frequency':
-            plt.ylabel('Companion Frequency')
-    if which_plot == 'Semi Major Axis':
-        bins = np.linspace(-1,7,13)
-    if which_plot == 'Multiplicity':
-        error = []
-    times = []
-    fractions = []
-    cons_fracs = []
-    nos = []
-    avg_mass = []
-    og_rolling_window = copy.copy(rolling_window)
-    for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
-        if which_plot == 'Multiplicity':
-            a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
-            comp_mul_no = c
-            sys_no = d
-            error_one = []
-            for i in range(len(sys_no)):
-                if sys_no[i]>10 and comp_mul_no[i]>0 and comp_mul_no[i]<sys_no[i]:
-                    error_one.append(sigmabinom(sys_no[i],comp_mul_no[i]))
-                else:
-                    if multiplicity == 'Fraction':
-                        error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
-                    elif multiplicity == 'Frequency':
-                        error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
-            error.append(error_one)
-            x.append(a)
-            y.append(b)
-        elif which_plot == 'Multiplicity Time Evolution':
-            if multiplicity == 'Fraction':
-                time,fraction,cons_frac = Multiplicity_Fraction_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
-            elif multiplicity == 'Frequency':
-                time,fraction,cons_frac = Companion_Frequency_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)    
-            if rolling_avg is True:
-                rolling_window = time_to_snaps(og_rolling_window,Files[i])
-                if rolling_window%2 == 0:
-                    rolling_window -= 1
-                rolling_window = int(rolling_window)
-                time = rolling_average(time,rolling_window)
-                fraction = rolling_average(fraction,rolling_window)
-                cons_frac = rolling_average(cons_frac,rolling_window)
-            times.append(time)
-            fractions.append(fraction)
-            cons_fracs.append(cons_frac)
-        elif which_plot == 'YSO Multiplicity':
-            time = []
-            for j in range(len(Files[i])):
-                time.append(Files[i][j].t)
-                
-            time = np.array(time)
-            ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
-            if time_norm is 'afft':
-                time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
-            elif time_norm is 'fft':
-                time = (time/(ff_t))
-            
-            if rolling_avg is True:
-                rolling_window = time_to_snaps(og_rolling_window,Files[i])
-                if rolling_window%2 == 0:
-                    rolling_window -= 1
-                rolling_window = int(rolling_window)
-                time = rolling_average(time,rolling_window)
-            times.append(time)
-            fraction,no,am = YSO_multiplicity(Files[i],Systems[i],min_age = min_age,target_age = target_age)
-            if rolling_avg is True:
-                fraction = rolling_average(fraction,rolling_window)
-                no = rolling_average(no,rolling_window)
-                am = rolling_average(am,rolling_window)
-            fractions.append(fraction)
-            nos.append(no)
-            avg_mass.append(am)
-        else:
-            a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i],zero = 'Formation')
-            if normalized == True:
-                b = b*norm_no/sum(b)
-            x.append(a)
-            y.append(b)
-    if which_plot == 'Semi Major Axis':
-        fig = plt.figure(figsize = (10,10))
-        ax1 = fig.add_subplot(111)
-        for i in range(len(Files)):
-            ax1.step(x[i],y[i],label = Filenames[i])
-        ax1.vlines(np.log10(20),0,max(y[0]))
-        pands = []
-        for i in Systems[0][-1]:
-            if i.no>1 and lower_limit<=i.primary<=upper_limit:
-                pands.append(i.primary+i.secondary)
-        average_pands = np.average(pands)*1.9891e30 
-        ax1.set_xlabel('Log Semi Major Axis[AU]')
-        ax2 = ax1.twiny()
-        ax2.set_xlabel('Log Period[Days]')
-        ax2.set_xlim(ax1.get_xlim())
-        ax1.set_ylabel('Number of Systems')
-        if all_companions == True:
-            ax1.set_ylabel('Number of Sub-Systems')
-        ax1Xs = ax1.get_xticks()
-        ax2Xs = []
-        for X in ax1Xs:
-            k = 2*np.pi*np.sqrt(((10**X*m_to_AU)**3)/(6.67e-11*average_pands))
-            period = np.log10(k/(60*60*24))
-            ax2Xs.append(period.round(1))
-        ax2.set_xticks(ax1Xs)
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.set_xticklabels(ax2Xs)
-        if upper_limit == 1.3 and lower_limit == 0.7:
-            periods = np.linspace(3.5,7.5,num = 5)
-            k = ((10**periods)*24*60*60)
-            smaxes3 = ((6.67e-11*(k**2)*average_pands)/(4*np.pi**2))
-            smaxes = np.log10((smaxes3**(1/3))/m_to_AU)
-            error_values_small = np.array([6,7,9,9,10])
-            error_values_big = np.array([18,27,31,23,21])
-            error_values_comb = (error_values_small+error_values_big)
-            dy_comb = np.sqrt(error_values_comb)
-            ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
-        ax1.legend()
-    elif which_plot == 'Multiplicity':
-        for i in range(0,len(Filenames)):
-            plt.plot(x[i],y[i],label = Filenames[i])
-            plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
-        if multiplicity == 'Fraction':
-            error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
-            error_bins = [0.1,0.3,1.0,3.25,12,16]
-            plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
-            plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,lolims = True,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
-            plt.ylim([-0.01,1.01])
-        elif multiplicity == 'Frequency':
-            error_values = [0.50,0.84,1.3,1.6,2.1]
-            error_bins = [1.0,3.5,7.0,12.5,16]
-            plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=0.04,xerr = [[(np.log10(1.0)-np.log10(0.8))],[np.log10(1.2)-np.log10(1.0)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.11,xerr = [[(np.log10(3.5)-np.log10(2))],[(np.log10(5)-np.log10(3.5))]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.2,xerr = [[(np.log10(7)-np.log10(5))],[(np.log10(9)-np.log10(7))]],marker = 'o',capsize = 5,color = 'black',label = 'Moe & DiStefano 2017')
-            plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
-            plt.ylim([-0.01,3.01])
-        plt.legend()
-    elif which_plot == 'Multiplicity Time Evolution':
-        for i in range(len(Files)):
-            if time_plot == 'consistent mass':
-                plt.plot(times[i],cons_fracs[i],label = Filenames[i])
-            elif time_plot == 'all':
-                plt.plot(times[i],fractions[i],label = Filenames[i])
-        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        if multiplicity == 'Fraction':
-            plt.ylabel('Multiplicity Fraction')
-            plt.ylim(bottom = 0,top = 1.01)
-        if multiplicity == 'Frequency':
-            plt.ylabel('Companion Frequency')
-        plt.legend()
-    elif which_plot == 'Multiplicity vs Formation':
+    if which_plot == 'Multiplicity vs Formation':
         multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis)
-    elif which_plot == 'YSO Multiplicity':
-        for i in range(len(Files)):
-            plt.plot(times[i],fractions[i],label = Filenames[i])
-        if time_norm is 'Myr':
-            plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
-            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
-            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.ylabel('YSO Multiplicity Fraction')
-        plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
-        plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
-        plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
-        plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
-        plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
-        plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
-        plt.legend()
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-        plt.figure()
-        for i in range(len(Files)):
-            plt.plot(times[i],nos[i],label = Filenames[i])
-        plt.ylabel('Number of YSOs')
-        if time_norm is 'Myr':
-            plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
-            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
-            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.legend()
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-        plt.figure()
-        for i in range(len(Files)):
-            plt.plot(times[i],avg_mass[i],label = Filenames[i])
-        plt.ylabel('Average Mass of YSOs')
-        if time_norm is 'Myr':
-            plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
-            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
-            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.legend()
     else:
-        for i in range(0,len(Filenames)):
-            plt.step(x[i],y[i],label = Filenames[i])
-        plt.legend()
-    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    if log == True:
-        plt.yscale('log')
+        if Snapshots == None:
+            Snapshots = [[-1]]*len(Filenames)
+        Snapshots = list(flatten(Snapshots))
+        x = []
+        y = []
+        if which_plot == 'System Mass':
+            bins = np.linspace(-1,3,8)
+            plt.xlabel('Log System Mass [$M_\odot$]')
+            plt.ylabel('Number of Systems')
+        if which_plot == 'Primary Mass':
+            bins = np.linspace(-1,3,8)
+            plt.xlabel('Log Primary Mass [$M_\odot$]')
+            plt.ylabel('Number of Systems')
+        if which_plot == 'Mass Ratio':
+            bins = np.linspace(0,1,11)
+            plt.xlabel('q (Companion Mass Ratio)')
+            plt.ylabel('Number of Systems')
+            if all_companions is True:
+                plt.ylabel('Number of Companions')
+        if which_plot == 'Multiplicity':
+            bins = 'observer'
+            plt.xlabel('Log Mass [$M_\odot$]')
+            if multiplicity == 'Fraction':
+                plt.ylabel('Multiplicity Fraction')
+            if multiplicity == 'Frequency':
+                plt.ylabel('Companion Frequency')
+        if which_plot == 'Semi Major Axis':
+            bins = np.linspace(-1,7,13)
+        if which_plot == 'Multiplicity':
+            error = []
+        times = []
+        fractions = []
+        cons_fracs = []
+        nos = []
+        avg_mass = []
+        og_rolling_window = copy.copy(rolling_window)
+        for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
+            if which_plot == 'Multiplicity':
+                a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+                comp_mul_no = c
+                sys_no = d
+                error_one = []
+                for i in range(len(sys_no)):
+                    if sys_no[i]>10 and comp_mul_no[i]>0 and comp_mul_no[i]<sys_no[i]:
+                        error_one.append(sigmabinom(sys_no[i],comp_mul_no[i]))
+                    else:
+                        if multiplicity == 'Fraction':
+                            error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
+                        elif multiplicity == 'Frequency':
+                            error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
+                error.append(error_one)
+                x.append(a)
+                y.append(b)
+            elif which_plot == 'Multiplicity Time Evolution':
+                if multiplicity == 'Fraction':
+                    time,fraction,cons_frac = Multiplicity_Fraction_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
+                elif multiplicity == 'Frequency':
+                    time,fraction,cons_frac = Companion_Frequency_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)    
+                if rolling_avg is True:
+                    rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                    if rolling_window%2 == 0:
+                        rolling_window -= 1
+                    rolling_window = int(rolling_window)
+                    time = rolling_average(time,rolling_window)
+                    fraction = rolling_average(fraction,rolling_window)
+                    cons_frac = rolling_average(cons_frac,rolling_window)
+                times.append(time)
+                fractions.append(fraction)
+                cons_fracs.append(cons_frac)
+            elif which_plot == 'YSO Multiplicity':
+                time = []
+                for j in range(len(Files[i])):
+                    time.append(Files[i][j].t)
+
+                time = np.array(time)
+                ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
+                if time_norm is 'afft':
+                    time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
+                elif time_norm is 'fft':
+                    time = (time/(ff_t))
+
+                if rolling_avg is True:
+                    rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                    if rolling_window%2 == 0:
+                        rolling_window -= 1
+                    rolling_window = int(rolling_window)
+                    time = rolling_average(time,rolling_window)
+                times.append(time)
+                fraction,no,am = YSO_multiplicity(Files[i],Systems[i],min_age = min_age,target_age = target_age)
+                if rolling_avg is True:
+                    fraction = rolling_average(fraction,rolling_window)
+                    no = rolling_average(no,rolling_window)
+                    am = rolling_average(am,rolling_window)
+                fractions.append(fraction)
+                nos.append(no)
+                avg_mass.append(am)
+            else:
+                a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+                if normalized == True:
+                    b = b*norm_no/sum(b)
+                x.append(a)
+                y.append(b)
+        if which_plot == 'Semi Major Axis':
+            fig = plt.figure(figsize = (10,10))
+            ax1 = fig.add_subplot(111)
+            for i in range(len(Files)):
+                ax1.step(x[i],y[i],label = Filenames[i])
+            ax1.vlines(np.log10(20),0,max(y[0]))
+            pands = []
+            for i in Systems[0][-1]:
+                if i.no>1 and lower_limit<=i.primary<=upper_limit:
+                    pands.append(i.primary+i.secondary)
+            average_pands = np.average(pands)*1.9891e30 
+            ax1.set_xlabel('Log Semi Major Axis[AU]')
+            ax2 = ax1.twiny()
+            ax2.set_xlabel('Log Period[Days]')
+            ax2.set_xlim(ax1.get_xlim())
+            ax1.set_ylabel('Number of Systems')
+            if all_companions == True:
+                ax1.set_ylabel('Number of Sub-Systems')
+            ax1Xs = ax1.get_xticks()
+            ax2Xs = []
+            for X in ax1Xs:
+                k = 2*np.pi*np.sqrt(((10**X*m_to_AU)**3)/(6.67e-11*average_pands))
+                period = np.log10(k/(60*60*24))
+                ax2Xs.append(period.round(1))
+            ax2.set_xticks(ax1Xs)
+            ax2.set_xbound(ax1.get_xbound())
+            ax2.set_xticklabels(ax2Xs)
+            if upper_limit == 1.3 and lower_limit == 0.7:
+                periods = np.linspace(3.5,7.5,num = 5)
+                k = ((10**periods)*24*60*60)
+                smaxes3 = ((6.67e-11*(k**2)*average_pands)/(4*np.pi**2))
+                smaxes = np.log10((smaxes3**(1/3))/m_to_AU)
+                error_values_small = np.array([6,7,9,9,10])
+                error_values_big = np.array([18,27,31,23,21])
+                error_values_comb = (error_values_small+error_values_big)
+                dy_comb = np.sqrt(error_values_comb)
+                ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+            ax1.legend()
+        elif which_plot == 'Multiplicity':
+            for i in range(0,len(Filenames)):
+                plt.plot(x[i],y[i],label = Filenames[i])
+                plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
+            if multiplicity == 'Fraction':
+                error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
+                error_bins = [0.1,0.3,1.0,3.25,12,16]
+                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
+                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,lolims = True,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
+                plt.ylim([-0.01,1.01])
+            elif multiplicity == 'Frequency':
+                error_values = [0.50,0.84,1.3,1.6,2.1]
+                error_bins = [1.0,3.5,7.0,12.5,16]
+                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=0.04,xerr = [[(np.log10(1.0)-np.log10(0.8))],[np.log10(1.2)-np.log10(1.0)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.11,xerr = [[(np.log10(3.5)-np.log10(2))],[(np.log10(5)-np.log10(3.5))]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.2,xerr = [[(np.log10(7)-np.log10(5))],[(np.log10(9)-np.log10(7))]],marker = 'o',capsize = 5,color = 'black',label = 'Moe & DiStefano 2017')
+                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
+                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
+                plt.ylim([-0.01,3.01])
+            plt.legend()
+        elif which_plot == 'Multiplicity Time Evolution':
+            for i in range(len(Files)):
+                if time_plot == 'consistent mass':
+                    plt.plot(times[i],cons_fracs[i],label = Filenames[i])
+                elif time_plot == 'all':
+                    plt.plot(times[i],fractions[i],label = Filenames[i])
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            if multiplicity == 'Fraction':
+                plt.ylabel('Multiplicity Fraction')
+                plt.ylim(bottom = 0,top = 1.01)
+            if multiplicity == 'Frequency':
+                plt.ylabel('Companion Frequency')
+            plt.legend()
+        elif which_plot == 'YSO Multiplicity':
+            for i in range(len(Files)):
+                plt.plot(times[i],fractions[i],label = Filenames[i])
+            if time_norm is 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm is 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm is 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.ylabel('YSO Multiplicity Fraction')
+            plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
+            plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
+            plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
+            plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
+            plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
+            plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
+            plt.legend()
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            plt.figure()
+            for i in range(len(Files)):
+                plt.plot(times[i],nos[i],label = Filenames[i])
+            plt.ylabel('Number of YSOs')
+            if time_norm is 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm is 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm is 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.legend()
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            plt.figure()
+            for i in range(len(Files)):
+                plt.plot(times[i],avg_mass[i],label = Filenames[i])
+            plt.ylabel('Average Mass of YSOs')
+            if time_norm is 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm is 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm is 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.legend()
+        else:
+            for i in range(0,len(Filenames)):
+                plt.step(x[i],y[i],label = Filenames[i])
+            plt.legend()
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        if log == True:
+            plt.yscale('log')
 
 #The length for the given box plot
 L = (4/3*np.pi)**(1/3)*10
