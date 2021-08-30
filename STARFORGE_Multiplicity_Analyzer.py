@@ -4178,6 +4178,59 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
             return np.log10(T_list),mul_list,yerr,system_no_list
 
 def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density'):
+    '''
+    The average multiplicity vs formation time/density for multiple files.
+
+    Inputs
+    ----------
+    Files: list of list of sinkdata objects
+    The original files before system assignment.
+
+    Systems: list of list of star system objects
+    All of the systems for the original files.
+    
+    Filenames: list of strings
+    The names of all the files
+
+    Parameters
+    ----------
+    adaptive_no: list,optional
+    The number of stars in each bin for each file
+    
+    T_list : list,optional
+    The time that the stars are born at.
+
+    dt_list :list,optional
+    The tolerance of the birth time.
+
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
+
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
+    
+    target_mass: int,float,optional
+    The target mass of primary to look at
+    
+    zero: string,optional
+    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
+
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties, multiplicity fraction or Companion Frequency.
+    
+    min_time_bin: int,optional
+    The minimum time bin to plot on the time histogram
+    
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
+
+    Example
+    -------
+    multiplicity_vs_formation(Files,Systems,adaptive_binning = True,adaptive_no = [20,20])
+    '''
     adaptive_no = adaptive_no*len(Files)
     x_array = []
     final_mul_list = []
@@ -4203,7 +4256,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         plt.ylabel('Multiplicity Fraction')
     elif multiplicity == 'Frequency':
         plt.ylabel('Companion Frequency')
-    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)    
+    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 
 def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20):
     '''
