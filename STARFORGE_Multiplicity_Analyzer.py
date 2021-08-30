@@ -4445,7 +4445,6 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     if filename is not None:
         plt.text(max(list(flatten(time_list)))/2,0.5,filename)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    plt.show()
 
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
     '''
@@ -4595,7 +4594,6 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                 plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,horizontalalignment = 'left')
             plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-            plt.show()
         else:
             if filtered == True:
                 return x_vals_filt,y_vals_filt
@@ -4704,7 +4702,6 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
         if filename is not None:
             plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-        plt.show()
 
 def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
     '''
@@ -4864,7 +4861,6 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if filename is not None:
                 plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-            plt.show()
         else:
             if filtered == True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
@@ -4920,7 +4916,6 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 handles.extend([line1])
             if multiplicity == 'Fraction':
                 plt.legend(handles = handles)
-            plt.show()
         else:
             if filtered == True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
@@ -4963,7 +4958,6 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 handles.extend([line1])
             plt.legend(handles = handles)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-            plt.show()
             plt.figure()
         else:
             if filtered == True:
