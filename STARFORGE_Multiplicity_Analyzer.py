@@ -4152,7 +4152,10 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         plt.fill_between(T_list,mul_list+yerr,mul_list-yerr,alpha = 0.3)
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
-        plt.ylabel('Multiplicity '+str(multiplicity))
+        if multiplicity = 'Fraction'
+            plt.ylabel('Multiplicity '+str(multiplicity))
+        elif multiplicity = 'Frequency':
+            plt.ylabel('Companion '+str(multiplicity))
         #plt.ylim(bottom = -0.05)
         if target_mass == 1:
             if multiplicity == 'Fraction':
@@ -5396,6 +5399,10 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     
     x_axis: string,optional
     Whether to plot the MF/CF with the formation time/density/mass density
+
+    zero: string,optional
+    Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
+
     
     Examples
     ----------
@@ -5498,7 +5505,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             nos.append(no)
             avg_mass.append(am)
         else:
-            a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+            a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i],zero = 'Formation')
             if normalized == True:
                 b = b*norm_no/sum(b)
             x.append(a)
