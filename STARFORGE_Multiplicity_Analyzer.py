@@ -5327,7 +5327,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft'):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density'):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5349,7 +5349,6 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
 
     Parameters
     ----------
-
     log: bool,optional
     Whether to plot the y data on a log scale.
 
@@ -5388,6 +5387,15 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     
     time_norm : str,optional
     Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    
+    adaptive_no: list,optional
+    The number of stars in each bin for each file
+    
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
     
     Examples
     ----------
@@ -5570,6 +5578,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         if multiplicity == 'Frequency':
             plt.ylabel('Companion Frequency')
         plt.legend()
+    elif which_plot == 'Multiplicity vs Formation':
+        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis)
     elif which_plot == 'YSO Multiplicity':
         for i in range(len(Files)):
             plt.plot(times[i],fractions[i],label = Filenames[i])
