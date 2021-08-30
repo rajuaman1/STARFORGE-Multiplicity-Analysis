@@ -1848,6 +1848,12 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
     else:
         return all_stars_slopes,primary_stars_slopes
 
+def percentile_75(array):
+    return np.percentile(array,75)
+
+def percentile_25(array):
+    return np.percentile(array,25)
+
 def density_evolution(densities,times,bins = 10,plot = True,filename = None,density = 'number'):
     '''
     A plot of the mean local density throughout formation times in the simulation
@@ -1893,14 +1899,13 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
     2) density_evolution(densities,times,'M2e4_C_M_2e7',plot = False)
     Returns the times, the average formation local density over time and the standard deviation of local density over time.
     '''
-    means,binned_times,bindices = stats.binned_statistic(times,densities,statistic='mean',bins = bins)
-    stds,binned_times,bindices = stats.binned_statistic(times,densities,statistic='std',bins = bins)
+    means,binned_times,bindices = stats.binned_statistic(times,densities,statistic='median',bins = bins)
+    error_up,binned_times,bindices = stats.binned_statistic(times,densities,statistic=percentile_75,bins = bins)
+    error_down,binned_times,bindices = stats.binned_statistic(times,densities,statistic=percentile_25,bins = bins)
     count_per_bin,binned_times,bindices = stats.binned_statistic(times,densities,statistic='count',bins = bins)
-    lower_limits = np.log10(means-stds)
-    lower_limits[lower_limits!=lower_limits] = -1.5
     if plot == True:
         plt.plot((binned_times[1:]+binned_times[:-1])/2,np.log10(means),marker = 'o',color = 'indianred')
-        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,np.log10(means+stds),lower_limits,alpha = 0.15,color = 'indianred')
+        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,np.log10(means+error_up),np.log10(means-error_down),alpha = 0.15,color = 'indianred')
         plt.xlabel('Times [Myr]')
         if density == 'number':
             plt.ylabel(r'Log Mean Local Density [$pc^{-3}$]')
@@ -1912,7 +1917,7 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
         #plt.yscale('log')
         print(count_per_bin)
     else:
-        return binned_times,means,stds
+        return binned_times,means,error_up,error_down
 
 #Calculating the semi major axis for every possible configuration of these systems
 def smaxis(system):
