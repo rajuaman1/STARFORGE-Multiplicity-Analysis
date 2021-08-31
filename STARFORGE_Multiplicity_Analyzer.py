@@ -4356,7 +4356,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     if adaptive_binning is True:
         form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
         form_times = np.sort(form_times)
-        indices = np.array(range(0,len(form_times),adaptive_no))
+        indices = np.array(range(0,len(form_times)-5,adaptive_no))
         adaptive_times = []
         for i in range(len(form_times)):
             if i in indices:
