@@ -5408,6 +5408,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     zero: string,optional
     Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
 
+    description: string,optional
+    What to save the name of the YSO plot under.
     
     Examples
     ----------
