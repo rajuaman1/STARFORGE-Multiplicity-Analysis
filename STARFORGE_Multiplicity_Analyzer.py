@@ -5324,7 +5324,7 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation'):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filtered = False,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5583,6 +5583,13 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.ylabel('Companion Frequency')
             plt.legend()
         elif which_plot == 'YSO Multiplicity':
+            if description is not None:
+                save = True
+                output_dir = description
+                new_file = output_dir+'/YSO'
+                mkdir_p(new_file)
+            else:
+                save = False
             for i in range(len(Files)):
                 plt.plot(times[i],fractions[i],label = Filenames[i])
             if time_norm is 'Myr':
@@ -5600,6 +5607,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save = True:
+                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 100)
             plt.figure()
             for i in range(len(Files)):
                 plt.plot(times[i],nos[i],label = Filenames[i])
@@ -5612,6 +5621,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save = True:
+                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 100)
             plt.figure()
             for i in range(len(Files)):
                 plt.plot(times[i],avg_mass[i],label = Filenames[i])
@@ -5623,6 +5634,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             elif time_norm is 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save = True:
+                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 100)
         else:
             for i in range(0,len(Filenames)):
                 plt.step(x[i],y[i],label = Filenames[i])
