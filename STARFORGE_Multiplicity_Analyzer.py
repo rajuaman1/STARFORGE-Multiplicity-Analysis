@@ -5169,7 +5169,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if time_norm is not 'Myr':
             prop_times = np.array(prop_times)
             ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
-            if time_norm is 'afft':
+            if time_norm == 'afft':
                 alpha = file_properties(filename,param = 'alpha')
                 ff_t = ff_t*np.sqrt(alpha)
             prop_times = (prop_times/ff_t)
@@ -5193,11 +5193,11 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
         plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
         
-        if time_norm is 'Myr':
+        if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
+        elif time_norm == 'fft':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
+        elif time_norm == 'afft':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('YSO Multiplicity Fraction')
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
@@ -5209,11 +5209,11 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.legend()
         
         plt.yscale('log')
-        if time_norm is 'Myr':
+        if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
+        elif time_norm == 'fft':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
+        elif time_norm == 'afft':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Number of Young Stars')
         #plt.legend()
@@ -5222,11 +5222,11 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         #[start_snap:end_snap]
         plt.yscale('log')
         #plt.plot(times,av2,label = 'Consistent Mass')
-        if time_norm is 'Myr':
+        if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm is 'fft':
+        elif time_norm == 'fft':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm is 'afft':
+        elif time_norm == 'afft':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Average Mass of Young Stars')
 
@@ -5533,9 +5533,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
 
                 time = np.array(time)
                 ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
-                if time_norm is 'afft':
+                if time_norm == 'afft':
                     time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
-                elif time_norm is 'fft':
+                elif time_norm == 'fft':
                     time = (time/(ff_t))
 
                 if rolling_avg is True:
@@ -5644,11 +5644,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 save = False
             for i in range(len(Files)):
                 plt.plot(times[i],fractions[i],label = Filenames[i])
-            if time_norm is 'Myr':
+            if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm is 'fft':
+            elif time_norm == 'fft':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm is 'afft':
+            elif time_norm == 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.ylabel('YSO Multiplicity Fraction')
             plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
@@ -5665,11 +5665,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             for i in range(len(Files)):
                 plt.plot(times[i],nos[i],label = Filenames[i])
             plt.ylabel('Number of YSOs')
-            if time_norm is 'Myr':
+            if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm is 'fft':
+            elif time_norm == 'fft':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm is 'afft':
+            elif time_norm == 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -5679,11 +5679,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             for i in range(len(Files)):
                 plt.plot(times[i],avg_mass[i],label = Filenames[i])
             plt.ylabel('Average Mass of YSOs')
-            if time_norm is 'Myr':
+            if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm is 'fft':
+            elif time_norm == 'fft':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm is 'afft':
+            elif time_norm == 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
