@@ -18,6 +18,8 @@ import itertools
 from scipy import stats, optimize
 from scipy.spatial import cKDTree
 from sys import exit
+from errno import EEXIST
+from os import makedirs,path
 
 #Convert the simulation time to Myrs
 code_time_to_Myr = 978.461942384
@@ -40,6 +42,15 @@ msun_to_kg = 1.9891e30
 #List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
 'Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity','Semi-Major Axis vs q']
+
+def mkdir_p(mypath):
+    '''Creates a directory. equivalent to using mkdir -p on the command line'''
+    try:
+        makedirs(mypath)
+    except OSError as exc: # Python >2.5
+        if exc.errno == EEXIST and path.isdir(mypath):
+            pass
+        else: raise
 
 def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,right = True,top = True):
     '''Change the font and handle sizes'''
@@ -5607,7 +5618,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-            if save = True:
+            if save == True:
                 plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 100)
             plt.figure()
             for i in range(len(Files)):
@@ -5621,7 +5632,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-            if save = True:
+            if save == True:
                 plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 100)
             plt.figure()
             for i in range(len(Files)):
@@ -5635,7 +5646,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend()
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-            if save = True:
+            if save == True:
                 plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 100)
         else:
             for i in range(0,len(Filenames)):
