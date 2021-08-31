@@ -4485,7 +4485,10 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(filename)+'/Multiplicity_Lifetime_Evolution.png',dpi = 100)
+        if multiplicity == 'Fraction':
+            plt.savefig(new_file+'/'+str(filename)+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 100)
+        elif multiplicity == 'Frequency':
+            plt.savefig(new_file+'/'+str(filename)+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 100)
 
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
     '''
