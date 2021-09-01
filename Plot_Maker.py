@@ -40,22 +40,22 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     #Multi_Plot figures
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity',Systems,Files,Filenames,multiplicity='Fraction',labels=labels)
-    plt.savefig(description+'/Multiplicity_Fraction_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Multiplicity_Fraction_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity',Systems,Files,Filenames,multiplicity='Frequency',labels=labels)
-    plt.savefig(description+'/Companion_Frequency_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Companion_Frequency_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Semi Major Axis',Systems,Files,Filenames,upper_limit=1.3e7,lower_limit=0,labels=labels)
-    plt.savefig(description+'/Semi_Major_Axis_all_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Semi_Major_Axis_all_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Semi Major Axis',Systems,Files,Filenames,upper_limit=1.3,lower_limit=0.7,labels=labels)
-    plt.savefig(description+'/Semi_Major_Axis_Solar_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Semi_Major_Axis_Solar_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Mass Ratio',Systems,Files,Filenames,upper_limit=1.3e7,lower_limit=0,labels=labels)
-    plt.savefig(description+'/Mass_Ratio_all_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Mass_Ratio_all_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Mass Ratio',Systems,Files,Filenames,upper_limit=1.3,lower_limit=0.7,labels=labels)
-    plt.savefig(description+'/Mass_Ratio_Solar_'+description+'.png',dpi = 150)
+    plt.savefig(description+'/Mass_Ratio_Solar_'+description+'.png',dpi = 150); plt.close('all') 
     
     #Random Sampling files
     new_file = output_dir+'/Random_Sampling'
@@ -63,7 +63,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     for n in tqdm(range(len(Files)),position = 0,desc = 'Random Sampling'):
         plt.figure(figsize = (6,6))
         Plots('Mass Ratio',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,bins = np.linspace(0,1,11),label=labels[n])
-        plt.savefig(new_file+'/Random_Sampling_'+orig_filenames[n]+'.png',dpi = 150)
+        plt.savefig(new_file+'/Random_Sampling_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     
     #System Mass files
     new_file = output_dir+'/System_Mass_Dist'
@@ -71,7 +71,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     for n in tqdm(range(len(Files)),position = 0,desc = 'System Mass Dist'):
         plt.figure(figsize = (6,6))
         Plots('System Mass',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,label=labels[n])
-        plt.savefig(new_file+'/System_Mass_'+orig_filenames[n]+'.png',dpi = 150)
+        plt.savefig(new_file+'/System_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
         
     #Primary Mass files
     new_file = output_dir+'/Primary_Mass_Dist'
@@ -79,7 +79,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     for n in tqdm(range(len(Files)),position = 0,desc = 'Primary Mass Dist'):
         plt.figure(figsize = (6,6))
         Plots('Primary Mass',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,label=labels[n])
-        plt.savefig(new_file+'/Primary_Mass_'+orig_filenames[n]+'.png',dpi = 150)    
+        plt.savefig(new_file+'/Primary_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
         
     #Formation Density vs Multiplicity Plots
     adaptive_nos = []
@@ -93,16 +93,16 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     mkdir_p(new_file)
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis='density',labels=labels)
-    plt.savefig(new_file+'/volume_density_multiplicity_fraction_'+description+'.png',dpi = 150)
+    plt.savefig(new_file+'/volume_density_multiplicity_fraction_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis='mass density',labels=labels)
-    plt.savefig(new_file+'/mass_density_multiplicity_fraction_'+description+'.png',dpi = 150)
+    plt.savefig(new_file+'/mass_density_multiplicity_fraction_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis='density',multiplicity='Frequency',labels=labels)
-    plt.savefig(new_file+'/volume_density_companion_frequency_'+description+'.png',dpi = 150)
+    plt.savefig(new_file+'/volume_density_companion_frequency_'+description+'.png',dpi = 150); plt.close('all') 
     plt.figure(figsize = (6,6))
     Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis='mass density',multiplicity='Frequency',labels=labels)
-    plt.savefig(new_file+'/mass_density_companion_frequency_'+description+'.png',dpi = 150)
+    plt.savefig(new_file+'/mass_density_companion_frequency_'+description+'.png',dpi = 150); plt.close('all') 
     
     #YSO
     plt.figure(figsize = (6,6))
@@ -118,7 +118,9 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     for i in tqdm(range(len(Systems)),position = 0,desc = 'Companion Frequency Lifetime Tracking'):
         plt.figure(figsize = (6,6))
         Plots('Multiplicity Lifetime Evolution',Systems[i][-1],Files[i],Filenames[i],Systems[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='Frequency',label=labels[i])
-        
+        plt.close('all') 
+    
+
 all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)
 #all_plots(BOX_filenames,'BOX',BOX_labels)

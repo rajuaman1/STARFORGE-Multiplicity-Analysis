@@ -227,15 +227,18 @@ def IGamma(k,n):
 
 def sigmabinom(n,k):
     '''The Binomial Error Function'''
+    if np.isnan(n) or np.isnan(k): return np.nan
     return np.sqrt((k*(n-k))/n**3)
 
 def Psigma(n,k):
     '''Complex Binomial Error Function'''
+    if np.isnan(n) or np.isnan(k): return np.nan
     variance = (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n))
     return np.sqrt(variance)
 
 def Lsigma(n,k):
     '''Companion Frequency Error Function'''
+    if np.isnan(n) or np.isnan(k): return np.nan
     variance = -((Gamma(2+k)-IGamma(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))**2))+((Gamma(3+k)-IGamma(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))))
     return np.sqrt(variance)
 
@@ -2733,7 +2736,6 @@ def companion_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'conti
     companion_frequency = np.zeros_like(bins)
     companion_count = np.zeros_like(bins)
     sys_count = np.zeros_like(bins)
-    lognums = np.zeros_like(bins)
     for i in range(len(bins)):
         sys_count[i] = len(bins[i])
         companion_count[i] = sum(bins[i])
@@ -4191,7 +4193,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         elif x_axis == 'mass density':
             return np.log10(T_list),mul_list,yerr,system_no_list
 
-def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density'):
+def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density',labels=None):
     '''
     The average multiplicity vs formation time/density for multiple files.
 
@@ -4245,6 +4247,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     -------
     multiplicity_vs_formation(Files,Systems,adaptive_binning = True,adaptive_no = [20,20])
     '''
+    if labels is None: labels=Filenames
     adaptive_no = adaptive_no*len(Files)
     x_array = []
     final_mul_list = []
@@ -4261,7 +4264,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         x_label = r'Log Formation Density [$\frac{M_\odot}{pc^3}$]'
     plt.figure(figsize = (10,10))
     for i in range(len(Files)):
-        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = Filenames[i])
+        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i])
         plt.plot(x_array[i],final_mul_list[i])
     plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
     plt.legend()
@@ -4490,7 +4493,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         elif multiplicity == 'Frequency':
             plt.savefig(new_file+'/'+str(filename)+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 100)
 
-def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None):
+def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None, label=None):
     '''
     Create the plots for one snapshot
     Inputs
@@ -4559,6 +4562,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
     -------
     One_Snap_Plots('Mass Ratio',M2e4_C_M_J_2e7_systems[-1],M2e4_C_M_J_2e7)
     '''
+    if label is None: label=filename
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
          x_vals,y_vals = hist(property_dist,bins = bins)
@@ -4635,7 +4639,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             if log == True:
                 plt.yscale('log')
             if filename is not None:
-                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,horizontalalignment = 'left')
+                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,horizontalalignment = 'left')
             plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         else:
@@ -4651,7 +4655,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             plt.ylabel('Number of Systems')
             plt.xlabel('q (Companion Mass Dist)')
             if filename is not None:
-                plt.text(0.5,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')  
+                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')  
             plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
             if compare == True:
                 if snapshot is None:
@@ -4744,10 +4748,10 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
         plt.ylabel('Mass Ratio')
         plt.scatter(np.log10(smaxes)-np.log10(m_to_AU),q)
         if filename is not None:
-            plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+            plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
 
-def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10):
+def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10,label=None):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
@@ -4822,6 +4826,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
     3) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Properties',bins = 'observer',plot = False)
     Multiplicity properties values being returned.
     '''
+    if label is None: label=filename
     if bins != 'observer' and bins != 'continous':
         print('Please use the string "observer" or "continous" as the bins')
     if multiplicity == 'Frequency':
@@ -4992,8 +4997,8 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.2,xerr = [[(np.log10(7)-np.log10(5))],[(np.log10(9)-np.log10(7))]],marker = 'o',capsize = 5,color = 'black',label = 'Moe & DiStefano 2017')
             plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
             plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
-            if filename is not None:
-                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+            if label is not None:
+                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
@@ -5009,7 +5014,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             else:
                 return logmasslist,o1,o2,o3
 
-def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None):
+def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None,label=None):
     '''
     Create a plot for a property that evolves through the simulation.
 
@@ -5114,7 +5119,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
     3)Time_Evolution_Plots("YSO Multiplicity",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,min_age = 0,target_age = 1)
     The multiplicity of stars of younger than the target age and older than the minimum age.
     '''
-
+    if label is None: label=filename
     if which_plot == 'Multiplicity Time Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5123,14 +5128,14 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             print('Provide the filename')
         if multiplicity == 'Fraction':
             if plot == True:
-                Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window)
+                Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
             elif plot == False:
-                return Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window)
+                return Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
         if multiplicity == 'Frequency':
             if plot == True:
-                Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window)
+                Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
             elif plot == False:
-                return Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window)
+                return Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5138,12 +5143,12 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if plot is False:
             print('Use Plot == True')
             return
-        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no,description=description)
+        multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no,description=description,label=label)
     if which_plot == 'Multiplicity vs Formation':
         if plot == True:
-            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = True)
+            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = True,label=label)
         elif plot == False:
-            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = False)
+            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = False,label=label)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
@@ -5203,8 +5208,8 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
         plt.xlim((left_limit,right_limit))
         plt.figure()
-        if filename is not None:
-            plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+        if label is not None:
+            plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.plot(prop_times,cou1,label = '< '+str(target_age)+' Myr Stars in Simulation')
         plt.legend()
         
@@ -5361,14 +5366,14 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     if label is None: label=filename
     if which_plot in One_System_Plots:
         if plot == True:
-            One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File)
+            One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
         else:
-            return One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File)
+            return One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
     elif which_plot == 'Multiplicity':
         if plot == True:
-            Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no)
+            Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no,label=label)
         else:
-            return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no)
+            return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no,label=label)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
             Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
@@ -5458,7 +5463,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     if labels is None: labels=Filenames
     
     if which_plot == 'Multiplicity vs Formation':
-        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis)
+        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis,labels=labels)
     else:
         if Snapshots == None:
             Snapshots = [[-1]]*len(Filenames)
