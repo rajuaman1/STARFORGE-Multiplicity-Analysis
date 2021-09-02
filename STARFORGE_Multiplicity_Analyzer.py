@@ -230,17 +230,25 @@ def sigmabinom(n,k):
     if np.isnan(n) or np.isnan(k): return np.nan
     return np.sqrt((k*(n-k))/n**3)
 
-def Psigma(n,k):
+def Psigma(n,k,limit=10):
     '''Complex Binomial Error Function'''
     if np.isnan(n) or np.isnan(k): return np.nan
-    variance = (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n))
-    return np.sqrt(variance)
+    if n<limit:
+        return np.sqrt( (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n)) )
+    else:
+        if k==n: k=n-1 #so that we get nonzero estimate
+        if k==0: k=1 #so that we get nonzero estimate
+        return sigmabinom(n,k) #use binomial apprximation
 
-def Lsigma(n,k):
+def Lsigma(n,k,limit=10):
     '''Companion Frequency Error Function'''
     if np.isnan(n) or np.isnan(k): return np.nan
-    variance = -((Gamma(2+k)-IGamma(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))**2))+((Gamma(3+k)-IGamma(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))))
-    return np.sqrt(variance)
+    if n<limit:
+        return np.sqrt(-((Gamma(2+k)-IGamma(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))**2))+((Gamma(3+k)-IGamma(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma(1+k,3*n)))))
+    else:
+        #Use Poisson to estimate
+        if k==0: k=1 #so that we get nonzero estimate
+        return np.sqrt(k)/n
 
 def load_files(filenames,brown_dwarfs = False):
     '''
@@ -4135,16 +4143,8 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         mul_list = comp_list/system_no_list
     yerr = []
     for i in range(len(mul_list)):
-        if multiplicity == 'Fraction':
-            if system_no_list[i]>10 and multiprim_list[i]>0 and multiprim_list[i]<system_no_list[i]:
-                yerr.append(sigmabinom(system_no_list[i],multiprim_list[i]))
-            else:
-                yerr.append(Psigma(system_no_list[i],multiprim_list[i]))
-        if multiplicity == 'Frequency':
-            if system_no_list[i]>10 and comp_list[i]>0 and comp_list[i]<system_no_list[i]:
-                yerr.append(sigmabinom(system_no_list[i],comp_list[i]))
-            else:
-                yerr.append(Lsigma(system_no_list[i],comp_list[i]))
+        if multiplicity == 'Fraction': yerr.append(Psigma(system_no_list[i],multiprim_list[i]))
+        if multiplicity == 'Frequency': yerr.append(Lsigma(system_no_list[i],comp_list[i]))
     yerr = np.array(yerr)
     if plot == True:
         #Plotting the multiplicity over age
