@@ -22,9 +22,11 @@ ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
 alt_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2']
 alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 
+alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
+
 datafolder='C:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
-def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
+def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_result=True):
     Filenames = orig_filenames.copy()
     if datafolder!='':
         for i,fname in enumerate(Filenames):
@@ -32,7 +34,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
     Files = load_files(Filenames)
     Systems = []
     for i in tqdm(range(len(Files)),position = 0,desc = 'Loading the Systems'):
-         Systems.append(system_initialization(Files[i] ,Filenames[i],read_in_result=True))
+         Systems.append(system_initialization(Files[i] ,Filenames[i],read_in_result=read_in_result))
     
     output_dir = description
     mkdir_p(output_dir)
@@ -119,7 +121,8 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5):
         plt.figure(figsize = (6,6))
         Plots('Multiplicity Lifetime Evolution',Systems[i][-1],Files[i],Filenames[i],Systems[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='Frequency',label=labels[i])
         plt.close('all') 
-    
+  
+
 
 all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)

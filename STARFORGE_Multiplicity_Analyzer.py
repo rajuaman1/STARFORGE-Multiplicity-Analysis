@@ -232,7 +232,7 @@ def sigmabinom(n,k):
 
 def Psigma(n,k,limit=10):
     '''Complex Binomial Error Function'''
-    if np.isnan(n) or np.isnan(k): return np.nan
+    if np.isnan(n) or np.isnan(k) or n==0: return np.nan
     if n<limit:
         return np.sqrt( (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n)) )
     else:
@@ -242,7 +242,7 @@ def Psigma(n,k,limit=10):
 
 def Lsigma(n,k,limit=10):
     '''Companion Frequency Error Function'''
-    if np.isnan(n) or np.isnan(k): return np.nan
+    if np.isnan(n) or np.isnan(k) or n==0: return np.nan
     if n<limit:
         return np.sqrt(-((Gamma(2+k)-IGamma(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))**2))+((Gamma(3+k)-IGamma(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma(1+k,3*n)))))
     else:
@@ -287,7 +287,7 @@ def load_files(filenames,brown_dwarfs = False):
             filtered_data_file = data_file
         Files_List.append(filtered_data_file) 
 
-    return np.array(Files_List)
+    return np.array(Files_List, dtype=object)
 
 ## This function calculates Binding Energy
 def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
@@ -4924,16 +4924,10 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             elif bins == 'observer':
                 if multiplicity == 'Fraction':
                     for i in range(len(logmasslist)-1):
-                        if o3[i]>10 and o2[i]>0 and o2[i]<o3[i]:
-                            plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+sigmabinom(o3[i],o2[i]),o1[i]-sigmabinom(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                        else:
-                            plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
+                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
                     if filtered is True:
                         for i in range(len(logmasslist_filt)-1):
-                            if o3_filt[i]>10 and o2_filt[i]>0 and o2_filt[i]<o3_filt[i]:
-                                plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+sigmabinom(o3_filt[i],o2_filt[i]),o1_filt[i]-sigmabinom(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
-                            else:
-                                plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
                 else:
                     plt.plot(logmasslist,np.log10(o1),marker = '^')
                     plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
@@ -4978,16 +4972,10 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                     plt.plot(logmasslist_filt,o1_filt,marker = 'o',label = 'After Corrections',linestyle = ':')
             elif bins == 'observer':
                 for i in range(len(logmasslist)-1):
-                    if o3[i]>10 and o2[i]>0 and o2[i]<o3[i]:
-                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+sigmabinom(o3[i],o2[i]),o1[i]-sigmabinom(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                    else:
-                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Lsigma(o3[i],o2[i]),o1[i]-Lsigma(o3[i],o2[i]),color = '#ff7f0e',alpha = 0.6)
+                    plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Lsigma(o3[i],o2[i]),o1[i]-Lsigma(o3[i],o2[i]),color = '#ff7f0e',alpha = 0.6)
                 if filtered is True:
                     for i in range(len(logmasslist_filt)-1):
-                        if o3_filt[i]>10 and o2_filt[i]>0 and o2_filt[i]<o3_filt[i]:
-                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+sigmabinom(o3_filt[i],o2_filt[i]),o1_filt[i]-sigmabinom(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
-                        else:
-                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                        plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
             error_values = [0.50,0.84,1.3,1.6,2.1]
             error_bins = [1.0,3.5,7.0,12.5,16]
             plt.xlabel('Mass (in log solar masses)')
@@ -5508,13 +5496,10 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 sys_no = d
                 error_one = []
                 for i in range(len(sys_no)):
-                    if sys_no[i]>10 and comp_mul_no[i]>0 and comp_mul_no[i]<sys_no[i]:
-                        error_one.append(sigmabinom(sys_no[i],comp_mul_no[i]))
-                    else:
-                        if multiplicity == 'Fraction':
-                            error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
-                        elif multiplicity == 'Frequency':
-                            error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
+                    if multiplicity == 'Fraction':
+                        error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
+                    elif multiplicity == 'Frequency':
+                        error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
                 error.append(error_one)
                 x.append(a)
                 y.append(b)
