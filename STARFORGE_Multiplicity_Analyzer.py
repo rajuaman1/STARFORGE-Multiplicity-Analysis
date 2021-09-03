@@ -290,25 +290,25 @@ def load_files(filenames,brown_dwarfs = False):
     return np.array(Files_List, dtype=object)
 
 ## This function calculates Binding Energy
-def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def Binding_Energy(m1,m2,x1,x2,v1,v2,periodic_edge = False,L = None):
     'Calculate the Binding Energy (in J) from given masses,positions and velocities. If using a box file, provide the lengths to modify it.'
     mu = (m1*m2)/(m1+m2)
     KE = msun_to_kg * 0.5 * ((v1[0]-v2[0])**2+(v1[1]-v2[1])**2 +(v1[2]-v2[2])**2) * mu
     dx = x1[0]-x2[0];dy = x1[1]-x2[1];dz = x1[2]-x2[2]
     #If the edge is periodic, we replace the long distance with the short distance in 1D.
     if periodic_edge is True:
-        if dx > Lx/2:
-            dx = Lx - dx
-        if dy > Ly/2:
-            dy = Ly - dy
-        if dz > Lz/2:
-            dz = Lz - dz
+        if dx > L/2:
+            dx = L - dx
+        if dy > L/2:
+            dy = L - dy
+        if dz > L/2:
+            dz = L - dz
     PE = (msun_to_kg**2*G*(m1+m2)*mu)/(pc_to_m*np.sqrt(dx**2+dy**2+dz**2))
     E = KE - PE
     return E
 
 #This function is able to calculate the binding energy matrix of a set of nodes
-def Binding_Energy_Matrix(m,x,v,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def Binding_Energy_Matrix(m,x,v,periodic_edge = False,L = None):
     'Calculate the Binding Energy Matrix (in J) from a list of masses,positions and velocities. If using Box run, provide the edge lengths.'
     Binding_energy_matrix = np.zeros((len(m),len(m)))
     for i in range(len(m)):
@@ -318,7 +318,7 @@ def Binding_Energy_Matrix(m,x,v,periodic_edge = False,Lx = None,Ly = None,Lz = N
                 if i == j:
                     E = float('inf')
                 else:
-                    E = Binding_Energy(m[i],m[j],x[i],x[j],v[i],v[j],periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz) 
+                    E = Binding_Energy(m[i],m[j],x[i],x[j],v[i],v[j],periodic_edge = periodic_edge,L = L) 
                 Binding_energy_matrix[i][j] = E                
                 Binding_energy_matrix[j][i] = E
     return Binding_energy_matrix
@@ -368,7 +368,7 @@ def min_and_max(x,dimension = 'x'):
             max_x = i[n]
     return min_x,max_x
 
-def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,L = None):
     '''
     Splitting the given files data into bins of a defined length. This would put the masses,positions, velocities and ids into different regions corresponding to
     the split regions.
@@ -381,7 +381,7 @@ def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,Lx = Non
     The snapshot to which to apply splitting
         
     seperation_param : float,int
-    The size of the box you want to split (in pc). 
+    The size of the box you want to split (in pc). If None, then no splitting is done
     Returns
     -------
     m,x,v,ids : lists
@@ -389,7 +389,7 @@ def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,Lx = Non
 
     Example
     -------
-    1) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7_BOX,snapshot = -1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    1) m,x,v,ids = Splitting_Data(file = M2e4_C_M_J_2e7_BOX,snapshot = -1,seperation_param = 2,periodic_edge = True,L = 1)
 
     This is for a box file with side lengths 1 and the splitting happening every 2 pc.
 
@@ -398,90 +398,97 @@ def Splitting_Data(file,snapshot,seperation_param,periodic_edge = False,Lx = Non
     This is for a non box file and the splitting happening every 2 pc.
 
     '''
-    # Using the max_and_min function
-    min_x,max_x = min_and_max(file[snapshot].x,'x')
-    min_y,max_y = min_and_max(file[snapshot].x,'y')
-    min_z,max_z = min_and_max(file[snapshot].x,'z')
-    # Defining a seperation parameter, the smaller the faster the program will run but the less accurate it will be
-    #Doing the clustering using the digitize function for x,y and z seperately. Since the bins aren't zero indexed, they are 
-    # all subtracted by one
-    if periodic_edge == False:
-        bins_x = np.arange(min_x,max_x,seperation_param)
-        clusters_x = np.digitize(file[snapshot].x,bins_x)
-        for i in range(len(clusters_x)):
-            clusters_x[i] = clusters_x[i]-1
-
-        bins_y = np.arange(min_y,max_y,seperation_param)
-        clusters_y = np.digitize(file[snapshot].x,bins_y)
-        for i in range(len(clusters_y)):
-            clusters_y[i] = clusters_y[i]-1
-
-        bins_z = np.arange(min_z,max_z,seperation_param)
-        clusters_z = np.digitize(file[snapshot].x,bins_z)
-        for i in range(len(clusters_z)):
-            clusters_z[i] = clusters_z[i]-1
+    
+    if seperation_param is None: #No need to split
+        m = [[[file[snapshot].m]]]
+        x = [[[file[snapshot].x]]]
+        v = [[[file[snapshot].v]]]
+        ids = [[[file[snapshot].id]]]
     else:
-        bins_x = np.arange(seperation_param,Lx-seperation_param,seperation_param)
-        bins_x = np.insert(bins_x,0,0)
-        bins_x = np.append(bins_x,Lx+0.1)
-        clusters_x = np.digitize(file[snapshot].x,bins_x)
-        for i in range(len(clusters_x)):
-            clusters_x[i] = clusters_x[i]-1
-
-        bins_y = np.arange(seperation_param,Ly-seperation_param,seperation_param)
-        bins_y = np.insert(bins_y,0,0)
-        bins_y = np.append(bins_y,Ly+0.1)
-        clusters_y = np.digitize(file[snapshot].x,bins_y)
-        for i in range(len(clusters_y)):
-            clusters_y[i] = clusters_y[i]-1
-
-        bins_z = np.arange(seperation_param,Lz-seperation_param,seperation_param)
-        bins_z = np.insert(bins_z,0,0)
-        bins_z = np.append(bins_z,Lz+0.1)
-        clusters_z = np.digitize(file[snapshot].x,bins_z)
-        for i in range(len(clusters_z)):
-            clusters_z[i] = clusters_z[i]-1
-    # The x,m,v and ids are first initialized to empty list of lists. Then, they get the required indexes from the earlier
-    #function and use that to place the objects in the correct indices
-    x = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
-    m = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
-    v = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
-    ids = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
-    for i in range(len(m)):
-        for j in range(len(m[0])):
-            for k in range(len(m[0][0])):
-                x[i][j][k] = []
-                m[i][j][k] = []
-                v[i][j][k] = []
-                ids[i][j][k] = []
-    for i in range(len(file[snapshot].x)):
-        iindex = clusters_x[i][0]
-        jindex = clusters_y[i][1]
-        zindex = clusters_z[i][2]
-        x[iindex][jindex][zindex].append(file[snapshot].x[i])
-        m[iindex][jindex][zindex].append(file[snapshot].m[i])
-        v[iindex][jindex][zindex].append(file[snapshot].v[i])
-        ids[iindex][jindex][zindex].append(file[snapshot].id[i])
-    if periodic_edge == True:
-        for i in range(len(bins_x)):
-            for j in range(len(bins_y)):
-                for k in range(len(bins_z)):
-                    if i == 0 or i == len(bins_x)-1 or j == 0 or j == len(bins_y)-1 or k == 0 or k == len(bins_z)-1:
-                        if not (i == 0 and j == 0 and k==0):
-                            m[0][0][0].extend(m[i][j][k])
-                            m[i][j][k] = []
-                            x[0][0][0].extend(x[i][j][k])
-                            x[i][j][k] = []
-                            v[0][0][0].extend(v[i][j][k])
-                            v[i][j][k] = []
-                            ids[0][0][0].extend(ids[i][j][k])
-                            ids[i][j][k] = []
+        # Using the max_and_min function
+        min_x,max_x = min_and_max(file[snapshot].x,'x')
+        min_y,max_y = min_and_max(file[snapshot].x,'y')
+        min_z,max_z = min_and_max(file[snapshot].x,'z')
+        # Defining a seperation parameter, the smaller the faster the program will run but the less accurate it will be
+        #Doing the clustering using the digitize function for x,y and z seperately. Since the bins aren't zero indexed, they are 
+        # all subtracted by one
+        if periodic_edge == False:
+            bins_x = np.arange(min_x,max_x,seperation_param)
+            clusters_x = np.digitize(file[snapshot].x,bins_x)
+            for i in range(len(clusters_x)):
+                clusters_x[i] = clusters_x[i]-1
+    
+            bins_y = np.arange(min_y,max_y,seperation_param)
+            clusters_y = np.digitize(file[snapshot].x,bins_y)
+            for i in range(len(clusters_y)):
+                clusters_y[i] = clusters_y[i]-1
+    
+            bins_z = np.arange(min_z,max_z,seperation_param)
+            clusters_z = np.digitize(file[snapshot].x,bins_z)
+            for i in range(len(clusters_z)):
+                clusters_z[i] = clusters_z[i]-1
+        else:
+            bins_x = np.arange(seperation_param,L-seperation_param,seperation_param)
+            bins_x = np.insert(bins_x,0,0)
+            bins_x = np.append(bins_x,L+0.1)
+            clusters_x = np.digitize(file[snapshot].x,bins_x)
+            for i in range(len(clusters_x)):
+                clusters_x[i] = clusters_x[i]-1
+    
+            bins_y = np.arange(seperation_param,L-seperation_param,seperation_param)
+            bins_y = np.insert(bins_y,0,0)
+            bins_y = np.append(bins_y,L+0.1)
+            clusters_y = np.digitize(file[snapshot].x,bins_y)
+            for i in range(len(clusters_y)):
+                clusters_y[i] = clusters_y[i]-1
+    
+            bins_z = np.arange(seperation_param,L-seperation_param,seperation_param)
+            bins_z = np.insert(bins_z,0,0)
+            bins_z = np.append(bins_z,L+0.1)
+            clusters_z = np.digitize(file[snapshot].x,bins_z)
+            for i in range(len(clusters_z)):
+                clusters_z[i] = clusters_z[i]-1
+        # The x,m,v and ids are first initialized to empty list of lists. Then, they get the required indexes from the earlier
+        #function and use that to place the objects in the correct indices
+        x = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
+        m = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
+        v = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
+        ids = np.zeros((len(bins_x),len(bins_y),len(bins_z))).tolist()
+        for i in range(len(m)):
+            for j in range(len(m[0])):
+                for k in range(len(m[0][0])):
+                    x[i][j][k] = []
+                    m[i][j][k] = []
+                    v[i][j][k] = []
+                    ids[i][j][k] = []
+        for i in range(len(file[snapshot].x)):
+            iindex = clusters_x[i][0]
+            jindex = clusters_y[i][1]
+            zindex = clusters_z[i][2]
+            x[iindex][jindex][zindex].append(file[snapshot].x[i])
+            m[iindex][jindex][zindex].append(file[snapshot].m[i])
+            v[iindex][jindex][zindex].append(file[snapshot].v[i])
+            ids[iindex][jindex][zindex].append(file[snapshot].id[i])
+        if periodic_edge == True:
+            for i in range(len(bins_x)):
+                for j in range(len(bins_y)):
+                    for k in range(len(bins_z)):
+                        if i == 0 or i == len(bins_x)-1 or j == 0 or j == len(bins_y)-1 or k == 0 or k == len(bins_z)-1:
+                            if not (i == 0 and j == 0 and k==0):
+                                m[0][0][0].extend(m[i][j][k])
+                                m[i][j][k] = []
+                                x[0][0][0].extend(x[i][j][k])
+                                x[i][j][k] = []
+                                v[0][0][0].extend(v[i][j][k])
+                                v[i][j][k] = []
+                                ids[0][0][0].extend(ids[i][j][k])
+                                ids[i][j][k] = []
                             
             
     return m,x,v,ids
 
 ## Most crucial function of the program (Program's runtime comes mainly from here)
-def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = None,Lz = None): 
+def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,L = None): 
     '''
     Find the minimum value in the Binding Energy Matrix and changes the masses, positions, velocities and ids of that node.
 
@@ -505,14 +512,8 @@ def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = Non
     periodic_edge : bool,optional
     If you are using the box simulation with periodic edges.
 
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
+    L: int,float,optional
+    The size of periodic box
 
     Returns
     -------
@@ -534,7 +535,7 @@ def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = Non
 
     Example
     -------
-    1) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    1) new_matrix,indexes,new_masses,new_x,new_v = remove_and_replace(matrix,m,x,v,ids,periodic_edge = True,L = 1)
 
     This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
 
@@ -605,7 +606,7 @@ def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = Non
             if i == replace_indice:
                 Binding_Energy_row.append(np.float('inf'))
             else: 
-                Energy_of_these_objects = Binding_Energy(new_masses[i],new_object_mass,new_x[i],new_object_x,new_v[i],new_object_v,periodic_edge=periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
+                Energy_of_these_objects = Binding_Energy(new_masses[i],new_object_mass,new_x[i],new_object_x,new_v[i],new_object_v,periodic_edge=periodic_edge,L = L)
                 Binding_Energy_row.append(Energy_of_these_objects)
         new_matrix[replace_indice] = Binding_Energy_row
         for i in range(len(new_matrix)):
@@ -616,7 +617,7 @@ def remove_and_replace(matrix,m,x,v,ids,periodic_edge = False,Lx = None,Ly = Non
 
 # Since the previous function had the constraints already, we can make the while condition stop when there is no additional 
 # clustering happening 
-def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge = False,L = None):
     '''
     Perform the remove and replace until it is no longer possible (because there are no more bound systems of less than 4 stars).
 
@@ -640,14 +641,8 @@ def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge
     periodic_edge : bool,optional
     If you are using the box simulation with periodic edges.
 
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
+    L: int,float,optional
+    The size of periodic box
 
     Returns
     -------
@@ -656,7 +651,7 @@ def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge
 
     Example
     -------
-    1) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    1) ids = constrained_remove_and_replace(matrix,ids,m,x,v,periodic_edge = True,L = 1)
 
     This is for a pre determined matrix,m,x,v and ids for a box file with side lengths 1.
 
@@ -668,11 +663,11 @@ def constrained_remove_and_replace(binding_energy_matrix,ids,m,x,v,periodic_edge
     # Wait till no more objects are clustered
     while len(previous_ids) != len(ids):
         previous_ids = list(ids)
-        binding_energy_matrix, ids, m, x, v = remove_and_replace(binding_energy_matrix,m,x,v,ids,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
+        binding_energy_matrix, ids, m, x, v = remove_and_replace(binding_energy_matrix,m,x,v,ids,periodic_edge = periodic_edge,L = L)
     return ids
 
 #This part of the program makes use of all the previous function definitions and leads to the result
-def clustering_algorithm(file,snapshot_number,seperation_param = 2,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def clustering_algorithm(file,snapshot_number,seperation_param = None,periodic_edge = False,L = None):
     '''
     The main algorithm that can perform system assignment after splitting the data into boxes.
     Inputs
@@ -686,19 +681,13 @@ def clustering_algorithm(file,snapshot_number,seperation_param = 2,periodic_edge
     periodic_edge : bool,optional
     If you are using the box simulation with periodic edges.
 
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
+    L: int,float,optional
+    The size of periodic box
 
     Parameters
     ----------
     seperation_param : int, float
-    The seperation of the boxes. By default, this is 2 pc and that is the separation of the pickle files. 
+    The seperation of the boxes. By default, this is 2 pc and that is the separation of the pickle files. If set to None, no splitting is done
 
     Returns
     -------
@@ -707,7 +696,7 @@ def clustering_algorithm(file,snapshot_number,seperation_param = 2,periodic_edge
 
     Example
     -------
-    1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
+    1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,L = 1)
 
     This is for a box file with side lengths 1 and split every 2 pc.
 
@@ -720,67 +709,14 @@ def clustering_algorithm(file,snapshot_number,seperation_param = 2,periodic_edge
         return file[snapshot_number].id
     #Otherwise, we perform out algorithm on the nodes.
     else:
-        m,x,v,idess = Splitting_Data(file,snapshot_number,seperation_param,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
+        m,x,v,ids = Splitting_Data(file,snapshot_number,seperation_param,periodic_edge = periodic_edge,L = L)
 
         Result = []
         for i in tqdm(range(len(m)),position = 0,desc = 'Main Loop',leave= True ):
             for j in range(len(m[i])):
                 for k in range(len(m[i][j])):
-                    Binding = Binding_Energy_Matrix(m[i][j][k],x[i][j][k],v[i][j][k],periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
-                    Result.append(constrained_remove_and_replace(Binding,idess[i][j][k],m[i][j][k],x[i][j][k],v[i][j][k],periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz))
-
-
-        return Result
-
-def clustering_algorithm_no_split(file,snapshot_number,periodic_edge = False,Lx = None,Ly = None,Lz = None):
-    '''
-    The main algorithm that can perform system assignment without splitting.
-    Inputs
-    ----------
-    file : list of sinkdata.
-    The input data that will be grouped into systems.
-
-    snapshot_number : int
-    The snapshot number to use.
-
-    periodic_edge : bool,optional
-    If you are using the box simulation with periodic edges.
-
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
-
-    Returns
-    -------
-    Result: list
-    The new ids containing the ids arranged by system.
-
-    Example
-    -------
-    1) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2,periodic_edge = True,Lx = 1,Ly = 1,Lz = 1)
-
-    This is for a box file with side lengths 1.
-
-    2) Result = clustering_algorithm(M2e4_C_M_J_2e7,-1,seperation_param = 2)
-
-    This is for a non-box file.
-    '''
-    if len(file[snapshot_number].m) <=1:
-        return file[snapshot_number].id
-    else:
-        m = file[snapshot_number].m
-        x = file[snapshot_number].x
-        v = file[snapshot_number].v
-        idess = file[snapshot_number].id
-
-        Result = []
-        Binding = Binding_Energy_Matrix(m,x,v,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
-        Result.append(constrained_remove_and_replace(Binding,idess,m,x,v,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz))
+                    Binding = Binding_Energy_Matrix(m[i][j][k],x[i][j][k],v[i][j][k],periodic_edge = periodic_edge,L = L)
+                    Result.append(constrained_remove_and_replace(Binding,ids[i][j][k],m[i][j][k],x[i][j][k],v[i][j][k],periodic_edge = periodic_edge,L = L))
 
 
         return Result
@@ -844,9 +780,9 @@ class star_system:
             self.smaxis = 0
 
 # Main Function of the program
-def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_in_result = False,periodic_edge = False,L = None):
     '''
-    The main function that does the system assignment(with splitting) and makes them star system objects.
+    The main function that does the system assignment(with/without splitting) and makes them star system objects.
     Inputs
     ----------
     file : list of sinkdata.
@@ -860,15 +796,11 @@ def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodi
 
     periodic_edge : bool,optional
     If you are using the box simulation with periodic edges.
+    
+    seperation_param: float, distance in pc for subdivisions in which system assignment is carried out. If None, no subdivision is done
 
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
+    L: int,float,optional
+    The size of periodic box
 
     Parameters
     ----------
@@ -886,7 +818,7 @@ def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodi
 
     This is the example of creating the systems for a non-boxed file with the systems already made (in the form of Master_File)
 
-    2) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = True,Lx = L,Ly = L,Lz = L)
+    2) systems = system_creation(M2e4_C_M_2e7,-1,M2e4_C_M_2e7_systems,read_in_result = True,periodic_edge = True,L = L)
 
     This is the example of creating the systems for a boxed file with the systems already made (in the form of Master_File)
 
@@ -900,7 +832,7 @@ def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodi
     if read_in_result == True:
         return Master_File[snapshot_num]
     else:
-        Result = clustering_algorithm(file,snapshot_num,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
+        Result = clustering_algorithm(file,snapshot_num,seperation_param = seperation_param,periodic_edge = periodic_edge,L = L)
    #Turn the id pairs into star system objects
     for i in tqdm(Result,desc = 'System Creation',position = 0,leave = True):
         if isinstance(i,list):
@@ -908,59 +840,7 @@ def system_creation(file,snapshot_num,Master_File,read_in_result = False,periodi
                 systems.append(star_system(j,snapshot_num,file))
         else:
             systems.append(star_system(i,snapshot_num,file))
-    return systems    
-
-def system_creation_no_splitting(data,snapshot_num,periodic_edge = False,Lx = None,Ly = None,Lz = None):
-    '''
-    The main function that does the system assignment(without splitting) and makes them star system objects.
-    Inputs
-    ----------
-    data : list of sinkdata.
-    The input data that will be grouped into systems.
-
-    snapshot_number : int
-    The snapshot number to use.
-
-    periodic_edge : bool,optional
-    If you are using the box simulation with periodic edges.
-
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
-
-    Returns
-    -------
-    systems: list of star system objects
-    The list of star system objects.
-
-    Example
-    -------
-    1) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = False)
-
-    This is the example of creating the systems for a non-boxed file without splitting.
-
-    2) systems = system_creation_no_splitting(M2e4_C_M_2e7,-1,periodic_edge = True,Lx = L,Ly = L,Lz = L)
-
-    This is the example of creating the systems for a boxed file of side length L without splitting.
-
-
-    '''
-
-    systems = []
-    Result = clustering_algorithm_no_split(data,snapshot_num,periodic_edge = periodic_edge,Lx = Lx,Ly = Ly,Lz = Lz)
-   
-    for i in tqdm(Result,desc = 'System Creation',position = 0,leave = True):
-        if isinstance(i,list):
-            for j in i:
-                systems.append(star_system(j,snapshot_num,data))
-        else:
-            systems.append(star_system(i,snapshot_num,data))
-    return systems   
+    return systems      
 
 #This is an SFE finder, gives you the snapshot for an SFE by finding the closest value to the target SFE. It also gives you
 #that SFE so that you know how close it is
@@ -991,7 +871,7 @@ def Mass_Creation_Finder(file,min_mass = 1):
             break
     return snap
 
-def system_initialization(file,file_name,read_in_result = True,full_assignment = False,snapshot_num = -1,periodic_edge = False,Lx = None,Ly = None,Lz = None):
+def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,snapshot_num = -1,periodic_edge = False,L = None):
     '''
     This function initializes the systems for a given file.
     Inputs
@@ -1009,6 +889,9 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
 
     full_assignment: bool,optional
     Whether to perform system assignment on all snapshots.
+    
+    seperation_param: float
+    If not None the simulation volume is subdivided into boxes whose of seperation_param size and the systm assignment is carried out in them inependetly
         
     snapshot_num: int,optional
     The snapshot to perform assignment if you only want to do it for one snap (i.e full_assignment = False).
@@ -1016,14 +899,8 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
     periodic_edge : bool,optional
     If you are using the box simulation with periodic edges.
 
-    Lx: int,float,optional
-    The length of periodic box in the x direction.
-
-    Ly: int,float,optional
-    The length of periodic box in the y direction.
-
-    Lz: int,float,optional
-    The length of periodic box in the z direction.
+    L: int,float,optional
+    The size of periodic box in pc.
 
     Returns
     -------
@@ -1036,7 +913,7 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
 
     This is the example of creating the systems for a non-boxed file where the systems are already made.
 
-    2) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True,periodic_edge = True, Lx = L,Ly = L,Lz = L)
+    2) M2e4_C_M_2e7_systems = system_initialization(M2e4_C_M_2e7,'M2e4_C_M_2e7',read_in_result = True,periodic_edge = True, L = L)
 
     This is the example of creating the systems for a boxed file of length L where the systems are already made.
 
@@ -1061,10 +938,10 @@ def system_initialization(file,file_name,read_in_result = True,full_assignment =
             Result_List = []
             for i in tqdm(range(len(file)),desc = 'Full Assignment',position = 0):
                 print('Snapshot No: '+str(i)+'/'+str(len(file)-1))
-                Result_List.append(system_creation(file,i,Master_File = file,read_in_result = False,periodic_edge = False,Lx = None,Ly = None,Lz = None))
+                Result_List.append(system_creation(file,i,Master_File = file,seperation_param=seperation_param,read_in_result = False,periodic_edge = False,L = None))
             return Result_List #Returning the list of assigned systems
         else:#Returning just one snapshot
-            return system_creation(file,snapshot_num,Master_File = file,read_in_result = False,periodic_edge = False,Lx = None,Ly = None,Lz = None)
+            return system_creation(file,snapshot_num,Master_File = file,seperation_param=seperation_param,read_in_result = False,periodic_edge = False,L = None)
 
 #This is a filter for minimum q for one snapshot
 def q_filter_one_snap(systems,min_q = 0.1):

@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -25,6 +25,24 @@ alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
 
 datafolder='C:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
+
+
+def redo_system_assignment(filename,datafolder='',seperation_param=None, do_last_10_with_no_sep=True):
+    file_path = filename
+    if datafolder !='': file_path = datafolder + '/' + filename
+    file = load_files(file_path)[0]
+    output = system_initialization(file,filename,read_in_result=False,full_assignment= True,seperation_param=seperation_param)
+    
+    if do_last_10_with_no_sep and (not (seperation_param is None) ):
+        for i in tqdm(range(-10,0)):
+            output[i] = system_creation(file,i,'',seperation_param=None,read_in_result=False)
+    #Saving to file
+    outfilename=filename+'_Systems'
+    if datafolder !='': outfilename = datafolder + '/' + outfilename
+    outfile = open(outfilename,'wb')
+    pickle.dump(output,outfile)
+    outfile.close()
+
 
 def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_result=True):
     Filenames = orig_filenames.copy()
@@ -123,8 +141,10 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         plt.close('all') 
   
 
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
 
-all_plots(alpha_filenames,'alpha',alpha_labels)
+
+#all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)
 #all_plots(BOX_filenames,'BOX',BOX_labels)
 #all_plots(metal_filenames,'metal',metal_labels)
