@@ -131,7 +131,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     #Multiplicity Lifetime Evolution
     new_file = output_dir+'/Multiplicity_Lifetime_Evolution'
     for i in Filenames:
-        mkdir_p(new_file+'/'+i)
+        mkdir_p(new_file+'/'+path.basename(i))
     for i in tqdm(range(len(Systems)),position = 0,desc = 'Multiplicity Fraction Lifetime Tracking'):
         plt.figure(figsize = (6,6))
         Plots('Multiplicity Lifetime Evolution',Systems[i][-1],Files[i],Filenames[i],Systems[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='Fraction',label=labels[i])
@@ -141,10 +141,9 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         plt.close('all') 
   
 
-redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
+#redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
 
-
-#all_plots(alpha_filenames,'alpha',alpha_labels)
+all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)
 #all_plots(BOX_filenames,'BOX',BOX_labels)
 #all_plots(metal_filenames,'metal',metal_labels)

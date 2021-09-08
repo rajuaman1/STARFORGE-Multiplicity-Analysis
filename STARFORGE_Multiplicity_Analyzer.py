@@ -1247,7 +1247,7 @@ def new_stars_count(file,plot = True,time = True,all_stars = False,lower_limit =
         elif plot == False:
             return no_of_stars
 
-def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2,only_primaries_and_singles = False,full_form_times = False):
+def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_time_bin = 0.2,only_primaries_and_singles = False,full_form_times = False, label = None):
     '''
     Create or return a histogram of the formation times of stars in the given mass range.
     
@@ -1297,6 +1297,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     -------
     formation_time_histogram(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,only_primaries_and_singles = True)
     '''
+    if label is None: label = path.basename(filename)
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     birth_times = []
@@ -1320,7 +1321,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     for i in file:
         times.append(i.t*code_time_to_Myr)
     birth_times = np.array(birth_times)
-    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
+    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = int((max(times)-min(times))/min_time_bin)))
     times = np.array(times)
     new_stars_co = np.insert(new_stars_co,0,0)
     if full_form_times is True:
@@ -1328,7 +1329,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     if plot == True:
         plt.step(times,new_stars_co)
         if filename is not None:
-            plt.text(max(times)/2,max(new_stars_co),filename)
+            plt.text(max(times)/2,max(new_stars_co),label)
         plt.text(max(times)/2,max(new_stars_co)*0.9,'Star Mass = '+str(target_mass)+' $M_\odot$')
         plt.xlabel('Time [Myr]')
         plt.ylabel('Number of New Stars')
@@ -4152,7 +4153,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         plt.ylabel('Companion Frequency')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 
-def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None):
+def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None, label=None):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -4223,6 +4224,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     -------
     multiplicity_and_age_combined(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,rolling_avg = True,adaptive_binning = True,adaptive_no = 20)
     '''  
+    if label is None: label = path.basename(filename)
     #In case there's no target mass
     if description is not None:
         save = True
@@ -4234,7 +4236,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     if adaptive_binning is True:
-        form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
+        form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True,label=label)
         form_times = np.sort(form_times)
         indices = np.array(range(0,len(form_times)-5,adaptive_no))
         adaptive_times = []
@@ -4274,7 +4276,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         min_time_bin = min(dt_list)
     if min_time_bin < (file[-1].t-file[-2].t)*code_time_to_Myr:
         min_time_bin = len(times)
-    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = (max(times)-min(times))/min_time_bin))
+    times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = int((max(times)-min(times))/min_time_bin)))
     times = np.array(times)
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
@@ -4291,7 +4293,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(filename)+'/New_Stars_Histogram.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/New_Stars_Histogram.png',dpi = 100)
     #Creating the plot of stellar densities
     number_densities = []
     mass_densities = []
@@ -4314,7 +4316,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(filename)+'/Density_Evolution.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 100)
     #Mass Density Plots
     plt.figure(figsize = (10,10))
     density_evolution(mass_densities,times,filename = filename,density = 'mass')
@@ -4331,7 +4333,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(filename)+'/Mass_Density_Evolution.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 100)
     #Plotting the multiplicity over age
     plt.figure(figsize = (10,10))
     for i in range(len(time_list)):
@@ -4359,16 +4361,16 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         plt.ylabel('Companion Frequency')
     plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
     if filename is not None:
-        plt.text(max(list(flatten(time_list)))/2,0.5,filename)
+        plt.text(max(list(flatten(time_list)))/2,0.5,label)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     if save is True:
         if filename is None:
             print('Please provide filename')
             return
         if multiplicity == 'Fraction':
-            plt.savefig(new_file+'/'+str(filename)+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 100)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 100)
         elif multiplicity == 'Frequency':
-            plt.savefig(new_file+'/'+str(filename)+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 100)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 100)
 
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None, label=None):
     '''
