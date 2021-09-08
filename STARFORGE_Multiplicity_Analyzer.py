@@ -1131,21 +1131,21 @@ def t_ff(mass,R):
     tff = np.sqrt(3.0*np.pi/( 32*G_code*( mass/(4.0*np.pi/3.0*(R**3)) ) ) )
     return tff
 
-def initial_local_density(ID,file,number = 32,density = 'number'):
+def initial_local_density(ID,file,number = 32,density = 'number',boxsize = None):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
     first_snap = first_snap_finder(ID,file)
     formation_pos = file[first_snap].x[file[first_snap].id == ID]
-    boxsize = 2e4
     des_ngb=number #number of neighbors to look for
     if 1<len(file[first_snap].m)<=des_ngb:
         des_ngb = len(file[first_snap].m)
     elif len(file[first_snap].m) == 1:
-        return np.nan,file[first_snap].t*code_time_to_Myr
-    boxsize=200
-    N = file[first_snap].x
+        return np.nan,file[first_snap].t*code_time_to_Myr   
     x = file[first_snap].x#position
     m = file[first_snap].m #mass
     ids = file[first_snap].id #ids
+    #Hack to check for Box size, should be replaced by propagating down the boxsize parameter
+    boxsize = np.max(x)+1e-5
+    #print("Estimated box size: %g pc. This is a temporary hack, in the future this should be a parameter."%(boxsize))
     tree = cKDTree(x, boxsize=boxsize)
     ngbdist, ngb = tree.query(x, des_ngb) #note that it will count the particle itself as its a neighbor
     ngb_ids =  ids[ngb]
@@ -1338,7 +1338,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
     else:
         return times,new_stars_co
 
-def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_dens_bin = 0.2,only_primaries_and_singles = False,full_form_dens = False,density = 'number'):
+def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,target_mass = None,filename = None,plot = True,min_dens_bin = 0.2,only_primaries_and_singles = False,full_form_dens = False,density = 'number',label=None):
     '''
     Create or return a histogram of the formation times of stars in the given mass range.
     
@@ -1391,6 +1391,7 @@ def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,t
     -------
     formation_time_histogram(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,only_primaries_and_singles = True)
     '''
+    if label is None: label = filename
     if target_mass is None:
         target_mass = (upper_limit+lower_limit)/2
     birth_densities = []
@@ -1418,8 +1419,8 @@ def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,t
         return birth_densities
     if plot == True:
         plt.step(densities,new_stars_co)
-        if filename is not None:
-            plt.text(max(densities)/2,max(new_stars_co),filename)
+        if label is not None:
+            plt.text(max(densities)/2,max(new_stars_co),label)
         plt.text(max(densities)/2,max(new_stars_co)*0.9,'Star Mass = '+str(target_mass)+' $M_\odot$')
         if density == 'number':
             plt.xlabel(r'Density [$pc^{-3}$]')
@@ -3870,7 +3871,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time',plot = True):
+def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time',plot = True,label=None):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3938,7 +3939,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
     #In case there's no target mass
     if adaptive_binning is True:
         if x_axis == 'time':
-            form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True)
+            form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True,label=label)
             form_times = np.sort(form_times)
             indices = np.array(range(0,len(form_times),adaptive_no))
             adaptive_times = []
@@ -3957,7 +3958,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
                 density = 'number'
             elif x_axis == 'mass density':
                 density = 'mass'
-            form_dens = 10**formation_density_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,filename=filename,plot = False,only_primaries_and_singles=True,min_dens_bin=0.2,full_form_dens=True,density = density)
+            form_dens = 10**formation_density_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,filename=filename,plot = False,only_primaries_and_singles=True,min_dens_bin=0.2,full_form_dens=True,density = density,label=label)
             form_dens = np.sort(form_dens)
             indices = np.array(range(0,len(form_dens),adaptive_no))
             adaptive_dens = []
@@ -4132,7 +4133,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     yerrs = []
     sys_nos = []
     for i in tqdm(range(len(Files)),position = 0):
-        x,final_mul,yerr,system_no = multiplicity_vs_formation(Files[i],Systems[i],T_list=T_list,dt_list=dt_list,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = False)
+        x,final_mul,yerr,system_no = multiplicity_vs_formation(Files[i],Systems[i],T_list=T_list,dt_list=dt_list,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = False,label=labels[i])
         x_array.append(x);final_mul_list.append(final_mul);yerrs.append(yerr);sys_nos.append(system_no)
     if x_axis == 'time':
         x_label = 'Formation Time[Myr]'
