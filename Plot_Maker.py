@@ -35,7 +35,7 @@ class Timer():
 
 alpha_filenames = ['M2e4_C_M_J_RT_W_alpha1_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
 alpha_labels = [r'$\alpha_\mathrm{turb}=1$',r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
-sigma_filenames = ['M2e4_C_M_J_RT_W_R3_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_R30_2e7']
+sigma_filenames = ['M2e4_C_M_J_RT_W_R30_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_R3_2e7']
 sigma_labels = [r'$\Sigma = 6.3\,M_\mathrm{\odot}/\mathrm{pc}^2$',r'$\Sigma = 63\,M_\mathrm{\odot}/\mathrm{pc}^2$', r'$\Sigma = 630\,M_\mathrm{\odot}/\mathrm{pc}^2$']
 BOX_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_2e7_BOX','M2e4_C_M_J_RT_W_nodriving_2e7_BOX']
 BOX_labels = [r'Sphere', r'Box', r'Box, decaying']
@@ -175,11 +175,11 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         plt.close('all') 
     timer.dt(text='CF evolution plots')
     
-    #Print out final timing table
+    # #Print out final timing table
     timer.list_times()
 
 #redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
-#all_plots(alpha_filenames,'alpha',alpha_labels)
+all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)
 #all_plots(BOX_filenames,'BOX',BOX_labels)
 #all_plots(metal_filenames,'metal',metal_labels)

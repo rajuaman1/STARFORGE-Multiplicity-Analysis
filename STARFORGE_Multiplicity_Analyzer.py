@@ -4607,7 +4607,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             ax1.set_ylabel('Number of Systems')
             if all_companions == True:
                 ax1.set_ylabel('Number of Sub Systems')
-            ax1.legend(fontsize = 20)
+            ax1.legend(fontsize = 14)
             adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
             fig.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')  
             if filename is not None:
@@ -5061,9 +5061,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.fill_betweenx(np.linspace(0.35,0.5,100),left_limit,right_limit,color = 'orange',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.3,0.4,100),left_limit,right_limit,color = 'black',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.25,0.15,100),left_limit,right_limit,color = 'purple',alpha = 0.3)
-        plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
-        plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
-        plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
+        plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 16)
+        plt.text(0.1,0.32,'Class 0 Orion',fontsize = 16)
+        plt.text(0.1,0.2,'Class 1 Orion',fontsize = 16)
         
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
@@ -5518,9 +5518,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
             plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
             plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
-            plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
-            plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
-            plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
+            plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 16)
+            plt.text(0.1,0.32,'Class 0 Orion',fontsize = 16)
+            plt.text(0.1,0.2,'Class 1 Orion',fontsize = 16)
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
