@@ -52,7 +52,7 @@ def mkdir_p(mypath):
             pass
         else: raise
 
-def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,right = True,top = True):
+def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,right = True,top = True, adjust_ticks=False):
     '''Change the font and handle sizes'''
     #Changing the legend size
     if not (lgnd is None):
@@ -66,7 +66,8 @@ def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelf
             ax1.set_xlabel(ax1.get_xlabel(),fontsize=labelfontsize)
             ax1.set_ylabel(ax1.get_ylabel(),fontsize=labelfontsize)
             ax1.minorticks_on()
-            ax1.tick_params(axis='both',which='both', direction='in',top=top,right=right)
+            if adjust_ticks:
+                ax1.tick_params(axis='both',which='both', direction='in',top=top,right=right)
 
 def rolling_average(List,rolling_window = 10):
     '''Rolling Average function'''
@@ -1334,7 +1335,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
         plt.xlabel('Time [Myr]')
         plt.ylabel('Number of New Stars')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
     else:
         return times,new_stars_co
 
@@ -1428,7 +1429,7 @@ def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,t
             plt.xlabel(r'Density [$\frac{M_\odot}{pc^{3}}$]')
         plt.ylabel('Number of New Stars')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
     else:
         return densities,new_stars_co
 
@@ -1490,7 +1491,7 @@ def star_formation_rate(file,plot = True,time = True,filename = None,time_norm =
         else:
             times.append(current_time)
     if plot ==True:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
         if rolling_avg is True:
             plt.plot(rolling_average(times,rolling_window = rolling_window),rolling_average(SFR,rolling_window = rolling_window))
         else:
@@ -1726,7 +1727,7 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
             primary_stars_slopes = np.array(rolling_average(primary_stars_slopes,rolling_window))
             nos_all = np.array(rolling_average(nos_all,rolling_window))
             nos_prim = np.array(rolling_average(nos_prim,rolling_window))
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
         plt.plot(times[nos_all>min_no],all_stars_slopes[nos_all>min_no],label = 'Slope for All')
         plt.plot(times[nos_all>min_no],primary_stars_slopes[nos_all>min_no],label = 'Slope for Primary',linestyle = '--')
         plt.plot(times[nos_all>min_no],[-2.3]*len(times[nos_all>min_no]),label = '-2.3',linestyle = ':')
@@ -1737,7 +1738,7 @@ def slope_evolution(file,systems,filename,lower_limit = 1,upper_limit = 10,no_of
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
         plt.show()
         if no_of_stars is True:
-            plt.figure(figsize = (10,10))
+            plt.figure(figsize = (6,6))
             plt.plot(times[nos_all>min_no],nos_all[nos_all>min_no],label = 'Number for All')
             plt.plot(times[nos_all>min_no],nos_prim[nos_all>min_no],label = 'Number for Primary',linestyle = '--')
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
@@ -2843,7 +2844,7 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
             plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
             plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        plt.legend(loc = (0.3,0.9))
+        plt.legend(loc = (0.3,0.9),fontsize = 14)
         plt.text(0.5,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
@@ -2971,7 +2972,7 @@ def Companion_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read_in
             plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
             plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        plt.legend(loc = (0.3,0.9))
+        plt.legend(loc = (0.3,0.9),fontsize = 14)
         plt.text(0.7,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
@@ -3247,7 +3248,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             offset = np.linspace(-0.3,0.3,len(all_status))
             for i in range(len(all_status)):
                 plt.plot(all_times[i],all_status[i]+offset[i],label = ids[i])
-            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0))
+            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0),fontsize = 14)
             #plt.text(max(flatten(all_times))*0.8,-0.5,Files_key[n],fontsize = 12)
             plt.text(max(flatten(all_times))*0.8,-0.75,'Target Mass = '+str(target_mass),fontsize = 12)
             plt.xlabel('Time (in Myrs)')
@@ -3260,7 +3261,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             offset = np.linspace(-0.3,0.3,len(change_in_status))
             for i in range(len(change_in_status)):
                 plt.plot(time_short[i],change_in_status[i]+offset[i],label = ids[i])
-            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0))
+            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0),fontsize = 14)
             #plt.text(max(flatten(time_short))*0.8,-0.5,Files_key[n],fontsize = 12)
             plt.text(max(flatten(time_short))*0.8,-0.75,'Target Mass = '+str(target_mass),fontsize = 12)
             plt.xlabel('Time (in Myrs)')
@@ -3282,7 +3283,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             offset = np.linspace(-0.3,0.3,len(rand_status))
             for i in range(len(rand_times)):
                 plt.plot(rand_times[i],rand_status[i]+offset[i],label = rand_ids[i])
-            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0))
+            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0),fontsize = 14)
             plt.xlabel('Time (in Myrs)')
             plt.ylabel('Status')
             #plt.text(max(flatten(rand_times))*0.8,-0.5,Files_key[n],fontsize = 12)
@@ -3303,7 +3304,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             offset = np.linspace(-0.3,0.3,len(rand_status))
             for i in range(len(rand_times)):
                 plt.plot(rand_times[i],rand_status[i]+offset[i],label = rand_ids[i])
-            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0))
+            plt.legend(loc = 'best',bbox_to_anchor=(1.1, 1, 0, 0),fontsize = 14)
             plt.xlabel('Time (in Myrs)')
             plt.ylabel('Change in Status')
             #plt.text(max(flatten(rand_times))*0.8,-0.5,Files_key[n],fontsize = 12)
@@ -3435,7 +3436,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         plt.xlabel('Age in Myrs')
         plt.ylabel('Average Multiplicity Fraction')
         plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
-        #plt.legend()
+        #plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.show()
         plt.figure()
@@ -3445,7 +3446,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.plot(age_bins_mean,(counted_in_bin))
         plt.xlabel('Age in Myrs')
         plt.ylabel('Number of Stars')
-        #plt.legend()
+        #plt.legend(fontsize = 14)
         plt.show()
     else:
         return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
@@ -3565,7 +3566,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         plt.ylabel('Companion Frequency')
         #plt.text(0.1,0.8,Files_key[n],transform = plt.gca().transAxes)
         plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
-        #plt.legend()
+        #plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.show()
         plt.figure()
@@ -3575,7 +3576,7 @@ def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.plot(age_bins_mean,(counted_in_bin))
         plt.xlabel('Age in Myrs')
         plt.ylabel('Number of Stars')
-        #plt.legend()
+        #plt.legend(fontsize = 14)
         plt.show()
     else:
         return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
@@ -3626,7 +3627,7 @@ def Orbital_Plot_2D(system,plot = True):
             v_new[i][1] = np.dot(com_frame_v[i],e2)
         #Now we plot onto a quiver plot 
         if plot == True:
-            plt.figure(figsize = (10,10))
+            plt.figure(figsize = (6,6))
             for i in range(system.no):
                 plt.quiver(x_new[i][0]*pc_to_AU,x_new[i][1]*pc_to_AU,v_new[i][0],v_new[i][1])
                 plt.scatter(x_new[i][0]*pc_to_AU,x_new[i][1]*pc_to_AU,s = system.m[i]*100)
@@ -3720,20 +3721,20 @@ def smaxis_tracker(file,Master_File,system_ids,plot = True,KE_tracker = False):
             f_tracks.append(np.nan)
 
     if plot == True:
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
         plt.plot(times,smaxes)
         plt.xlabel('Time (Myr)')
         plt.ylabel('Log Semi Major Axis (AU)')
         plt.show()
 
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
         plt.plot(times,no_of_stars)
         plt.xlabel('Time (Myr)')
         plt.ylabel('No of Stars in System')
         plt.show()
         
         if KE_tracker == True:
-            plt.figure(figsize = (10,10))
+            plt.figure(figsize = (6,6))
             plt.plot(times,f_tracks)
             plt.xlabel('Time (Myr)')
             plt.ylabel('Kinetic Energy Loss in Orbital Projection')
@@ -4027,7 +4028,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
     yerr = np.array(yerr)
     if plot == True:
         #Plotting the multiplicity over age
-        plt.figure(figsize = (10,10))
+        plt.figure(figsize = (6,6))
         #plt.plot(T_list,final_mul_list)
         if x_axis == 'time':
             x_label = 'Formation Time[Myr]'
@@ -4045,9 +4046,11 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
         if multiplicity == 'Fraction':
-            plt.ylabel('Multiplicity '+str(multiplicity))
+            plt.ylabel('Multiplicity Fraction')
+            plt.ylim([0,1])
         elif multiplicity == 'Frequency':
-            plt.ylabel('Companion '+str(multiplicity))
+            plt.ylabel('Companion Frequency')
+            plt.ylim([0,3])
         #plt.ylim(bottom = -0.05)
         if target_mass == 1:
             if multiplicity == 'Fraction':
@@ -4062,7 +4065,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
         if filename is not None:
             plt.text(max(T_list)*0.9,0.5,filename)
-        plt.legend()
+        plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     elif plot == False:
         if x_axis == 'time':
@@ -4141,17 +4144,19 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         x_label = r'Log Formation Density [$pc^{-3}$]'
     elif x_axis == 'mass density':
         x_label = r'Log Formation Density [$\frac{M_\odot}{pc^3}$]'
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (6,6))
     for i in range(len(Files)):
         plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i])
         plt.plot(x_array[i],final_mul_list[i])
     plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
-    plt.legend()
+    plt.legend(fontsize=14)
     plt.xlabel(x_label)
     if multiplicity == 'Fraction':
         plt.ylabel('Multiplicity Fraction')
+        plt.ylim([0,1])
     elif multiplicity == 'Frequency':
         plt.ylabel('Companion Frequency')
+        plt.ylim([0,3])
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 
 def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None, label=None):
@@ -4283,7 +4288,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
-    plt.legend()
+    plt.legend(fontsize=14)
     if filename is not None:
         plt.text(max(times)/2,max(new_stars_co),filename)
     plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
@@ -4294,7 +4299,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/New_Stars_Histogram.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/New_Stars_Histogram.png',dpi = 150)
     #Creating the plot of stellar densities
     number_densities = []
     mass_densities = []
@@ -4307,23 +4312,23 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     the_times,the_number_densities,the_errors_up,the_errors_down = density_evolution(number_densities,times,filename = filename,plot = False)
     the_times,the_mass_densities,the_mass_errors_up,the_mass_errors_down = density_evolution(mass_densities,times,filename = filename,plot = False)
     #Number density Plots
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (6,6))
     density_evolution(number_densities,times,filename = filename,density= 'number')
     for i in range(len(T_list)):
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_number_densities)),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
-    plt.legend()
+    plt.legend(fontsize=14)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     if save is True:
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 150)
     #Mass Density Plots
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (6,6))
     density_evolution(mass_densities,times,filename = filename,density = 'mass')
     for i in range(len(T_list)):
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_mass_densities)),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
-    plt.legend()
+    plt.legend(fontsize=14)
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     #Using rolling average
     if rolling_avg is True:
@@ -4334,9 +4339,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 100)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 150)
     #Plotting the multiplicity over age
-    plt.figure(figsize = (10,10))
+    plt.figure(figsize = (6,6))
     for i in range(len(time_list)):
         plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
         plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars',color = colors[i])
@@ -4352,7 +4357,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         elif multiplicity == 'Frequency':
             plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-    plt.legend()
+    plt.legend(fontsize=14)
     plt.xlabel('Age [Myr]')
     plt.ylabel('Multiplicity Fraction')
     if multiplicity == 'Fraction':
@@ -4369,9 +4374,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             print('Please provide filename')
             return
         if multiplicity == 'Fraction':
-            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 100)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 150)
         elif multiplicity == 'Frequency':
-            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 100)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
 
 def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None, label=None):
     '''
@@ -4442,6 +4447,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
     -------
     One_Snap_Plots('Mass Ratio',M2e4_C_M_J_2e7_systems[-1],M2e4_C_M_J_2e7)
     '''
+    adjust_ticks=True
     if label is None: label=filename
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
@@ -4509,11 +4515,11 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                 else:
                     plt.step(x_vals,y_vals,label = 'Mass Dist for Primaries')
                 plt.step(tot_m,vals,label = 'Stellar Mass Dist (IMF)')
-                plt.legend()
+                plt.legend(fontsize=14)
             elif filtered == True:
                 plt.step(x_vals,y_vals,label = 'Raw Data')
                 plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
-                plt.legend()
+                plt.legend(fontsize=14)
             else:
                 plt.step(x_vals,y_vals)
             if log == True:
@@ -4558,7 +4564,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                     plt.ylabel('Number of Companions')
                 else:
                     plt.step(x_vals,Weighted_IMF*sum(y_vals)/sum(Weighted_IMF),label = 'Weighted IMF')
-            plt.legend()
+            plt.legend(fontsize=14)
             if log == True:
                 plt.yscale('log')
         else:
@@ -4568,7 +4574,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                 return x_vals,y_vals
     if which_plot == 'Semi Major Axis':
         if plot == True:
-            fig = plt.figure(figsize = (10,10))
+            fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
             ax1.step(x_vals,y_vals,label = 'Raw Data')
             if filtered is True:
@@ -4579,20 +4585,13 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                 if i.no>1 and lower_limit<=i.primary<=upper_limit:
                     pands.append(i.primary+i.secondary)
             average_pands = np.average(pands)*1.9891e30 
-            ax1.set_xlabel('Log Semi Major Axis[AU]')
-            ax2 = ax1.twiny()
-            ax2.set_xlabel('Log Period[Days]')
-            ax2.set_xlim(ax1.get_xlim())
+            ax1.set_xlabel('Log Semi Major Axis [AU]')
             plt.ylabel('Number of Systems')
-            ax1Xs = ax1.get_xticks()
-            ax2Xs = []
-            for X in ax1Xs:
-                k = 2*np.pi*np.sqrt(((10**X*m_to_AU)**3)/(6.67e-11*average_pands))
-                period = np.log10(k/(60*60*24))
-                ax2Xs.append(period.round(1))
-            ax2.set_xticks(ax1Xs)
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels(ax2Xs)
+            ax2 = ax1.twiny()
+            adjust_ticks=False
+            ax2.set_xlabel('Log Period [Days]')
+            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
+            ax2.set_xlim(logperiod_lims)
             if upper_limit == 1.3 and lower_limit == 0.7:
                 periods = np.linspace(3.5,7.5,num = 5)
                 k = ((10**periods)*24*60*60)
@@ -4629,7 +4628,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
         plt.scatter(np.log10(smaxes)-np.log10(m_to_AU),q)
         if filename is not None:
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,adjust_ticks=adjust_ticks)
 
 def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10,label=None):
     '''
@@ -4779,7 +4778,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-Primary Stars Filt',linestyle = ':')
-            plt.legend()
+            plt.legend(fontsize=14)
             plt.xlabel('Log Mass [$M_\odot$]')
             if multiplicity == 'Properties':
                 plt.ylabel('Fraction of All Stars')
@@ -4838,7 +4837,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
             if multiplicity == 'Fraction':
-                plt.legend(handles = handles)
+                plt.legend(handles = handles,fontsize=14)
         else:
             if filtered == True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
@@ -4873,7 +4872,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             if filtered == True:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
-            plt.legend(handles = handles)
+            plt.legend(handles = handles,fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             plt.figure()
         else:
@@ -5079,7 +5078,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if label is not None:
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.plot(prop_times,cou1,label = '< '+str(target_age)+' Myr Stars in Simulation')
-        plt.legend()
+        plt.legend(fontsize=14)
         
         plt.yscale('log')
         if time_norm == 'Myr':
@@ -5089,7 +5088,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif time_norm == 'afft':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Number of Young Stars')
-        #plt.legend()
+        #plt.legend(fontsize=14)
         plt.figure()
         plt.plot(prop_times,av1,label = 'Formation')
         #[start_snap:end_snap]
@@ -5328,8 +5327,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
     ----------
     1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
     '''  
+    adjust_ticks=True
     if labels is None: labels=Filenames
-    
     if which_plot == 'Multiplicity vs Formation':
         multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis,labels=labels)
     else:
@@ -5433,7 +5432,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 x.append(a)
                 y.append(b)
         if which_plot == 'Semi Major Axis':
-            fig = plt.figure(figsize = (10,10))
+            fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
             for i in range(len(Files)):
                 ax1.step(x[i],y[i],label = labels[i])
@@ -5443,22 +5442,14 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 if i.no>1 and lower_limit<=i.primary<=upper_limit:
                     pands.append(i.primary+i.secondary)
             average_pands = np.average(pands)*1.9891e30 
-            ax1.set_xlabel('Log Semi Major Axis[AU]')
-            ax2 = ax1.twiny()
-            ax2.set_xlabel('Log Period[Days]')
-            ax2.set_xlim(ax1.get_xlim())
-            ax1.set_ylabel('Number of Systems')
+            ax1.set_xlabel('Log Semi Major Axis [AU]',fontsize=14)
+            ax1.set_ylabel('Number of Systems',fontsize=14)
             if all_companions == True:
-                ax1.set_ylabel('Number of Sub-Systems')
-            ax1Xs = ax1.get_xticks()
-            ax2Xs = []
-            for X in ax1Xs:
-                k = 2*np.pi*np.sqrt(((10**X*m_to_AU)**3)/(6.67e-11*average_pands))
-                period = np.log10(k/(60*60*24))
-                ax2Xs.append(period.round(1))
-            ax2.set_xticks(ax1Xs)
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels(ax2Xs)
+                ax1.set_ylabel('Number of Sub-Systems',fontsize=14)
+            ax2 = ax1.twiny(); adjust_ticks=False
+            ax2.set_xlabel('Log Period [Days]',fontsize=14)
+            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
+            ax2.set_xlim(logperiod_lims)
             if upper_limit == 1.3 and lower_limit == 0.7:
                 periods = np.linspace(3.5,7.5,num = 5)
                 k = ((10**periods)*24*60*60)
@@ -5469,7 +5460,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 error_values_comb = (error_values_small+error_values_big)
                 dy_comb = np.sqrt(error_values_comb)
                 ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
-            ax1.legend()
+            ax1.legend(fontsize=14)
         elif which_plot == 'Multiplicity':
             for i in range(0,len(Filenames)):
                 plt.plot(x[i],y[i],label = labels[i])
@@ -5493,7 +5484,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
                 plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
                 plt.ylim([-0.01,3.01])
-            plt.legend()
+            plt.legend(fontsize=14)
         elif which_plot == 'Multiplicity Time Evolution':
             for i in range(len(Files)):
                 if time_plot == 'consistent mass':
@@ -5506,7 +5497,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.ylim(bottom = 0,top = 1.01)
             if multiplicity == 'Frequency':
                 plt.ylabel('Companion Frequency')
-            plt.legend()
+            plt.legend(fontsize=14)
         elif which_plot == 'YSO Multiplicity':
             if description is not None:
                 save = True
@@ -5530,11 +5521,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 20)
             plt.text(0.1,0.32,'Class 0 Orion',fontsize = 20)
             plt.text(0.1,0.2,'Class 1 Orion',fontsize = 20)
-            plt.legend()
+            plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 100)
-            plt.figure(figsize = (10,10))
+                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 150)
+            plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 plt.plot(times[i],nos[i],label = labels[i])
             plt.ylabel('Number of YSOs')
@@ -5544,11 +5535,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
             elif time_norm == 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-            plt.legend()
+            plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 100)
-            plt.figure(figsize = (10,10))
+                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 150)
+            plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 plt.plot(times[i],avg_mass[i],label = labels[i])
             plt.ylabel('Average Mass of YSOs')
@@ -5558,15 +5549,15 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
             elif time_norm == 'afft':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-            plt.legend()
+            plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 100)
+                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150)
         else:
             for i in range(0,len(Filenames)):
                 plt.step(x[i],y[i],label = labels[i])
-            plt.legend()
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            plt.legend(fontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
             plt.yscale('log')
 
