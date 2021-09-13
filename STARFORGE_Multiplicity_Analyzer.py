@@ -739,7 +739,7 @@ class star_system:
         else:
             self.ids = [ids]
             self.no = 1
-        self.ids = np.array(self.ids,dtype=np.int32)
+        self.ids = np.array(self.ids,dtype=np.int64)
         index = np.isin(data[n].id,ids)
         self.m = data[n].m[index]
         self.x = data[n].x[index,:]
@@ -778,7 +778,7 @@ class star_system:
         self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None)[0] for ID in self.ids])
         self.init_density = {'number': self.init_star_vol_density, 'mass': self.init_star_mass_density}
         #Get stellar evolution stage of stars
-        self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int32)
+        self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int64)
         #Get formation times of stars
         self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID] for ID in self.ids])*code_time_to_Myr
         self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
@@ -1839,7 +1839,7 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
 def smaxis(system):
     '''Calculate the semi major axis (in m) between the secondary and primary in a system.'''
     k = system #Don't want to rewrite all the ks
-    if k.no == 1: #Single star has no smaxis
+    if len(k.m) == 1: #Single star has no smaxis
         smaxis = 0
         return smaxis
     if len(k.m) == 2 and k.m[0] == k.m[1]:
@@ -2182,7 +2182,7 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     mass_ratios = []
     semi_major_axes = []
     for i in systems:
-        if i.no>1: #Make sure you only consider the multi star systems.
+        if len(i.m)>1: #Make sure you only consider the multi star systems.
             masses.append(i.tot_m)
             primary_masses.append(i.primary)
             if lower_limit<=i.primary<=upper_limit:
@@ -2401,7 +2401,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         state.append(i.multip_state[selection_index])
     mass_densities = np.concatenate(mass_densities)
     number_densities = np.concatenate(number_densities)
-    state = np.concatenate(state,dtype=np.int32)
+    state = np.concatenate(state,dtype=np.int64)
 
     minmass= 0.08 # Because we dont want brown dwarfs
     maxmass = max(m)
@@ -3032,7 +3032,6 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
         tot_mass = 0
         for j in i:
             age_checker = 0
-            prim_id = j.primary_id
             age = 0
             for Id in j.ids:
                 if form[k] == -1:
@@ -3164,8 +3163,12 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             birth_times.append(s.formation_time_Myr[0])
             densities.append(s.init_star_vol_density[0])
             mass_densities.append(s.init_star_mass_density[0])
-            mass_accretion_times.append(file[first_snap_mass_finder(s.primary_id,file,lower_limit,upper_limit)].t*code_time_to_Myr)
-    birth_times = np.array(birth_times); mass_densities = np.array(mass_densities); densities = np.array(densities); mass_accretion_times = np.array(mass_accretion_times)
+            mass_acr_snap = first_snap_mass_finder(s.primary_id,file,lower_limit,1e3)
+            if not(mass_acr_snap is None):
+                mass_accretion_times.append(file[first_snap_mass_finder(s.primary_id,file,lower_limit,upper_limit)].t*code_time_to_Myr)
+            else:
+                mass_accretion_times.append(file[-1].t*code_time_to_Myr) #Not sure how this could ever be executed
+    birth_times = np.squeeze(np.array(birth_times)); mass_densities = np.array(mass_densities); densities = np.array(densities); mass_accretion_times = np.array(mass_accretion_times)
     selected_ind = np.full(len(birth_times),True)
     if select_by_time == True:
         Tend = file[-1].t*code_time_to_Myr
@@ -3190,27 +3193,30 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     #This is quite inefficient, needs rewriting
     all_status = []
     change_in_status = []
-    for i in tqdm(consistent_solar_mass,desc = 'Star of Interest',position=0):       
+    for ind in selected_ind:
+        ID = consistent_solar_mass[ind]
         statuses = []
-        first_snap = first_snap_finder(i,file)
-        for k in range(first_snap,len(file),steps):
+        start_snap = np.argmax(snaptimes>=zero_times[ind])
+        for k in range(start_snap,len(file),1):
             status = 0
             if read_in_result == False:
                 sys = system_creation(file,k)
             elif read_in_result == True:
                 sys = Master_File[k]
             for l in sys:
-                if l.no>1 and i in l.ids:
-                    if i == l.primary_id:
-                        status = l.no-1
+                if ID in l.ids:
+                    if len(l.ids)>1:
+                        if ID == l.primary_id:
+                            status = len(l.ids)-1
+                        else:
+                            status = -1
                     else:
-                        status = -1
-                elif l.no == 1 and i == l.ids:
-                    status = 0
+                        status = 0
             statuses.append(status)
         all_status.append(statuses)
         change_in_status.append(np.diff(statuses))
-    ids = consistent_solar_mass
+
+    ids = np.array(consistent_solar_mass,dtype=np.int64)[selected_ind]
     if plot == True:
         if len(all_status)>sample_size:
             rand = True
@@ -3376,7 +3382,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     time_all = []; status_all = []
     lengths = []
     for t,s in zip(times,status):
-        time_all += t;status_all += s
+        time_all+=list(t);status_all+=list(s)
         lengths.append(len(t))
     time_all = np.array(time_all);status_all = np.array(status_all)
     age_bins=np.linspace(0,max(time_all),max(lengths)+1)
@@ -4282,8 +4288,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     times = []
     for i in range(len(Master_File[-1])):
         if lower_limit<=Master_File[-1][i].primary<=upper_limit:
-            number_density,formation_time = Master_File[-1][i].init_star_vol_density
-            mass_density,formation_time = Master_File[-1][i].init_star_mass_density
+            formation_time = Master_File[-1][i].formation_time_Myr[0]
+            number_density = Master_File[-1][i].init_star_vol_density[0]
+            mass_density = Master_File[-1][i].init_star_mass_density[0]
             number_densities.append(number_density);times.append(formation_time);mass_densities.append(mass_density)
     the_times,the_number_densities,the_errors_up,the_errors_down = density_evolution(number_densities,times,filename = filename,plot = False)
     the_times,the_mass_densities,the_mass_errors_up,the_mass_errors_down = density_evolution(mass_densities,times,filename = filename,plot = False)
