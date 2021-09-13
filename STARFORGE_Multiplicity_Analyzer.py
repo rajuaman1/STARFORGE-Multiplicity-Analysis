@@ -221,7 +221,14 @@ def first_snap_mass_finder(ide,file,lower_limit,upper_limit):
     for i,j in enumerate(file):
         if ide in j.id and lower_limit<=j.m[j.id == ide][0]<=upper_limit:
             return i
-    
+
+def last_snap_finder(ID,file_data):
+    'Find the last snapshot where an id is present'
+    for i in range(-1,-len(file_data),-1):
+        if ID in file_data[i].id:
+            return i
+    return 0 
+ 
 def IGamma(k,n):
     '''The Incomplete Gamma Function'''
     return GammaInc(k,n)*Gamma(k)
@@ -733,24 +740,11 @@ class star_system:
         else:
             self.ids = [ids]
             self.no = 1
-        #ai = []
-        #u = np.in1d(data[n].id,self.ids)
-        m = []
-        x = []
-        v = []
-        for i in self.ids:
-            m.append(data[n].m[data[n].id == i][0])# Getting the masses
-            x.append(data[n].x[data[n].id == i][0])# Getting the positions 
-            v.append(data[n].v[data[n].id == i][0])# Getting the velocities
-        self.m = np.array(m)
-        self.x = np.array(x)
-        self.v = np.array(v)
-       # for i in range(len(u)):
-        #    if u[i] == True:
-         #       ai.append(i)
-        #self.m = data[n].m[ai]
-        #self.x = data[n].x[ai]
-        #self.v = data[n].v[ai]
+        self.ids = np.array(self.ids,dtype=np.int32)
+        index = np.isin(data[n].id,ids)
+        self.m = data[n].m[index]
+        self.x = data[n].x[index,:]
+        self.v = data[n].v[index,:]
         self.snapshot_num = n #The snapshot number of the system
         self.tot_m = sum(self.m) #The total mass of the system
         primary_mass = max(self.m) #The primary (most massive) star in the system
@@ -779,6 +773,28 @@ class star_system:
             self.smaxis = - (mu2/(2*eps))
         else:
             self.smaxis = 0
+            
+        #Get at formation density info
+        self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None) for ID in self.ids])
+        self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None) for ID in self.ids])
+        self.init_density = {'number': self.init_star_vol_density, 'mass': self.init_star_mass_density}
+        #Get stellar evolution stage of stars
+        self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int32)
+        #Get formation times of stars
+        self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID] for ID in self.ids])*code_time_to_Myr
+        self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
+        #Zero-age main-sequence (ZAMS) info
+        self.m_ZAMS = np.array([data[n].val('ZAMS_Mass')[data[n].id==ID] for ID in self.ids])
+        self.ZAMS_age = (data[n].t - np.array([data[n].val('StellarAge')[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
+        self.ZAMS_age[self.m_ZAMS==0] = -1 #placeholder value showing that this star is not yet on MS
+        #Get final masses of stars
+        self.final_masses = []
+        for ID in self.ids:
+            last_snap = last_snap_finder(ID,data) #will almost always be -1, except for SNe
+            self.final_masses.append(data[last_snap].m[data[last_snap].id==ID])
+        self.final_masses = np.array(self.final_masses)
+        #Mark multiplicity status of stars
+        
 
 # Main Function of the program
 def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_in_result = False,periodic_edge = False,L = None):
@@ -1132,11 +1148,10 @@ def t_ff(mass,R):
     tff = np.sqrt(3.0*np.pi/( 32*G_code*( mass/(4.0*np.pi/3.0*(R**3)) ) ) )
     return tff
 
-def initial_local_density(ID,file,number = 32,density = 'number',boxsize = None):
+def initial_local_density(ID,file,des_ngb = 32,density = 'number',boxsize = None):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
     first_snap = first_snap_finder(ID,file)
     formation_pos = file[first_snap].x[file[first_snap].id == ID]
-    des_ngb=number #number of neighbors to look for
     if 1<len(file[first_snap].m)<=des_ngb:
         des_ngb = len(file[first_snap].m)
     elif len(file[first_snap].m) == 1:
@@ -1403,8 +1418,7 @@ def formation_density_histogram(file,systems,upper_limit=1.3,lower_limit = 0.7,t
         for i in range(len(systems[-1])):
             this_mass = systems[-1][i].primary
             if lower_limit<=this_mass<=upper_limit:
-                birth_density = np.log10(initial_local_density(systems[-1][i].primary_id,file,density = density)[0])
-                birth_densities.append(birth_density)
+                birth_densities.append( np.log10(systems[-1][i].init_density[density])[0] )
     else:
         for i in range(len(file[-1].m)):
             this_id = file[-1].id[i]
@@ -2381,26 +2395,13 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     mass_densities = []
     number_densities = []
     for i in tqdm(systems,position = 0,desc = 'processing all systems'):
-        if len(i.m) == 1:
-            m.append(i.m[0])
-            state.append(0)
-            mass_densities.append(initial_local_density(i.primary_id,file,density = 'mass')[0])
-            number_densities.append(initial_local_density(i.primary_id,file,density = 'number')[0])
-        elif i.no>1:
-            for j in i.m:
-                if j>=i.primary*selection_ratio and j != i.primary:
-                    m.append(j)
-                    state.append(2)
-                    mass_densities.append(initial_local_density(np.array(i.ids)[np.array(i.m) == j],file,density = 'mass')[0])
-                    number_densities.append(initial_local_density(np.array(i.ids)[np.array(i.m) == j],file,density = 'number')[0])
-            m.append(i.primary)
-            masses = np.array(i.m)
-            mass_densities.append(initial_local_density(i.primary_id,file,density = 'mass')[0])
-            number_densities.append(initial_local_density(i.primary_id,file,density = 'number')[0])
-            if len(masses[masses>=selection_ratio*i.primary])>1:
-                state.append(1)
-            elif len(masses[masses>=selection_ratio*i.primary]) == 1:
-                state.append(0)
+        selection_index = (i.m>=i.primary*selection_ratio)
+        mass_densities.append(i.init_density['mass'][selection_index])
+        number_densities.append(i.init_density['number'][selection_index])
+        state.append(i.multip_state[selection_index])
+    mass_densities = np.concatenate(mass_densities)
+    number_densities = np.concatenate(number_densities)
+    state = np.concatenate(state,dtype=np.int32)
 
     minmass= 0.08 # Because we dont want brown dwarfs
     maxmass = max(m)
@@ -3146,7 +3147,8 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     Example
     -------
     star_multiplicity_tracker(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,T = 2,dt = 0.33)
-    '''    
+    '''  
+    
     consistent_solar_mass = []
     if read_in_result == False:
         last_snap = system_creation(file,-1) #Getting the primaries in the last snap
@@ -3156,66 +3158,41 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         steps = 1
     max_mass = 0
     min_mass = 0.08
-    birth_times = []
+    birth_times = []; densities = []; mass_densities = []; mass_accretion_times = []
     #Getting a list of primaries that stay around the target mass at the end
-    for i in last_snap:
-        if lower_limit<=i.primary<=upper_limit and i.no>1:
-            consistent_solar_mass.append(i.primary_id)  
-            first_snap = first_snap_finder(i.primary_id,file)
-            birth_time = file[first_snap].t*code_time_to_Myr
-            birth_times.append(birth_time)
-        elif i.no==1 and lower_limit<=i.m[0]<=upper_limit:
-            consistent_solar_mass.append(i.ids)
-            first_snap = first_snap_finder(i.primary_id,file)
-            birth_time = file[first_snap].t*code_time_to_Myr
-            birth_times.append(birth_time)
+    for s in last_snap:
+        if lower_limit<=s.primary<=upper_limit:
+            consistent_solar_mass.append(s.primary_id)  
+            birth_times.append(s.formation_time_Myr[0])
+            densities.append(s.init_star_vol_density[0])
+            mass_densities.append(s.init_star_mass_density[0])
+            mass_accretion_times.append(file[first_snap_mass_finder(s.primary_id,file,lower_limit,upper_limit)].t*code_time_to_Myr)
+    birth_times = np.array(birth_times); mass_densities = np.array(mass_densities); densities = np.array(densities); mass_accretion_times = np.array(mass_accretion_times)
+    selected_ind = np.full(len(birth_times),True)
     if select_by_time == True:
         Tend = file[-1].t*code_time_to_Myr
-        kicked = 0 
-        kept = 0
-        og = len(consistent_solar_mass)
-        copy = consistent_solar_mass.copy()
-        average_dens = 0
-        average_mass_dens = 0
-        for i in tqdm(copy,desc = 'Selecting By Maturity Time',position=0):
-            first_snap = first_snap_finder(i,file)
-            birth_time = file[first_snap].t
-            if birth_time*code_time_to_Myr>T+dt/2 or birth_time*code_time_to_Myr<T-dt/2:
-                consistent_solar_mass.remove(i)
-                kicked += 1
-            else:
-                kept += 1
-                average_dens+= initial_local_density(i,file,density='number')[0]
-                average_mass_dens += initial_local_density(i,file,density='mass')[0]
-        print('Kept = '+str(kept))
-        print('Removed = '+str(kicked))
-        print('Original Total = '+str(og))
-        if kept == 0:
-            print('No Stars in Given Range, please try a different range instead')
-        average_dens = average_dens/kept
-        average_mass_dens = average_mass_dens/kept
+        print('Filtering by formation time')
+        selected_ind = selected_ind & (birth_times<=(T+dt/2)) &  (birth_times>=(T-dt/2))
+    selected_ind = np.arange(len(selected_ind))[selected_ind]
+    average_dens = np.median(densities[selected_ind])
+    average_dens = np.median(mass_densities[selected_ind])
+    #Adjusting zero time point
+    if zero == 'Consistent Mass':
+        zero_times = mass_accretion_times
+    elif zero == 'Formation':
+        zero_times = birth_times
+    snaptimes = np.array([d.t*code_time_to_Myr for d in file])
     all_times = []
+     for ind in selected_ind:
+        all_times.append(snaptimes[snaptimes>=zero_times[ind]]-zero_times[ind])
+    time_short = [time_array[1:]+time_array[:-1])/2 for time_array in all_times]   
+    
+        
+    #This is quite inefficient, needs rewriting
     all_status = []
     first_snaps = []
     change_in_status = []
-    time_short = []
-    maturity_times = []
-    for i in tqdm(consistent_solar_mass,desc = 'Star of Interest',position=0):
-        if zero == 'Consistent Mass':
-            first_snap = first_snap_mass_finder(i,file,lower_limit,upper_limit)
-        elif zero == 'Formation':
-            first_snap = first_snap_finder(i,file)
-        first_snaps.append(first_snap)
-        birth_time = file[first_snap].t
-        maturity_times.append(birth_time*code_time_to_Myr)
-        times = []
-        status = []
-        for j in file:
-            if j.t-birth_time>= 0:
-                times.append((j.t-birth_time)*code_time_to_Myr)
-        all_times.append(times)
-        time_array = np.array(times)
-        time_short.append(list((time_array[1:]+time_array[:-1])/2))
+    for i in tqdm(consistent_solar_mass,desc = 'Star of Interest',position=0):       
         statuses = []
         for k in range(first_snap,len(file),steps):
             status = 0
@@ -4011,12 +3988,12 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         for i in tqdm(Master_File[-1],position = 0):
             if lower_limit<=i.primary<=upper_limit:
                 for j in range(len(T_list)):
-                    if round(T_list[j]-(dt_list[j])/2,4)<=round(initial_local_density(i.primary_id,file,density = density)[0],4)<round((T_list[j]+(dt_list[j])/2),4):
+                    if round(T_list[j]-(dt_list[j])/2,4)<=round(i.init_density[density][0],4)<round((T_list[j]+(dt_list[j])/2),4):
                         comp_list[j] += i.no-1
                         system_no_list[j] += 1
                         if i.no-1 > 0:
                             multiprim_list[j]+= 1
-                        use_ids[j].append(i.primary_id)
+                        use_ids[j].append(i.primary_id)    
     if multiplicity == 'Fraction':
         mul_list = multiprim_list/system_no_list
     else:
@@ -4306,8 +4283,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     times = []
     for i in range(len(Master_File[-1])):
         if lower_limit<=Master_File[-1][i].primary<=upper_limit:
-            number_density,formation_time = initial_local_density(Master_File[-1][i].primary_id,file,density = 'number')
-            mass_density,formation_time = initial_local_density(Master_File[-1][i].primary_id,file,density = 'mass')
+            number_density,formation_time = Master_File[-1][i].init_star_vol_density
+            mass_density,formation_time = Master_File[-1][i].init_star_mass_density
             number_densities.append(number_density);times.append(formation_time);mass_densities.append(mass_density)
     the_times,the_number_densities,the_errors_up,the_errors_down = density_evolution(number_densities,times,filename = filename,plot = False)
     the_times,the_mass_densities,the_mass_errors_up,the_mass_errors_down = density_evolution(mass_densities,times,filename = filename,plot = False)
@@ -4994,15 +4971,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif filename is None:
             print('Provide the filename')
         if multiplicity == 'Fraction':
-            if plot == True:
-                Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
-            elif plot == False:
-                return Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
+            Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
         if multiplicity == 'Frequency':
-            if plot == True:
-                Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = True,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
-            elif plot == False:
-                return Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
+            Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5012,10 +4983,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             return
         multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no,description=description,label=label)
     if which_plot == 'Multiplicity vs Formation':
-        if plot == True:
-            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = True,label=label)
-        elif plot == False:
-            multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = False,label=label)
+        multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = plot,label=label)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
