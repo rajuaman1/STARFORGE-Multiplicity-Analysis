@@ -775,8 +775,8 @@ class star_system:
             self.smaxis = 0
             
         #Get at formation density info
-        self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None) for ID in self.ids])
-        self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None) for ID in self.ids])
+        self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None)[0] for ID in self.ids])
+        self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None)[0] for ID in self.ids])
         self.init_density = {'number': self.init_star_vol_density, 'mass': self.init_star_mass_density}
         #Get stellar evolution stage of stars
         self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int32)

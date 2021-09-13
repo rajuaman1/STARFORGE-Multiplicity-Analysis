@@ -139,7 +139,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         for j in i[-1]:
             if 0.7<=j.primary<=1.3:
                 no_of_solar += 1
-        adaptive_nos.append(int((no_of_solar/adaptive_bin_no)))
+        adaptive_nos.append(max(int((no_of_solar/adaptive_bin_no)),1))
     new_file = output_dir+'/Density_vs_Multiplicity'
     mkdir_p(new_file)
     plt.figure(figsize = (6,6)); print('\n Making MF vs formation density plot...')
