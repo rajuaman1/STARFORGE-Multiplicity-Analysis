@@ -780,7 +780,7 @@ class star_system:
         #Get stellar evolution stage of stars
         self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int64)
         #Get formation times of stars
-        self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID] for ID in self.ids])*code_time_to_Myr
+        self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID][0] for ID in self.ids])*code_time_to_Myr
         self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
         #Zero-age main-sequence (ZAMS) info
         self.ZAMS_age = ( data[n].t-np.array([data[n].formation_time[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
@@ -4272,7 +4272,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
     plt.legend(fontsize=14)
     if filename is not None:
-        plt.text(max(times)/2,max(new_stars_co),filename)
+        plt.text(max(times)/2,max(new_stars_co),path.basename(filename))
     plt.text(max(times)/2,max(new_stars_co)-1,'Star Mass = '+str(target_mass)+' $M_\odot$')
     plt.xlabel('Time [Myr]')
     plt.ylabel('Number of New Stars')
@@ -4289,8 +4289,8 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     for i in range(len(Master_File[-1])):
         if lower_limit<=Master_File[-1][i].primary<=upper_limit:
             formation_time = Master_File[-1][i].formation_time_Myr[0]
-            number_density = Master_File[-1][i].init_star_vol_density[0]
-            mass_density = Master_File[-1][i].init_star_mass_density[0]
+            number_density = np.log10(Master_File[-1][i].init_star_vol_density[0])
+            mass_density = np.log10(Master_File[-1][i].init_star_mass_density[0])
             number_densities.append(number_density);times.append(formation_time);mass_densities.append(mass_density)
     the_times,the_number_densities,the_errors_up,the_errors_down = density_evolution(number_densities,times,filename = filename,plot = False)
     the_times,the_mass_densities,the_mass_errors_up,the_mass_errors_down = density_evolution(mass_densities,times,filename = filename,plot = False)
