@@ -784,9 +784,12 @@ class star_system:
         self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID] for ID in self.ids])*code_time_to_Myr
         self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
         #Zero-age main-sequence (ZAMS) info
-        self.m_ZAMS = np.array([data[n].val('ZAMS_Mass')[data[n].id==ID] for ID in self.ids])
-        self.ZAMS_age = (data[n].t - np.array([data[n].val('StellarAge')[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
-        self.ZAMS_age[self.m_ZAMS==0] = -1 #placeholder value showing that this star is not yet on MS
+        self.m_ZAMS = 0*self.m
+        self.ZAMS_age = -np.ones_like(self.m_ZAMS) #placeholder value showing that this star is not yet on MS
+        for i,ID in enumerate(self.ids):
+            if self.stellar_evol_stages[i]==5:
+                self.ZAMS_age[i] = (data[n].t-data[first_snap_mass_finder(ID,data,self.m_ZAMS[i],1e3)].t)*code_time_to_Myr
+                self.m_ZAMS[i] = data[n].val('ZAMS_Mass')[data[n].id==ID]
         #Get final masses of stars
         self.final_masses = []
         for ID in self.ids:
@@ -3156,8 +3159,6 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
     elif read_in_result == True:
         last_snap = Master_File[-1]
         steps = 1
-    max_mass = 0
-    min_mass = 0.08
     birth_times = []; densities = []; mass_densities = []; mass_accretion_times = []
     #Getting a list of primaries that stay around the target mass at the end
     for s in last_snap:
@@ -3174,8 +3175,9 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         print('Filtering by formation time')
         selected_ind = selected_ind & (birth_times<=(T+dt/2)) &  (birth_times>=(T-dt/2))
     selected_ind = np.arange(len(selected_ind))[selected_ind]
+    kept = len(selected_ind)
     average_dens = np.median(densities[selected_ind])
-    average_dens = np.median(mass_densities[selected_ind])
+    average_mass_dens = np.median(mass_densities[selected_ind])
     #Adjusting zero time point
     if zero == 'Consistent Mass':
         zero_times = mass_accretion_times
@@ -3183,17 +3185,17 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         zero_times = birth_times
     snaptimes = np.array([d.t*code_time_to_Myr for d in file])
     all_times = []
-     for ind in selected_ind:
+    for ind in selected_ind:
         all_times.append(snaptimes[snaptimes>=zero_times[ind]]-zero_times[ind])
-    time_short = [time_array[1:]+time_array[:-1])/2 for time_array in all_times]   
+    time_short = [(time_array[1:]+time_array[:-1])/2 for time_array in all_times]   
     
         
     #This is quite inefficient, needs rewriting
     all_status = []
-    first_snaps = []
     change_in_status = []
     for i in tqdm(consistent_solar_mass,desc = 'Star of Interest',position=0):       
         statuses = []
+        first_snap = first_snap_finder(i,file)
         for k in range(first_snap,len(file),steps):
             status = 0
             if read_in_result == False:
@@ -3300,7 +3302,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
             placeholder2 = kept
             placeholder3 = average_dens
             placeholder4 = average_mass_dens
-        return all_times,all_status,ids,maturity_times,placeholder,birth_times,placeholder2,placeholder3,placeholder4
+        return all_times,all_status,ids,zero_times,placeholder,birth_times,placeholder2,placeholder3,placeholder4
 
 #This function gives the multiplicity fraction at different ages
 def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
