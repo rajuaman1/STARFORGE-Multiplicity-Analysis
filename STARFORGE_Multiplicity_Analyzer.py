@@ -784,12 +784,10 @@ class star_system:
         self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID] for ID in self.ids])*code_time_to_Myr
         self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
         #Zero-age main-sequence (ZAMS) info
-        self.m_ZAMS = 0*self.m
-        self.ZAMS_age = -np.ones_like(self.m_ZAMS) #placeholder value showing that this star is not yet on MS
+        self.ZAMS_age = ( data[n].t-np.array([data[n].formation_time[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
         for i,ID in enumerate(self.ids):
-            if self.stellar_evol_stages[i]==5:
-                self.ZAMS_age[i] = (data[n].t-data[first_snap_mass_finder(ID,data,self.m_ZAMS[i],1e3)].t)*code_time_to_Myr
-                self.m_ZAMS[i] = data[n].val('ZAMS_Mass')[data[n].id==ID]
+            if self.stellar_evol_stages[i]!=5:
+                self.ZAMS_age[i] = -1
         #Get final masses of stars
         self.final_masses = []
         for ID in self.ids:
