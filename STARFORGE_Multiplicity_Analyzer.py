@@ -127,7 +127,6 @@ def Remove_Brown_Dwarfs(data,minmass = 0.08):
         data[i].id = data[i].id[data[i].m>minmass]
         data[i].formation_time = data[i].formation_time[data[i].m>minmass]
         for label_no in range(len(data[i].extra_data_labels)):
-            if data[i].extra_data_labels[label_no] == 'ProtoStellarStage' or data[i].extra_data_labels[label_no] == 'ProtoStellarAge':
                 data[i].extra_data[label_no] = data[i].extra_data[label_no][data[i].m>minmass]
         data[i].m = data[i].m[data[i].m>minmass]
 
@@ -746,7 +745,7 @@ class star_system:
         self.x = data[n].x[index,:]
         self.v = data[n].v[index,:]
         self.snapshot_num = n #The snapshot number of the system
-        self.tot_m = sum(self.m) #The total mass of the system
+        self.tot_m = np.sum(self.m) #The total mass of the system
         primary_mass = max(self.m) #The primary (most massive) star in the system
         self.primary = primary_mass 
         self.primary_id = self.ids[np.argmax(self.m)] #The primary star's id
