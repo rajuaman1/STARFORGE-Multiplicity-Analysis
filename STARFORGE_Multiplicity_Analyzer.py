@@ -3729,6 +3729,80 @@ def smaxis_tracker(file,Master_File,system_ids,plot = True,KE_tracker = False):
         elif KE_tracker == True:
             return smaxes,no_of_stars,f_tracks,times
 
+def distance_tracker_binaries(file,Master_File,system_ids,plot = True,rolling_avg = True,rolling_window_Myr = 0.1):
+    '''
+    Tracking the distance axis between some ids in a binary system throughout the simulation runtime.
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
+
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
+
+    system_ids: list
+    The ids to track the semi-major axis of.
+
+    Parameters
+    ----------
+    plot: bool,optional
+    Whether to return the values or plot them.
+
+    Returns
+    -------
+    smaxes: list
+    The distance between the given ids throughout the simulation
+
+    times: list
+    The times that the system exists in the simulation (0 is when the system formed).
+
+    Example
+    -------
+    distance_tracker_binaries(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems,[112324.0,1233431.0])
+    '''  
+
+    if len(system_ids) != 2:
+        print('Please provide a binary system')
+        return
+    distances = []
+    times = []
+    snaps = []
+    for i in range(len(Master_File)):
+        marker = 0
+        times.append(file[i].t*code_time_to_Myr)
+        pos1 = file[i].x[file[i].id == system_ids[0]]
+        pos2 = file[i].x[file[i].id == system_ids[1]]
+        distances.append(np.log10(np.linalg.norm(pos1-pos2)*pc_to_AU))
+        for j in Master_File[i]:
+            if(set(system_ids).issubset(set(j.ids))):
+                marker = 1
+        if marker == 1:
+            snaps.append(i)
+    times = np.array(times)
+    if len(snaps) > 0:
+        t0 = file[snaps[0]].t*code_time_to_Myr
+    else:
+        t0 = file[-1].t*code_time_to_Myr
+    times = times-t0
+    
+    if rolling_avg is True:
+        rolling_window_Myr = time_to_snaps(rolling_window_Myr,file)
+        if rolling_window_Myr%2 == 0:
+            rolling_window_Myr -= 1
+        rolling_window_Myr = int(rolling_window_Myr)
+        times = rolling_average(times,rolling_window_Myr)
+        distances = rolling_average(distances,rolling_window_Myr)
+
+    if plot == True:
+        plt.figure(figsize = (6,6))
+        plt.plot(times,distances)
+        plt.xlabel('Time (Myr)')
+        plt.ylabel('Log Semi Major Axis (AU)')
+        plt.show()
+        
+    elif plot == False:
+        return distances,times
+
 def formation_distance(id_list,file_name,log = True):
     '''The formation distance between two ids with the original file name provided as a string.'''
     pickle_file = open(file_name +'.pickle','rb')
