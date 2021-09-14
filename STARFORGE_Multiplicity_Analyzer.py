@@ -1020,13 +1020,13 @@ def q_filter(Master_File):
     return New_Master_File
 
 def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
-    'Removing every companion that didnt exist for the last 10 Myrs.'
+    'Working the simple filter onto one system'
     was_primary_there = False
     for previous_sys in Master_File[comparison_snapshot]:
         if system.primary_id == previous_sys.primary_id:
             previous_target_system = previous_sys
             was_primary_there = True
-    if was_primary_there == False: #Just checking if there are snapshots where the primary wasn't formed before
+    if was_primary_there == False: #If primary wasn't there, we make a new system of just the primary
         system.no = 1
         system.ids = [system.primary_id]
         system.secondary = 0
@@ -1052,6 +1052,13 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             system.no -= 1
             system.m = system.m[system.m != remove_mass]
             system.tot_m = sum(system.m)
+            system.age_Myr = system.age_Myr[system.m != remove_mass]
+            system.final_masses = system.final_masses[system.m != remove_mass]
+            system.formation_time_Myr = system.formtation_time_Myr[system.m != remove_mass]
+            system.init_star_vol_density= system.init_star_vol_density[system.m != remove_mass]
+            system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
+            system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
+            system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
             if system.no == 1:
                 system.mass_ratio = 0
                 system.secondary = 0 #Remove the secondary if the remaining star is solitary
