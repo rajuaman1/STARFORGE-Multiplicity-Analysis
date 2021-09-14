@@ -728,9 +728,355 @@ def clustering_algorithm(file,snapshot_number,seperation_param = None,periodic_e
 
         return Result
 
+#Calculating the semi major axis for the primary and secondary sub-systems of these systems
+def smaxis(system):
+    '''Calculate the semi major axis (in m) between the secondary and primary in a system.'''
+    k = system #Don't want to rewrite all the ks
+    if len(k.m) == 1: #Single star has no smaxis
+        smaxis = 0
+        return smaxis
+    if len(k.m) == 2 and k.m[0] == k.m[1]:
+        primary_id = k.ids[0]
+        primary_mass = k.m[0]
+        secondary_id = k.ids[1]
+        secondary_mass = k.m[1]
+        sec_ind = 1
+    else:
+        primary_id = k.primary_id
+        primary_mass = k.primary
+        secondary_id = np.array(k.ids)[k.m == k.secondary]
+        if isinstance(secondary_id,np.ndarray):
+            secondary_id = secondary_id[0]
+        secondary_mass = 0
+    for i in range(len(k.m)):
+        if k.m[i] < primary_mass and k.m[i]> secondary_mass:
+            secondary_mass = k.m[i]
+            sec_ind = i
+    if k.no == 2: #If there's two stars, only one possible semi major axis 
+        vel_prim = k.v[np.argmax(k.m)]
+        x_prim = k.x[np.argmax(k.m)]
+        vel_sec = k.v[sec_ind]
+        x_sec = k.x[sec_ind]
+    if k.no == 3: #If there's three stars, only three configs: [[1,2],3] , [[1,3],2] and [[2,3],1]
+        for i in k.structured_ids:
+            if isinstance(i,list) and primary_id in i:
+                if secondary_id in i:
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                else:
+                    vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])[0]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+            elif isinstance(i,list) and secondary_id in i:
+                if primary_id not in i:
+                    vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+
+    if k.no == 4:# 4 is the most complex  [[1,2],[3,4]],[[1,3/4],[2,3/4]],[[[1,2],3/4],3/4],[[[1,3/4],2],3/4] or [[[1,3/4],3/4],2]
+        struc_list = []
+        for i in k.structured_ids:
+            if isinstance(i,list):
+                struc_list.append(len(i))
+            else:
+                struc_list.append(0)
+        if sum(struc_list) == 4: #It is a binary of binaries
+            for i in k.structured_ids:
+                if primary_id in i and secondary_id in i:
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                else:
+                    if primary_id in i and secondary_id not in i:
+                        vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                        x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                        primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])
+                    elif primary_id not in i and secondary_id in i:
+                        vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                        x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                        secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
+        elif sum(struc_list) == 2: #It is hierarchial
+            structure = []
+            for i in k.structured_ids:
+                substructure = []
+                if isinstance(i,list):
+                    for j in i:
+                        if isinstance(j,list) and primary_id in j and secondary_id in j:
+                            vel_prim = k.v[np.argmax(k.m)]
+                            x_prim = k.x[np.argmax(k.m)]
+                            vel_sec = k.v[sec_ind]
+                            x_sec = k.x[sec_ind]
+                        elif isinstance(j,list) and primary_id in j:
+                            vel_prim = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            x_prim = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            primary_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
+                            substructure.append(42.0)
+                        elif isinstance(j,list) and secondary_id in j:
+                            vel_sec = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            x_sec = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            secondary_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
+                            substructure.append(24.0)
+                        elif isinstance(j,list) and primary_id not in j and secondary_id not in j:
+                            some_vel = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            some_x = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
+                            some_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
+                            substructure.append(2.4)
+                        elif isinstance(j,list) == False:
+                            substructure.append(j)
+                    structure.append(substructure)
+                else:
+                    structure.append(i)
+            for stru in structure:
+                if isinstance(stru,list) and 42.0 in stru and secondary_id in stru:
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                elif isinstance(stru,list) and 24.0 in stru and primary_id in stru:
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                elif isinstance(stru,list) and 42.0 in stru and secondary_id not in stru:
+                    vel_prim = ((primary_mass*vel_prim)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])))/(primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])
+                    x_prim = (primary_mass*x_prim + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])/(primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])
+                    primary_mass = primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                elif isinstance(stru,list) and 24.0 in stru and primary_id not in stru:
+                    vel_sec = (secondary_mass*vel_sec + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]*np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])/(secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])
+                    x_sec = (secondary_mass*x_sec + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])/(secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])
+                    secondary_mass = secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                elif isinstance(stru,list) and 2.4 in stru and primary_id in stru:
+                    vel_prim = ((some_mass*some_vel)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])))/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
+                    x_prim = (some_mass*some_x + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                    primary_mass = some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]
+                elif isinstance(stru,list) and 2.4 in stru and secondary_id in stru:
+                    vel_sec = ((some_mass*some_vel)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])))/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
+                    x_sec = (some_mass*some_x + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                    secondary_mass = some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]
+                
+    
+    x_prim = list(flatten(x_prim))
+    x_sec= list(flatten(x_sec))
+    vel_prim = list(flatten(vel_prim))
+    vel_sec= list(flatten(vel_sec))
+    binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    eps = binding_energy/mu
+    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
+    smaxis = - (mu2/(2*eps))
+    if isinstance(smaxis,np.ndarray):
+        smaxis = smaxis[0]
+    return smaxis
+
+def semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec):
+    '''Calculate the semimajor axis(in m) from given parameters'''
+    x_prim = list(flatten(x_prim))
+    x_sec= list(flatten(x_sec))
+    vel_prim = list(flatten(vel_prim))
+    vel_sec= list(flatten(vel_sec))
+    binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
+    eps = binding_energy/mu
+    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
+    semiax = - (mu2/(2*eps))
+    if isinstance(semiax,np.ndarray):
+        semiax = semiax[0]
+    return semiax
+
+#Calculating the semi major axis for every possible configuration of these systems
+def smaxis_all(system):
+    '''Calculate the semimajor axis between all subsystems in a system'''
+    k = system
+    if k.no == 1: #Single star has no smaxis
+        smaxis = 0
+        return smaxis
+    if len(k.m) == 2 and k.m[0] == k.m[1]:
+        primary_id = k.ids[0]
+        primary_mass = k.m[0]
+        secondary_id = k.ids[1]
+        secondary_mass = k.m[1]
+        sec_ind = 1
+    else:
+        primary_id = k.primary_id
+        primary_mass = k.primary
+        secondary_id = np.array(k.ids)[k.m == k.secondary]
+        if isinstance(secondary_id,np.ndarray):
+            secondary_id = secondary_id[0]
+        secondary_mass = 0
+    for i in range(len(k.m)):
+        if k.m[i] < primary_mass and k.m[i]> secondary_mass:
+            secondary_mass = k.m[i]
+            sec_ind = i
+    if k.no == 3:
+        tert_mass = k.m[k.m < secondary_mass][0]
+        tert_id = np.array(k.ids)[k.m == tert_mass][0]
+        tert_x = k.x[k.m == tert_mass][0]
+        tert_v = k.v[k.m == tert_mass][0]
+    elif k.no == 4:
+        tert_mass = k.m[k.m < secondary_mass][0]
+        tert_id = np.array(k.ids)[k.m == tert_mass][0]
+        tert_x = k.x[k.m == tert_mass][0]
+        tert_v = k.v[k.m == tert_mass][0]
+        
+        quart_mass = k.m[k.m < secondary_mass][1]
+        quart_id = np.array(k.ids)[k.m == quart_mass][0]
+        quart_x = k.x[k.m == quart_mass][0]
+        quart_v = k.v[k.m == quart_mass][0]
+        
+    if k.no == 2: #If there's two stars, only one possible semi major axis 
+        vel_prim = k.v[np.argmax(k.m)]
+        x_prim = k.x[np.argmax(k.m)]
+        vel_sec = k.v[sec_ind]
+        x_sec = k.x[sec_ind]
+        
+        smaxis_count = 1
+        
+        semiax = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+    if k.no == 3: #If there's three stars, only three configs: [[1,2],3] , [[1,3],2] and [[2,3],1]
+        smaxis_count = 2
+        for i in k.structured_ids:
+            if isinstance(i,list) and primary_id in i:
+                if secondary_id in i:
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                    semiax1 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+                    semiax2 = semi_major_axis(primary_mass+secondary_mass,tert_mass,(x_prim*primary_mass+x_sec*secondary_mass)/(primary_mass+secondary_mass),tert_x,(vel_prim*primary_mass+vel_sec*secondary_mass)/(primary_mass+secondary_mass),tert_v)
+                    smaxis_count = 2
+                else:
+                    semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]][0],np.array(k.x)[np.array(k.ids) == i[1]][0],np.array(k.v)[np.array(k.ids) == i[0]][0],np.array(k.v)[np.array(k.ids) == i[1]][0])
+                    smaxis_count = 2
+                    vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]][0]*np.array(k.v)[np.array(k.ids) == i[0]][0] + np.array(k.m)[np.array(k.ids) == i[1]][0]*np.array(k.v)[np.array(k.ids) == i[1]][0])/(np.array(k.m)[np.array(k.ids) == i[1]][0]+np.array(k.m)[np.array(k.ids) == i[0]][0])
+                    x_prim = (np.array(k.m)[np.array(k.ids) == i[0]][0]*np.array(k.x)[np.array(k.ids) == i[0]][0] + np.array(k.m)[np.array(k.ids) == i[1]][0]*np.array(k.x)[np.array(k.ids) == i[1]][0])/(np.array(k.m)[np.array(k.ids) == i[1]][0]+np.array(k.m)[np.array(k.ids) == i[0]][0])
+                    primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])[0]
+                    vel_sec = k.v[sec_ind]
+                    x_sec = k.x[sec_ind]
+                    semiax2 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+            elif isinstance(i,list) and secondary_id in i:
+                if primary_id not in i:
+                    semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]][0],np.array(k.x)[np.array(k.ids) == i[1]][0],np.array(k.v)[np.array(k.ids) == i[0]][0],np.array(k.v)[np.array(k.ids) == i[1]][0])
+                    smaxis_count = 2
+                    vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+                    secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]][0]+np.array(k.m)[np.array(k.ids) == i[1]][0]
+                    vel_prim = k.v[np.argmax(k.m)]
+                    x_prim = k.x[np.argmax(k.m)]
+                    semiax2 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+
+    if k.no == 4:# 4 is the most complex  [[1,2],[3,4]],[[1,3/4],[2,3/4]],[[[1,2],3/4],3/4],[[[1,3/4],2],3/4] or [[[1,3/4],3/4],2]
+        smaxis_count = 3
+        struc_list = []
+        for i in k.structured_ids:
+            if isinstance(i,list):
+                struc_list.append(len(i))
+            else:
+                struc_list.append(0)
+        if sum(struc_list) == 4: #It is a binary of binaries
+            i = k.structured_ids[0]
+            semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]],np.array(k.x)[np.array(k.ids) == i[1]],np.array(k.v)[np.array(k.ids) == i[0]],np.array(k.v)[np.array(k.ids) == i[1]])
+            vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+            x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+            primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])
+            i = k.structured_ids[1]
+            semiax2 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]],np.array(k.x)[np.array(k.ids) == i[1]],np.array(k.v)[np.array(k.ids) == i[0]],np.array(k.v)[np.array(k.ids) == i[1]])
+            vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+            x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
+            secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
+            semiax3 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+        elif sum(struc_list) == 2: #It is a hierarchial system
+            structure = []
+            for i in k.structured_ids:
+                substructure = []
+                if isinstance(i,list):
+                    for j in i:
+                        if isinstance(j,list):
+                            semiax1 = semi_major_axis(k.m[np.array(k.ids) == j[0]][0],k.m[np.array(k.ids) == j[1]][0],k.x[np.array(k.ids) == j[0]],k.x[np.array(k.ids) == j[1]],k.v[np.array(k.ids) == j[0]],k.v[np.array(k.ids) == j[1]])
+                            primary_mass = k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0]
+                            vel_prim = (k.v[np.array(k.ids) == j[0]]*k.m[np.array(k.ids) == j[0]]+k.v[np.array(k.ids) == j[1]]*k.m[np.array(k.ids) == j[1]])/(k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0])
+                            x_prim = (k.x[np.array(k.ids) == j[0]]*k.m[np.array(k.ids) == j[0]]+k.x[np.array(k.ids) == j[1]]*k.m[np.array(k.ids) == j[1]])/(k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0])
+                        else:
+                            outside_id = j
+                    semiax2 = semi_major_axis(primary_mass,k.m[np.array(k.ids) == outside_id][0],x_prim,k.x[np.array(k.ids) == outside_id],vel_prim,k.v[np.array(k.ids) == outside_id])
+                    x_prim = (primary_mass*x_prim+k.m[np.array(k.ids) == outside_id][0]*k.x[np.array(k.ids) == outside_id])/(primary_mass+k.m[np.array(k.ids) == outside_id][0])
+                    vel_prim = (primary_mass*vel_prim+k.m[np.array(k.ids) == outside_id][0]*k.v[np.array(k.ids) == outside_id])/(primary_mass+k.m[np.array(k.ids) == outside_id][0])
+                    primary_mass = primary_mass+k.m[np.array(k.ids) == outside_id][0] 
+                else:
+                    out_outside_id = i
+                        
+            semiax3 = semi_major_axis(primary_mass,k.m[np.array(k.ids) == out_outside_id][0],x_prim,k.x[np.array(k.ids) == out_outside_id],vel_prim,k.v[np.array(k.ids) == out_outside_id])
+                       
+    if smaxis_count == 1:
+        return semiax
+    elif smaxis_count == 2:
+        return np.array([semiax1,semiax2])
+    elif smaxis_count == 3:
+        return np.array([semiax1,semiax2,semiax3])
+
 # Defining a class that contains the structured & non-structured ids, the masses, the snapshot number, the coordinates, the 
 # velocities, the primary mass, the secondary mass, their ratio and the total mass of the system
 class star_system:
+    def  __init__(self,ids,n,data):
+        self.structured_ids = ids #Saving the structured ids
+        if isinstance(ids,list): #Flattening the ids
+            self.ids = list(flatten(list(ids)))
+            self.no = len(self.ids)
+        else:
+            self.ids = [ids]
+            self.no = 1
+        self.ids = np.array(self.ids,dtype=np.int64)
+        index = np.isin(data[n].id,self.ids)
+        self.m = data[n].m[index]
+        self.x = data[n].x[index,:]
+        self.v = data[n].v[index,:]
+        self.snapshot_num = n #The snapshot number of the system
+        self.tot_m = np.sum(self.m) #The total mass of the system
+        primary_mass = max(self.m) #The primary (most massive) star in the system
+        self.primary = primary_mass 
+        self.primary_id = self.ids[np.argmax(self.m)] #The primary star's id
+        secondary_mass = 0
+        for i in range(len(self.m)):
+            if self.m[i] < primary_mass and self.m[i]> secondary_mass:
+                secondary_mass = self.m[i]
+                sec_ind = i
+        self.secondary = secondary_mass #The mass of the second most massive star
+        self.mass_ratio = secondary_mass/primary_mass #The companion mass ratio (secondary/primary)
+        #Note: The semi major axis is in m and is between the sub-systems with the primary & secondary
+        self.smaxis = smaxis(self)
+        self.smaxis_all = smaxis_all(self)
+        #Get at formation density info
+        self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None)[0] for ID in self.ids])
+        self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None)[0] for ID in self.ids])
+        self.init_density = {'number': self.init_star_vol_density, 'mass': self.init_star_mass_density}
+        #Get stellar evolution stage of stars
+        self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int64)
+        #Get formation times of stars
+        self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID][0] for ID in self.ids])*code_time_to_Myr
+        self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
+        #Zero-age main-sequence (ZAMS) info
+        self.ZAMS_age = ( data[n].t-np.array([data[n].formation_time[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
+        for i,ID in enumerate(self.ids):
+            if self.stellar_evol_stages[i]!=5:
+                self.ZAMS_age[i] = -1
+        #Get final masses of stars
+        self.final_masses = []
+        for ID in self.ids:
+            last_snap = last_snap_finder(ID,data) #will almost always be -1, except for SNe
+            self.final_masses.append(data[last_snap].m[data[last_snap].id==ID])
+        self.final_masses = np.array(self.final_masses)
+        #Mark multiplicity status of stars
+        
     def  __init__(self,ids,n,data):
         self.structured_ids = ids #Saving the structured ids
         if isinstance(ids,list): #Flattening the ids
@@ -1036,6 +1382,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         system.mass_ratio = 0
         system.tot_m = system.primary
         system.structured_ids = [system.primary_id]
+        system.smaxis = 0
         return system
     og_system = copy.copy(system)
     for ides in og_system.ids: #Checking all the ids in the snap
@@ -1095,6 +1442,8 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                         secondary = j
                 system.secondary = secondary
                 system.mass_ratio = secondary/system.primary
+                system.smaxis = smaxis(system)
+                system.smaxis_all = smaxis_all(system)
                 #Add secondary
     return system
 
@@ -1841,302 +2190,6 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
         print(count_per_bin)
     else:
         return binned_times,means,error_up,error_down
-
-#Calculating the semi major axis for every possible configuration of these systems
-def smaxis(system):
-    '''Calculate the semi major axis (in m) between the secondary and primary in a system.'''
-    k = system #Don't want to rewrite all the ks
-    if len(k.m) == 1: #Single star has no smaxis
-        smaxis = 0
-        return smaxis
-    if len(k.m) == 2 and k.m[0] == k.m[1]:
-        primary_id = k.ids[0]
-        primary_mass = k.m[0]
-        secondary_id = k.ids[1]
-        secondary_mass = k.m[1]
-        sec_ind = 1
-    else:
-        primary_id = k.primary_id
-        primary_mass = k.primary
-        secondary_id = np.array(k.ids)[k.m == k.secondary]
-        if isinstance(secondary_id,np.ndarray):
-            secondary_id = secondary_id[0]
-        secondary_mass = 0
-    for i in range(len(k.m)):
-        if k.m[i] < primary_mass and k.m[i]> secondary_mass:
-            secondary_mass = k.m[i]
-            sec_ind = i
-    if k.no == 2: #If there's two stars, only one possible semi major axis 
-        vel_prim = k.v[np.argmax(k.m)]
-        x_prim = k.x[np.argmax(k.m)]
-        vel_sec = k.v[sec_ind]
-        x_sec = k.x[sec_ind]
-    if k.no == 3: #If there's three stars, only three configs: [[1,2],3] , [[1,3],2] and [[2,3],1]
-        for i in k.structured_ids:
-            if isinstance(i,list) and primary_id in i:
-                if secondary_id in i:
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                else:
-                    vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])[0]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-            elif isinstance(i,list) and secondary_id in i:
-                if primary_id not in i:
-                    vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-
-    if k.no == 4:# 4 is the most complex  [[1,2],[3,4]],[[1,3/4],[2,3/4]],[[[1,2],3/4],3/4],[[[1,3/4],2],3/4] or [[[1,3/4],3/4],2]
-        struc_list = []
-        for i in k.structured_ids:
-            if isinstance(i,list):
-                struc_list.append(len(i))
-            else:
-                struc_list.append(0)
-        if sum(struc_list) == 4: #It is a binary of binaries
-            for i in k.structured_ids:
-                if primary_id in i and secondary_id in i:
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                else:
-                    if primary_id in i and secondary_id not in i:
-                        vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                        x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                        primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])
-                    elif primary_id not in i and secondary_id in i:
-                        vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                        x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                        secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
-        elif sum(struc_list) == 2: #It is hierarchial
-            structure = []
-            for i in k.structured_ids:
-                substructure = []
-                if isinstance(i,list):
-                    for j in i:
-                        if isinstance(j,list) and primary_id in j and secondary_id in j:
-                            vel_prim = k.v[np.argmax(k.m)]
-                            x_prim = k.x[np.argmax(k.m)]
-                            vel_sec = k.v[sec_ind]
-                            x_sec = k.x[sec_ind]
-                        elif isinstance(j,list) and primary_id in j:
-                            vel_prim = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            x_prim = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            primary_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
-                            substructure.append(42.0)
-                        elif isinstance(j,list) and secondary_id in j:
-                            vel_sec = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            x_sec = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            secondary_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
-                            substructure.append(24.0)
-                        elif isinstance(j,list) and primary_id not in j and secondary_id not in j:
-                            some_vel = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.v)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.v)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            some_x = (np.array(k.m)[np.array(k.ids) == j[0]]*np.array(k.x)[np.array(k.ids) == j[0]] + np.array(k.m)[np.array(k.ids) == j[1]]*np.array(k.x)[np.array(k.ids) == j[1]])/(np.array(k.m)[np.array(k.ids) == j[1]]+np.array(k.m)[np.array(k.ids) == j[0]])
-                            some_mass = np.array(k.m)[np.array(k.ids) == j[0]]+np.array(k.m)[np.array(k.ids) == j[1]]
-                            substructure.append(2.4)
-                        elif isinstance(j,list) == False:
-                            substructure.append(j)
-                    structure.append(substructure)
-                else:
-                    structure.append(i)
-            for stru in structure:
-                if isinstance(stru,list) and 42.0 in stru and secondary_id in stru:
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                elif isinstance(stru,list) and 24.0 in stru and primary_id in stru:
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                elif isinstance(stru,list) and 42.0 in stru and secondary_id not in stru:
-                    vel_prim = ((primary_mass*vel_prim)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])))/(primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])
-                    x_prim = (primary_mass*x_prim + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])/(primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]])
-                    primary_mass = primary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=42.0]]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                elif isinstance(stru,list) and 24.0 in stru and primary_id not in stru:
-                    vel_sec = (secondary_mass*vel_sec + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]*np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])/(secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])
-                    x_sec = (secondary_mass*x_sec + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])/(secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]])
-                    secondary_mass = secondary_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=24.0]]
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                elif isinstance(stru,list) and 2.4 in stru and primary_id in stru:
-                    vel_prim = ((some_mass*some_vel)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])))/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
-                    x_prim = (some_mass*some_x + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                    primary_mass = some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]
-                elif isinstance(stru,list) and 2.4 in stru and secondary_id in stru:
-                    vel_sec = ((some_mass*some_vel)+((np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])*(np.array(k.v)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])))/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
-                    x_sec = (some_mass*some_x + np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]*np.array(k.x)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])/(some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]])
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                    secondary_mass = some_mass+np.array(k.m)[np.array(k.ids)==np.array(stru)[np.array(stru)!=2.4]]
-                
-    
-    x_prim = list(flatten(x_prim))
-    x_sec= list(flatten(x_sec))
-    vel_prim = list(flatten(vel_prim))
-    vel_sec= list(flatten(vel_sec))
-    binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
-    eps = binding_energy/mu
-    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
-    smaxis = - (mu2/(2*eps))
-    if isinstance(smaxis,np.ndarray):
-        smaxis = smaxis[0]
-    return smaxis
-
-def semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec):
-    '''Calculate the semimajor axis(in m) from given parameters'''
-    x_prim = list(flatten(x_prim))
-    x_sec= list(flatten(x_sec))
-    vel_prim = list(flatten(vel_prim))
-    vel_sec= list(flatten(vel_sec))
-    binding_energy = Binding_Energy(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    mu = msun_to_kg*((primary_mass*secondary_mass)/(primary_mass+secondary_mass))
-    eps = binding_energy/mu
-    mu2 = msun_to_kg*G*(primary_mass+secondary_mass)
-    semiax = - (mu2/(2*eps))
-    if isinstance(semiax,np.ndarray):
-        semiax = semiax[0]
-    return semiax
-
-#Calculating the semi major axis for every possible configuration of these systems
-def smaxis_all(system):
-    '''Calculate the semimajor axis between all subsystems in a system'''
-    k = system
-    if k.no == 1: #Single star has no smaxis
-        smaxis = 0
-        return smaxis
-    if len(k.m) == 2 and k.m[0] == k.m[1]:
-        primary_id = k.ids[0]
-        primary_mass = k.m[0]
-        secondary_id = k.ids[1]
-        secondary_mass = k.m[1]
-        sec_ind = 1
-    else:
-        primary_id = k.primary_id
-        primary_mass = k.primary
-        secondary_id = np.array(k.ids)[k.m == k.secondary]
-        if isinstance(secondary_id,np.ndarray):
-            secondary_id = secondary_id[0]
-        secondary_mass = 0
-    for i in range(len(k.m)):
-        if k.m[i] < primary_mass and k.m[i]> secondary_mass:
-            secondary_mass = k.m[i]
-            sec_ind = i
-    if k.no == 3:
-        tert_mass = k.m[k.m < secondary_mass][0]
-        tert_id = np.array(k.ids)[k.m == tert_mass][0]
-        tert_x = k.x[k.m == tert_mass][0]
-        tert_v = k.v[k.m == tert_mass][0]
-    elif k.no == 4:
-        tert_mass = k.m[k.m < secondary_mass][0]
-        tert_id = np.array(k.ids)[k.m == tert_mass][0]
-        tert_x = k.x[k.m == tert_mass][0]
-        tert_v = k.v[k.m == tert_mass][0]
-        
-        quart_mass = k.m[k.m < secondary_mass][1]
-        quart_id = np.array(k.ids)[k.m == quart_mass][0]
-        quart_x = k.x[k.m == quart_mass][0]
-        quart_v = k.v[k.m == quart_mass][0]
-        
-    if k.no == 2: #If there's two stars, only one possible semi major axis 
-        vel_prim = k.v[np.argmax(k.m)]
-        x_prim = k.x[np.argmax(k.m)]
-        vel_sec = k.v[sec_ind]
-        x_sec = k.x[sec_ind]
-        
-        smaxis_count = 1
-        
-        semiax = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-    if k.no == 3: #If there's three stars, only three configs: [[1,2],3] , [[1,3],2] and [[2,3],1]
-        smaxis_count = 2
-        for i in k.structured_ids:
-            if isinstance(i,list) and primary_id in i:
-                if secondary_id in i:
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                    semiax1 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-                    semiax2 = semi_major_axis(primary_mass+secondary_mass,tert_mass,(x_prim*primary_mass+x_sec*secondary_mass)/(primary_mass+secondary_mass),tert_x,(vel_prim*primary_mass+vel_sec*secondary_mass)/(primary_mass+secondary_mass),tert_v)
-                    smaxis_count = 2
-                else:
-                    semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]][0],np.array(k.x)[np.array(k.ids) == i[1]][0],np.array(k.v)[np.array(k.ids) == i[0]][0],np.array(k.v)[np.array(k.ids) == i[1]][0])
-                    smaxis_count = 2
-                    vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]][0]*np.array(k.v)[np.array(k.ids) == i[0]][0] + np.array(k.m)[np.array(k.ids) == i[1]][0]*np.array(k.v)[np.array(k.ids) == i[1]][0])/(np.array(k.m)[np.array(k.ids) == i[1]][0]+np.array(k.m)[np.array(k.ids) == i[0]][0])
-                    x_prim = (np.array(k.m)[np.array(k.ids) == i[0]][0]*np.array(k.x)[np.array(k.ids) == i[0]][0] + np.array(k.m)[np.array(k.ids) == i[1]][0]*np.array(k.x)[np.array(k.ids) == i[1]][0])/(np.array(k.m)[np.array(k.ids) == i[1]][0]+np.array(k.m)[np.array(k.ids) == i[0]][0])
-                    primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])[0]
-                    vel_sec = k.v[sec_ind]
-                    x_sec = k.x[sec_ind]
-                    semiax2 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-            elif isinstance(i,list) and secondary_id in i:
-                if primary_id not in i:
-                    semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]][0],np.array(k.x)[np.array(k.ids) == i[1]][0],np.array(k.v)[np.array(k.ids) == i[0]][0],np.array(k.v)[np.array(k.ids) == i[1]][0])
-                    smaxis_count = 2
-                    vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-                    secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]][0]+np.array(k.m)[np.array(k.ids) == i[1]][0]
-                    vel_prim = k.v[np.argmax(k.m)]
-                    x_prim = k.x[np.argmax(k.m)]
-                    semiax2 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-
-    if k.no == 4:# 4 is the most complex  [[1,2],[3,4]],[[1,3/4],[2,3/4]],[[[1,2],3/4],3/4],[[[1,3/4],2],3/4] or [[[1,3/4],3/4],2]
-        smaxis_count = 3
-        struc_list = []
-        for i in k.structured_ids:
-            if isinstance(i,list):
-                struc_list.append(len(i))
-            else:
-                struc_list.append(0)
-        if sum(struc_list) == 4: #It is a binary of binaries
-            i = k.structured_ids[0]
-            semiax1 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]],np.array(k.x)[np.array(k.ids) == i[1]],np.array(k.v)[np.array(k.ids) == i[0]],np.array(k.v)[np.array(k.ids) == i[1]])
-            vel_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-            x_prim = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-            primary_mass = (np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]])
-            i = k.structured_ids[1]
-            semiax2 = semi_major_axis(np.array(k.m)[np.array(k.ids) == i[0]][0],np.array(k.m)[np.array(k.ids) == i[1]][0],np.array(k.x)[np.array(k.ids) == i[0]],np.array(k.x)[np.array(k.ids) == i[1]],np.array(k.v)[np.array(k.ids) == i[0]],np.array(k.v)[np.array(k.ids) == i[1]])
-            vel_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.v)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.v)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-            x_sec = (np.array(k.m)[np.array(k.ids) == i[0]]*np.array(k.x)[np.array(k.ids) == i[0]] + np.array(k.m)[np.array(k.ids) == i[1]]*np.array(k.x)[np.array(k.ids) == i[1]])/(np.array(k.m)[np.array(k.ids) == i[1]]+np.array(k.m)[np.array(k.ids) == i[0]])
-            secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
-            semiax3 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
-        elif sum(struc_list) == 2: #It is a hierarchial system
-            structure = []
-            for i in k.structured_ids:
-                substructure = []
-                if isinstance(i,list):
-                    for j in i:
-                        if isinstance(j,list):
-                            semiax1 = semi_major_axis(k.m[np.array(k.ids) == j[0]][0],k.m[np.array(k.ids) == j[1]][0],k.x[np.array(k.ids) == j[0]],k.x[np.array(k.ids) == j[1]],k.v[np.array(k.ids) == j[0]],k.v[np.array(k.ids) == j[1]])
-                            primary_mass = k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0]
-                            vel_prim = (k.v[np.array(k.ids) == j[0]]*k.m[np.array(k.ids) == j[0]]+k.v[np.array(k.ids) == j[1]]*k.m[np.array(k.ids) == j[1]])/(k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0])
-                            x_prim = (k.x[np.array(k.ids) == j[0]]*k.m[np.array(k.ids) == j[0]]+k.x[np.array(k.ids) == j[1]]*k.m[np.array(k.ids) == j[1]])/(k.m[np.array(k.ids) == j[0]][0]+k.m[np.array(k.ids) == j[1]][0])
-                        else:
-                            outside_id = j
-                    semiax2 = semi_major_axis(primary_mass,k.m[np.array(k.ids) == outside_id][0],x_prim,k.x[np.array(k.ids) == outside_id],vel_prim,k.v[np.array(k.ids) == outside_id])
-                    x_prim = (primary_mass*x_prim+k.m[np.array(k.ids) == outside_id][0]*k.x[np.array(k.ids) == outside_id])/(primary_mass+k.m[np.array(k.ids) == outside_id][0])
-                    vel_prim = (primary_mass*vel_prim+k.m[np.array(k.ids) == outside_id][0]*k.v[np.array(k.ids) == outside_id])/(primary_mass+k.m[np.array(k.ids) == outside_id][0])
-                    primary_mass = primary_mass+k.m[np.array(k.ids) == outside_id][0] 
-                else:
-                    out_outside_id = i
-                        
-            semiax3 = semi_major_axis(primary_mass,k.m[np.array(k.ids) == out_outside_id][0],x_prim,k.x[np.array(k.ids) == out_outside_id],vel_prim,k.v[np.array(k.ids) == out_outside_id])
-                       
-    if smaxis_count == 1:
-        return semiax
-    elif smaxis_count == 2:
-        return np.array([semiax1,semiax2])
-    elif smaxis_count == 3:
-        return np.array([semiax1,semiax2,semiax3])
 
 #Getting the total masses, primary masses, smaxes and companion mass ratio. Also gets the target primary masses for 
 #smaxes and companion mass ratios.
