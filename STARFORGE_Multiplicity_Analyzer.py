@@ -1402,13 +1402,13 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                     if isinstance(idd,list):
                         state += len(idd)
             remove_mass = system.m[np.array(system.ids) == ides]
-            system.ids.remove(ides)
+            system.ids = system.ids[system.m != remove_mass]
             system.x = system.x[system.m != remove_mass]
             system.v = system.v[system.m != remove_mass]
             system.no -= 1
             system.age_Myr = system.age_Myr[system.m != remove_mass]
             system.final_masses = system.final_masses[system.m != remove_mass]
-            system.formation_time_Myr = system.formtation_time_Myr[system.m != remove_mass]
+            system.formation_time_Myr = system.formation_time_Myr[system.m != remove_mass]
             system.init_star_vol_density= system.init_star_vol_density[system.m != remove_mass]
             system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
             system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
