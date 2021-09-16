@@ -5367,14 +5367,14 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     if label is None: label=filename
     if which_plot in One_System_Plots:
         if plot == True:
-            One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
+            One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = avg_filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
         else:
-            return One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
+            return One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = avg_filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
     elif which_plot == 'Multiplicity':
         if plot == True:
-            Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no,label=label)
+            Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =avg_filter_snaps_no,label=label)
         else:
-            return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =filter_snaps_no,label=label)
+            return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =avg_filter_snaps_no,label=label)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
             Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
@@ -5504,7 +5504,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         og_rolling_window = copy.copy(rolling_window)
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
             if which_plot == 'Multiplicity':
-                a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+                a,b,c,d = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,avg_q_filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
                 comp_mul_no = c
                 sys_no = d
                 error_one = []
@@ -5560,7 +5560,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 nos.append(no)
                 avg_mass.append(am)
             else:
-                a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
+                a,b = Plots(which_plot,Systems[i][Snapshots[i]],Files[i],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,avg_q_filtered = filtered,snapshot = Snapshots[i],Master_File = Systems[i])
                 if normalized == True:
                     b = b*norm_no/sum(b)
                 x.append(a)
