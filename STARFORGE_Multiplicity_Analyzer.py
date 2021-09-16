@@ -1383,10 +1383,17 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             was_primary_there = True
     if was_primary_there == False: #If primary wasn't there, we make a new system of just the primary
         system.no = 1
-        system.ids = [system.primary_id]
+        system.ids = np.array([system.primary_id])
         system.secondary = 0
         system.x = system.x[system.m == system.primary]
         system.v = system.v[system.m == system.primary]
+        system.age_Myr = system.age_Myr[system.m == system.primary]
+        system.final_masses = system.final_masses[system.m == system.primary]
+        system.formation_time_Myr = system.formation_time_Myr[system.m == system.primary]
+        system.init_star_vol_density= system.init_star_vol_density[system.m == system.primary]
+        system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
+        system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
+        system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
         system.m = np.array([system.primary])
         system.mass_ratio = 0
         system.tot_m = system.primary
@@ -1420,7 +1427,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                 system.secondary = 0 #Remove the secondary if the remaining star is solitary
                 system.structured_ids = [system.primary_id]
             if system.no == 2:
-                system.structured_ids = system.ids
+                system.structured_ids = list(system.ids)
                 secondary = 0
                 for j in system.m:
                     if j < system.primary and j > secondary:
