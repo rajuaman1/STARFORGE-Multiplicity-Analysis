@@ -1321,7 +1321,7 @@ def q_filter_one_snap(systems,min_q = 0.1):
                             if isinstance(idd,list):
                                 state += len(idd)
                     remove_id = np.array(j.ids)[j.m == k] #The id that we have to remove
-                    j.ids.remove(remove_id)
+                    j.ids = j.ids[j.m != k]
                     j.x = j.x[j.m != k]
                     j.v = j.v[j.m != k]
                     j.no -= 1
@@ -1339,7 +1339,7 @@ def q_filter_one_snap(systems,min_q = 0.1):
                         j.secondary = 0 #Remove the secondary if the remaining star is solitary
                         j.structured_ids = [j.ids]
                     if j.no == 2:
-                        j.structured_ids = j.ids #The secondary isn't going to be removed if there's 2 stars remaining
+                        j.structured_ids = list(j.ids) #The secondary isn't going to be removed if there's 2 stars remaining
                     if j.no == 3:
                         removed_list = copy.deepcopy(j.structured_ids) 
                         checker = remove_id[0] #The remove ID is in an array so we make it single
