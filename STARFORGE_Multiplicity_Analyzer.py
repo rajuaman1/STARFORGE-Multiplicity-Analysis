@@ -1325,6 +1325,13 @@ def q_filter_one_snap(systems,min_q = 0.1):
                     j.x = j.x[j.m != k]
                     j.v = j.v[j.m != k]
                     j.no -= 1
+                    j.age_Myr = j.age_Myr[j.m != k]
+                    j.final_masses = j.final_masses[j.m != k]
+                    j.formation_time_Myr = j.formation_time_Myr[j.m != k]
+                    j.init_star_vol_density = j.init_star_vol_density[j.m != k]
+                    j.init_star_mass_density = j.init_star_mass_density[j.m != k]
+                    j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
+                    j.ZAMS_age = j.ZAMS_age[j.m != k]
                     j.m = j.m[j.m != k]
                     j.tot_m = sum(j.m)
                     if j.no == 1:
@@ -1353,6 +1360,8 @@ def q_filter_one_snap(systems,min_q = 0.1):
                                     elif isinstance(value,list) and len(value) == 2:
                                         removed_list[index] = list(flatten(value)) 
                         j.structured_ids = removed_list
+                    j.smaxis = smaxis(j)
+                    j.smaxis_all = smaxis_all(j)
                     Filtered_Master_File[i] = j
     return Filtered_Master_File
 
@@ -1397,8 +1406,6 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             system.x = system.x[system.m != remove_mass]
             system.v = system.v[system.m != remove_mass]
             system.no -= 1
-            system.m = system.m[system.m != remove_mass]
-            system.tot_m = sum(system.m)
             system.age_Myr = system.age_Myr[system.m != remove_mass]
             system.final_masses = system.final_masses[system.m != remove_mass]
             system.formation_time_Myr = system.formtation_time_Myr[system.m != remove_mass]
@@ -1406,6 +1413,8 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
             system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
             system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
+            system.m = system.m[system.m != remove_mass]
+            system.tot_m = sum(system.m)
             if system.no == 1:
                 system.mass_ratio = 0
                 system.secondary = 0 #Remove the secondary if the remaining star is solitary
@@ -1458,12 +1467,17 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
     Filtered_Master_File = copy.deepcopy(Master_File)
     for i in tqdm(file,desc = 'Times'):
         times.append(i.t*code_time_to_Myr)
-    snap_3 = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
-    
+    long_ago_snap = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
     
     for system_no,system in enumerate(tqdm(Filtered_Master_File[selected_snap],desc = 'Simple Filter Loop',position = 0)):
         result_1 = simple_filter_one_system(system,Filtered_Master_File,comparison_snapshot=snap_1)
         result_2 = simple_filter_one_system(result_1,Filtered_Master_File,comparison_snapshot=snap_2)
+        orbital_period_check = 2*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary))/(60*60*24*365*1e6)
+        orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
+        if orbital_period_snap > long_ago_snap:
+            snap_3 = orbital_period_snap
+        else:
+            snap3 = long_ago_snap
         result_3 = simple_filter_one_system(result_2,Filtered_Master_File,comparison_snapshot=snap_3)
         Filtered_Master_File[selected_snap][system_no] = result_3
     return Filtered_Master_File[selected_snap]
