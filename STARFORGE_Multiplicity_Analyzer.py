@@ -1198,7 +1198,7 @@ def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_i
         Result = clustering_algorithm(file,snapshot_num,seperation_param = seperation_param,periodic_edge = periodic_edge,L = L)
    #Turn the id pairs into star system objects
     for i in tqdm(Result,desc = 'System Creation',position = 0,leave = True):
-        if isinstance(i,list):
+        if isinstance(i,list) or isinstance(i,np.ndarray):
             for j in i:
                 systems.append(star_system(j,snapshot_num,file))
         else:
