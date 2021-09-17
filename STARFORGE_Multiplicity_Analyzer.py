@@ -1525,7 +1525,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
         for i in range(len(systems[-1])):
             this_mass = systems[-1][i].primary
             if lower_limit<=this_mass<=upper_limit:
-                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == systems[-1][i].primary_id][0]*code_time_to_Myr
+                birth_time = systems[-1][i].formation_time_Myr[systems[-1][i].m==systems[-1][i].primary][0]
                 birth_times.append(birth_time)
     else:
         for i in range(len(file[-1].m)):
