@@ -48,7 +48,7 @@ ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
 alt_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2']
 alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 
-datafolder='C:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
+datafolder='D:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
 def redo_system_assignment(filename,datafolder='',seperation_param=None, do_last_10_with_no_sep=True):
     file_path = filename
@@ -178,11 +178,11 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
 
 #redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
 #redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
-#redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
 alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
 
 
-all_plots(alpha_filenames,'alpha',alpha_labels)
+#all_plots(alpha_filenames,'alpha',alpha_labels)
 #all_plots(sigma_filenames,'sigma',sigma_labels)
 #all_plots(BOX_filenames,'BOX',BOX_labels)
 #all_plots(metal_filenames,'metal',metal_labels)
