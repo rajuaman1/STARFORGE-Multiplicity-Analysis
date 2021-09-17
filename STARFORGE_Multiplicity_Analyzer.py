@@ -1152,6 +1152,11 @@ def q_filter_one_snap(systems,min_q = 0.1):
                     j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
                     j.ZAMS_age = j.ZAMS_age[j.m != k]
                     j.m = j.m[j.m != k]
+                    if j.no == 1:
+                        j.secondary = 0
+                    else:
+                        j.secondary = np.max(j.m[j.m!=j.primary])
+                    j.mass_ratio = j.secondary/j.primary
                     j.tot_m = sum(j.m)
                     if j.no == 1:
                         j.mass_ratio = 0
