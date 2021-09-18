@@ -4340,22 +4340,25 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         elif multiplicity == 'Frequency':
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
 
-def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filtered = False,filter_snaps_no = 10,min_q = 0.1,Master_File = None, label=None):
+def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
     '''
     Create the plots for one snapshot
     Inputs
     ----------
     which_plot: string
     The plot to be made.
-
-    systems: list of star system objects
-    The systems you want to analyze (1 snapshot or a filtered snapshot).
+    
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment.
 
     file:list of sinkdata objects
     The original sinkdata file.
 
     Parameters
     ----------
+    systems: list of star system objects
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
+    
     filename:string
     The name of the original file. It will be labelled on the plot if provided.
 
@@ -4386,15 +4389,24 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
     read_in_result: bool,optional
     Whether to perform system assignment again or just read it in.
 
-    filtered: bool,optional
-    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
-
-    filter_snaps_no: int,float,optional
-    The number of snaps to average over in the filter
-
-    min_q:int,float,optional
-    The mass ratio to remove companions under with the filter.
-
+    filters: list of strings,None,optional
+    Whether to use a filter or not. The choices are 'time_filter','q_filter' or 'average_filter'
+    
+    avg_filter_snaps_no: int,optional
+    The number of snapshots to average over with the average filter
+    
+    q_filt_min: float,optional
+    The minimum q to use in the q filter
+    
+    time_filt_min: float,optional
+    The minimum time that companions should have been in a system
+     
+    only_filter: bool,optional
+    Whether to only look at the filter (True) or to plot both the filter and unfiltered data (False).
+    
+    label: string,optional
+    The label to use on the plot
+    
     Returns
     -------
     x_vals: list
@@ -4411,6 +4423,13 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
     '''
     adjust_ticks=True
     if label is None: label=filename
+    if systems is None: systems = Master_File[snapshot]
+    if 'time_filter' in filters:
+        filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
+    if 'q_filter' in filters:
+        filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
+    if only_filter is True and None not in filters:
+        systems = filtered_systems    
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
          x_vals,y_vals = hist(property_dist,bins = bins)
@@ -4420,20 +4439,14 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
          x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
     y_vals = np.insert(y_vals,0,0)
     #Creating the filtered systems
-    if filtered is True:
-        if snapshot is None:
-            print('Please Provide Snapshot No')
-            return
-        if Master_File is None:
-            print('Please Provide Master_File')
-            return
+    if only_filter is False or 'average_filter' in filters:
         property_dist_filt = []
-        for i in range(snapshot+1-filter_snaps_no,snapshot+1):
-            property_dist_filt.append(primary_total_ratio_axis(q_filter_one_snap(Master_File[i],min_q = min_q),lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot))
+        for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
+            property_dist_filt.append(primary_total_ratio_axis(filtered_systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot))
         x_vals_all = []
         y_vals_all = []
         count = 0
-        for i in range(snapshot+1-filter_snaps_no,snapshot+1):
+        for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
             if which_plot == 'Mass Ratio':
                 x_vals_all.append(hist(property_dist_filt[count],bins = bins)[0])
                 the_y = (hist(property_dist_filt[count],bins = bins)[1])
@@ -4446,16 +4459,23 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             the_y = np.insert(the_y,0,0)
             y_vals_all.append(the_y)
             count = count+1
-        x_vals_filt = np.zeros_like(x_vals_all[-1])
-        y_vals_filt = np.zeros_like(y_vals_all[-1])
-        count = 0
-        for i in range(snapshot+1-filter_snaps_no,snapshot+1):
-            for j in range(len(x_vals)):
-                x_vals_filt[j] += x_vals_all[count][j]
-                y_vals_filt[j] += y_vals_all[count][j]
-            count += 1
-        x_vals_filt = x_vals_filt/filter_snaps_no
-        y_vals_filt = y_vals_filt/filter_snaps_no
+        if 'average_filter' in filters:
+            x_vals_filt = np.zeros_like(x_vals_all[-1])
+            y_vals_filt = np.zeros_like(y_vals_all[-1])
+            count = 0
+            for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
+                for j in range(len(x_vals)):
+                    x_vals_filt[j] += x_vals_all[count][j]
+                    y_vals_filt[j] += y_vals_all[count][j]
+                count += 1
+            x_vals_filt = x_vals_filt/avg_filter_snaps_no
+            y_vals_filt = y_vals_filt/avg_filter_snaps_no
+            if only_filter is True:
+                x_vals = x_vals_filt
+                y_vals = y_vals_filt
+        else:
+            x_vals_filt = x_vals_all[-1]
+            y_vals_filt = y_vals_all[-1]
     if which_plot == 'System Mass' or which_plot == 'Primary Mass':
         if plot == True:
             #plt.title('Total Mass Distribution of all of the systems in Snapshot '+str(snapshot_number))
@@ -4478,7 +4498,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                     plt.step(x_vals,y_vals,label = 'Mass Dist for Primaries')
                 plt.step(tot_m,vals,label = 'Stellar Mass Dist (IMF)')
                 plt.legend(fontsize=14)
-            elif filtered == True:
+            elif only_filter is False:
                 plt.step(x_vals,y_vals,label = 'Raw Data')
                 plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 plt.legend(fontsize=14)
@@ -4491,14 +4511,14 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         else:
-            if filtered == True:
+            if only_filter is True:
                 return x_vals_filt,y_vals_filt
             else:
                 return x_vals,y_vals
     if which_plot == 'Mass Ratio':
         if plot == True:
             plt.step(x_vals,y_vals,label = 'Raw Data')
-            if filtered == True:
+            if only_filter is False:
                 plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             plt.ylabel('Number of Systems')
             plt.xlabel('q (Companion Mass Dist)')
@@ -4517,7 +4537,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
                 plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 0.3)
                 plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
                 plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
-                if filtered is True:
+                if None in filters is True:
                     plt.vlines((x_vals_filt[-1]+x_vals_filt[-2]+0.02)/2,y_vals_filt[-1]-np.sqrt(y_vals_filt[-1]),y_vals_filt[-1]+np.sqrt(y_vals_filt[-1]),linestyles=':')
                     plt.vlines((x_vals_filt[4]+x_vals_filt[3]+0.02)/2,y_vals_filt[4]-np.sqrt(y_vals_filt[4]),y_vals_filt[4]+np.sqrt(y_vals_filt[4]),linestyles=':')
                     plt.vlines((x_vals_filt[1]+x_vals_filt[2]+0.02)/2,y_vals_filt[2]-np.sqrt(y_vals_filt[2]),y_vals_filt[2]+np.sqrt(y_vals_filt[2]),linestyles=':')
@@ -4530,7 +4550,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             if log == True:
                 plt.yscale('log')
         else:
-            if filtered == True:
+            if only_filter is True:
                 return x_vals_filt,y_vals_filt
             else:
                 return x_vals,y_vals
@@ -4539,7 +4559,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
             ax1.step(x_vals,y_vals,label = 'Raw Data')
-            if filtered is True:
+            if only_filter is False:
                 ax1.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             ax1.vlines(np.log10(20),0,max(y_vals))
             pands = []
@@ -4575,7 +4595,7 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             if filename is not None:
                 fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left') 
         else:
-            if filtered == True:
+            if only_filter is True:
                 return x_vals_filt,y_vals_filt
             else:
                 return x_vals,y_vals
@@ -4592,20 +4612,22 @@ def One_Snap_Plots(which_plot,systems,file,filename = None,snapshot = None,upper
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,adjust_ticks=adjust_ticks)
 
-def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot = None,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filtered = False,filter_q = 0.1,filter_snaps_no =10,label=None):
+def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
     Inputs
     ----------
-
-    systems: list of star system objects
-    The systems you want to analyze (1 snapshot or a filtered snapshot).
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment.
+    
+    file: list of sinkdata
+    The simulation file.
 
     Parameters
     ----------
-    Master_File: list of lists of star system objects
-    The entire simulation with system assignment. Only required for filter on.
+    systems: list of star system objects,optional
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
 
     snapshot: int,float
     The snapshot to look at. It is required with the filter on.
@@ -4625,15 +4647,24 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
     bins: int,float,list,array,string,optional
     The bins for the histograms. Use continous or observer.
 
-    filtered: bool,optional
-    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
-
-    filter_snaps_no: int,float,optional
-    The number of snaps to average over in the filter
-
-    min_q:int,float,optional
-    The mass ratio to remove companions under with the filter.
-
+    filters: list of strings,None,optional
+    Whether to use a filter or not. The choices are 'time_filter','q_filter' or 'average_filter'
+    
+    avg_filter_snaps_no: int,optional
+    The number of snapshots to average over with the average filter
+    
+    q_filt_min: float,optional
+    The minimum q to use in the q filter
+    
+    time_filt_min: float,optional
+    The minimum time that companions should have been in a system
+     
+    only_filter: bool,optional
+    Whether to only look at the filter (True) or to plot both the filter and unfiltered data (False).
+    
+    label: string,optional
+    The label to put on the plot
+    
     Returns
     -------
     x_vals: list
@@ -4670,6 +4701,13 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
     if label is None: label=filename
     if bins != 'observer' and bins != 'continous':
         print('Please use the string "observer" or "continous" as the bins')
+    if systems is None: systems = Master_File[snapshot]
+    if 'time_filter' in filters:
+        filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
+    if 'q_filter' in filters:
+        filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
+    if only_filter is True and None not in filters:
+        systems = filtered_systems    
     if multiplicity == 'Frequency':
         logmasslist,o1,o2,o3 = companion_frequency(systems,mass_break=mass_break,bins = bins)
     elif multiplicity == 'Properties' or multiplicity == 'Fraction':
@@ -4682,20 +4720,14 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             logmasslist,o1,o2,o3,o4,o5,o6 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
         else:
             logmasslist,o1,o2 = multiplicity_fraction_with_density(systems,file,mass_break=mass_break,bins = bins,attribute=multiplicity)
-    if filtered is True:
-        if snapshot is None:
-            print('Please provide snapshot')
-            return
-        if Master_File is None:
-            print('Please provide Master_File')
-            return
+    if only_filter is False or 'average_filter' in filters:
         logmasslist_all = []
         o1_all = []
         o2_all = []
         o3_all = []
         count = 0
-        for i in range(snapshot+1-filter_snaps_no,snapshot+1):
-            filtered_q = q_filter_one_snap(Master_File[i],filter_q)
+        for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
+            filtered_q = q_filter_one_snap(Master_File[i],min_q = q_filt_min)
             if multiplicity == 'Frequency':
                 logmasslist_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[0])
                 o1_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[1])
@@ -4707,22 +4739,33 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 o2_all.append(multiplicity_fraction(filtered_q,attribute = multiplicity,mass_break=mass_break,bins = bins)[2])
                 o3_all.append(multiplicity_fraction(filtered_q,attribute = multiplicity,mass_break=mass_break,bins = bins)[3])
             count += 1
-        logmasslist_filt = np.zeros_like(logmasslist_all[-1])
-        o1_filt = np.zeros_like(o1_all[-1])
-        o2_filt = np.zeros_like(o2_all[-1])
-        o3_filt = np.zeros_like(o3_all[-1])
-        count = 0
-        for i in range(snapshot+1-filter_snaps_no,snapshot+1):
-            for j in range(len(logmasslist_filt)):
-                logmasslist_filt[j] += logmasslist_all[count][j]
-                o1_filt[j] += o1_all[count][j]
-                o2_filt[j] += o2_all[count][j]
-                o3_filt[j] += o3_all[count][j]
-            count += 1
-        logmasslist_filt = logmasslist_filt/filter_snaps_no
-        o1_filt = o1_filt/filter_snaps_no
-        o2_filt = o2_filt/filter_snaps_no
-        o3_filt = o3_filt/filter_snaps_no
+        if 'average_filter' in filters:
+            logmasslist_filt = np.zeros_like(logmasslist_all[-1])
+            o1_filt = np.zeros_like(o1_all[-1])
+            o2_filt = np.zeros_like(o2_all[-1])
+            o3_filt = np.zeros_like(o3_all[-1])
+            count = 0
+            for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
+                for j in range(len(logmasslist_filt)):
+                    logmasslist_filt[j] += logmasslist_all[count][j]
+                    o1_filt[j] += o1_all[count][j]
+                    o2_filt[j] += o2_all[count][j]
+                    o3_filt[j] += o3_all[count][j]
+                count += 1
+            logmasslist_filt = logmasslist_filt/avg_filter_snaps_no
+            o1_filt = o1_filt/avg_filter_snaps_no
+            o2_filt = o2_filt/avg_filter_snaps_no
+            o3_filt = o3_filt/avg_filter_snaps_no
+            if only_filter is True:
+                logmasslist = logmasslist_filt
+                o1 = o1_filt
+                o2 = o2_filt
+                o3 = o3_filt
+        else:
+            logmasslist_filt = logmasslist_all[-1]
+            o1_filt = o1_all[-1]
+            o2_filt = o2_all[-1]
+            o3_filt = o3_all[-1]
     if multiplicity == 'Properties' or multiplicity == 'Density Separate' or multiplicity == 'Mass Density Separate':
         if plot == True:
             if multiplicity == 'Properties':
@@ -4736,7 +4779,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
                 plt.fill_between(logmasslist,np.log10(o2+o5),np.log10(o2)-(np.log10(o2+o5)-np.log10(o2)),alpha = 0.3)
                 plt.plot(logmasslist,np.log10(o3),marker = '^',label = 'Non-Primary Stars')
                 plt.fill_between(logmasslist,np.log10(o3+o6),np.log10(o3)-(np.log10(o3+o6)-np.log10(o3)),alpha = 0.3)
-            if filtered is True:
+            if only_filter is False:
                 plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-Primary Stars Filt',linestyle = ':')
@@ -4752,7 +4795,7 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             if filename is not None:
                 plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         else:
-            if filtered == True:
+            if only_filter is True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3
@@ -4760,19 +4803,19 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
         if plot == True:
             if bins == 'continous':
                 plt.plot(logmasslist,o1,marker = '^',label = 'Raw Data')
-                if filtered is True:
+                if only_filter is False:
                     plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             elif bins == 'observer':
                 if multiplicity == 'Fraction':
                     for i in range(len(logmasslist)-1):
                         plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                    if filtered is True:
+                    if only_filter is False:
                         for i in range(len(logmasslist_filt)-1):
                             plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
                 else:
                     plt.plot(logmasslist,np.log10(o1),marker = '^')
                     plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
-                    if filtered is True:
+                    if only_filter is False:
                         plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
             error_bins = [0.1,0.3,1.0,3.25,12,16]
@@ -4795,13 +4838,13 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
-            if filtered == True:
+            if only_filter is False:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
             if multiplicity == 'Fraction':
                 plt.legend(handles = handles,fontsize=14)
         else:
-            if filtered == True:
+            if only_filter is True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3    
@@ -4809,12 +4852,12 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
         if plot == True:
             if bins == 'continous':
                 plt.plot(logmasslist,o1,marker = 'o',label = 'Raw Data')
-                if filtered is True:
+                if only_filter is False:
                     plt.plot(logmasslist_filt,o1_filt,marker = 'o',label = 'After Corrections',linestyle = ':')
             elif bins == 'observer':
                 for i in range(len(logmasslist)-1):
                     plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Lsigma(o3[i],o2[i]),o1[i]-Lsigma(o3[i],o2[i]),color = '#ff7f0e',alpha = 0.6)
-                if filtered is True:
+                if only_filter is False:
                     for i in range(len(logmasslist_filt)-1):
                         plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
             error_values = [0.50,0.84,1.3,1.6,2.1]
@@ -4831,14 +4874,14 @@ def Multiplicity_One_Snap_Plots(systems,Master_File = None,file = None,snapshot 
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
-            if filtered == True:
+            if only_filter is False:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
             plt.legend(handles = handles,fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             plt.figure()
         else:
-            if filtered == True:
+            if only_filter is True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3
@@ -5056,7 +5099,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= None,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = 10,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,time_q_filtered = True,time_filter_Myr = 1,avg_q_filtered = False,avg_filter_snaps_no = 10,min_q = 0.1,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None): 
+def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -5064,24 +5107,24 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     ----------
     which_plot: string
     The plot to be made.
-
-    systems: list of star system objects
-    The systems you want to analyze (1 snapshot or a filtered snapshot).
+    
+    Master_File: list of lists of star system objects
+    The entire simulation with system assignment. Only required for time evolution plots and filter on.
 
     file:list of sinkdata objects
     The original sinkdata file.
 
-    filename:string
-    The name of the original file. It will be labelled on the plot if provided.
-
-    Master_File: list of lists of star system objects
-    The entire simulation with system assignment. Only required for time evolution plots and filter on.
-
-    snapshot: int,float
-    The snapshot number you want to look at. Only required for IMF comparisons and filter on.
-
     Parameters
     ----------
+    
+    filename:string
+    The name of the original file. It will be labelled on the plot if provided.
+    
+    systems: list of star system objects
+    The systems you want to analyze (1 snapshot or a filtered snapshot).
+    
+    snapshot: int,float
+    The snapshot number you want to look at. Only required for IMF comparisons and filter on.
 
     target_mass: int,float,optional
     The mass of the primaries of the systems of interest.
@@ -5140,20 +5183,20 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     select_by_time: bool,optional
     Whether to look at average multiplicity for all stars or only those in a window.
 
-    time_q_filtered:bool,optional
-    Whether to only include systems that last for a minimum of some Myrs.
+    filters: list of strings,None,optional
+    Whether to use a filter or not. The choices are 'time_filter','q_filter' or 'average_filter'
     
-    time_filter_Myr: int,optional
-    The time(in Myr) to use as the time for the time filter
-
-    avg_q_filtered: bool,optional
-    Whether to include the filter of averaging the last 10 snapshots and removing all of the companions lesser than 0.1q.
-
-    avg_filter_snaps_no: int,float,optional
-    The number of snaps to average over in the filter
-
-    min_q:int,float,optional
-    The mass ratio to remove companions under with the filter.
+    avg_filter_snaps_no: int,optional
+    The number of snapshots to average over with the average filter
+    
+    q_filt_min: float,optional
+    The minimum q to use in the q filter
+    
+    time_filt_min: float,optional
+    The minimum time that companions should have been in a system
+     
+    only_filter: bool,optional
+    Whether to only look at the filter (True) or to plot both the filter and unfiltered data (False)..
 
     rolling_avg: bool,optional
     Whether to use a rolling average or not.
@@ -5187,25 +5230,19 @@ def Plots(which_plot,systems,file,filename = None,Master_File = None,snapshot= N
     weights:list
     The weights of each bin
     '''
-    if time_q_filtered is True:
-        if Master_File is None:
-            print('Please Provide Master File')
-            return
-        systems = full_simple_filter(Master_File,file,selected_snap=snapshot,long_ago=time_filter_Myr)
-        systems = q_filter_one_snap(systems,min_q=min_q)
     One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Mass Ratio','Semi Major Axis vs q']
     Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity']
     if label is None: label=filename
     if which_plot in One_System_Plots:
         if plot == True:
-            One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = avg_filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
+            One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
         else:
-            return One_Snap_Plots(which_plot,systems,file,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filtered = avg_q_filtered,filter_snaps_no = avg_filter_snaps_no,min_q = min_q,Master_File=Master_File,label=label)
+            return One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
     elif which_plot == 'Multiplicity':
         if plot == True:
-            Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =avg_filter_snaps_no,label=label)
+            Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
         else:
-            return Multiplicity_One_Snap_Plots(systems,Master_File,file = file,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filtered = avg_q_filtered,filter_q = min_q,plot = plot,filename = filename,snapshot = snapshot,filter_snaps_no =avg_filter_snaps_no,label=label)
+            return Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
             Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
