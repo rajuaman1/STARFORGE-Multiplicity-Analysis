@@ -966,6 +966,14 @@ class star_system:
             self.final_masses.append(data[last_snap].m[data[last_snap].id==ID])
         self.final_masses = np.array(self.final_masses)
         #Mark multiplicity status of stars
+        multiplicity_state = np.zeros_like(self.m)
+        for i in range(len(self.m)):
+            if self.m[i] == self.primary:
+                multiplicity_state[i] = self.no-1
+            else:
+                multiplicity_state[i] = -1
+        self.multip_state = multiplicity_state
+        
         
 # Main Function of the program
 def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_in_result = False,L = None):
@@ -2167,7 +2175,7 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
             for j in i.m:
                 if j>=i.primary*selection_ratio and j != i.primary:
                     m.append(j)
-                    state.append(2)
+                    state.append(-1)
             m.append(i.primary)
             masses = np.array(i.m)
             if len(masses[masses>=selection_ratio*i.primary])>1:
