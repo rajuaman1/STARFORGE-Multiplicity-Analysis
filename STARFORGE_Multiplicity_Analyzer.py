@@ -1159,6 +1159,7 @@ def q_filter_one_snap(systems,min_q = 0.1):
                     j.init_star_mass_density = j.init_star_mass_density[j.m != k]
                     j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
                     j.ZAMS_age = j.ZAMS_age[j.m != k]
+                    j.multip_state = j.multip_state[j.m != k]
                     j.m = j.m[j.m != k]
                     if j.no == 1:
                         j.secondary = 0
@@ -1226,6 +1227,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
         system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
         system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
+        system.multip_state = system.multip_state[j.m != k]
         system.m = np.array([system.primary])
         system.mass_ratio = 0
         system.tot_m = system.primary
@@ -1252,6 +1254,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
             system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
             system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
+            system.multip_state = system.multip_state[j.m != k]
             system.m = system.m[system.m != remove_mass]
             system.tot_m = sum(system.m)
             if system.no == 1:
