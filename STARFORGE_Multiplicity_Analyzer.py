@@ -39,6 +39,9 @@ G = 6.67e-11
 #Solar Mass to kg
 msun_to_kg = 1.9891e30
 
+#The length for the given box plot
+L = (4/3*np.pi)**(1/3)*10
+
 #List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
 'Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity','Semi-Major Axis vs q']
@@ -973,8 +976,7 @@ class star_system:
             else:
                 multiplicity_state[i] = -1
         self.multip_state = multiplicity_state
-        
-        
+           
 # Main Function of the program
 def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_in_result = False,L = None):
     '''
@@ -1227,7 +1229,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
         system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
         system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
-        system.multip_state = system.multip_state[j.m != k]
+        system.multip_state = system.multip_state[system.m == system.primary]
         system.m = np.array([system.primary])
         system.mass_ratio = 0
         system.tot_m = system.primary
@@ -1254,7 +1256,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
             system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
             system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
-            system.multip_state = system.multip_state[j.m != k]
+            system.multip_state = system.multip_state[system.m != remove_mass]
             system.m = system.m[system.m != remove_mass]
             system.tot_m = sum(system.m)
             if system.no == 1:
@@ -1359,6 +1361,17 @@ def t_ff(mass,R):
     G_code=4325.69
     tff = np.sqrt(3.0*np.pi/( 32*G_code*( mass/(4.0*np.pi/3.0*(R**3)) ) ) )
     return tff
+
+def time_array(file,unit = 'code',t_ff = 1):
+    time = []
+    for i in file:
+        time.append(i.t)
+    time = np.array(time)
+    if unit == 'Myr':
+        time = time*code_time_to_Myr
+    elif unit == 't_ff':
+        time = time*t_ff
+    return time
 
 def initial_local_density(ID,file,des_ngb = 32,density = 'number',boxsize = None):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
@@ -1545,9 +1558,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
             if lower_limit<=this_mass<=upper_limit:
                 birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == this_id][0]*code_time_to_Myr
                 birth_times.append(birth_time)
-    times = []
-    for i in file:
-        times.append(i.t*code_time_to_Myr)
+    times = time_array(file,'Myr')
     birth_times = np.array(birth_times)
     times,new_stars_co = hist(birth_times,bins = np.linspace(min(times),max(times),num = int((max(times)-min(times))/min_time_bin)))
     times = np.array(times)
@@ -2241,7 +2252,7 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
             alternative_fraction[i] = primary_count/(primary_count+solo_count+secondary_count)
         else:
             alternative_fraction[i] = np.nan
-    if attribute == 'Fraction':
+    if attribute == 'MF':
         return logmasslist,other_fraction,mult_sys_count,sys_count
     elif attribute == 'All Companions':
         return logmasslist,alternative_fraction
@@ -2251,7 +2262,7 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
         return None
 
 #Multiplicity Fraction over different masses with a selection ratio of companions
-def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_ratio = 0,attribute = 'Fraction',bins = 'continous'):
+def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_ratio = 0,attribute = 'MF',bins = 'continous'):
     '''
     Returns the multiplicity fraction or multiplicity properties over a mass range or the density.
 
@@ -2315,9 +2326,11 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         mass_densities.append(i.init_density['mass'][selection_index])
         number_densities.append(i.init_density['number'][selection_index])
         state.append(i.multip_state[selection_index])
+        m.append(i.m)
     mass_densities = np.concatenate(mass_densities)
     number_densities = np.concatenate(number_densities)
-    state = np.concatenate(state,dtype=np.int64)
+    state = np.concatenate(state)
+    m = np.concatenate(m)
 
     minmass= 0.08 # Because we dont want brown dwarfs
     maxmass = max(m)
@@ -2456,7 +2469,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         else:
             solo_densities[i] = np.nan
             solo_mass_densities[i] = np.nan
-    if attribute == 'Fraction':
+    if attribute == 'MF':
         return logmasslist,other_fraction,mult_sys_count,sys_count
     elif attribute == 'All Companions':
         return logmasslist,alternative_fraction
@@ -2474,7 +2487,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
         return None
 
 #Companion Frequency over different masses with a selection ratio
-def companion_frequency(systems,mass_break = 2,selection_ratio = 0,bins = 'continous'):
+def companion_frequency(systems,mass_break = 2,selection_ratio = 0,attribute = 'CF',bins = 'continous'):
     '''
     Returns the companion frequency over a mass range.
 
@@ -2639,11 +2652,11 @@ def randomly_distributed_companions(systems,file,snapshot,lower_limit = 1/1.5,up
     else:
         return Nsystems_with_M_companion_mass,Stellar_Mass_PDF
 
-#Describes the time evolution of the multiplicity fraction of different masses with two lines, one that
+#Describes the time evolution of the MF/CF of different masses with two lines, one that
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
-def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window_Myr = 0.1):
+def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',multiplicity = 'MF'):
     '''
-    Returns the evolution of the multiplicity fraction for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
+    Returns the evolution of the multiplicity fraction or companion frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
     Inputs
     ----------
@@ -2678,6 +2691,12 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
 
     rolling_window_Myr: int,float,optional
     How much time to include in the rolling window. [in Myr]
+    
+    time_norm : string,optional
+    Which normalization to use for time (Myr,fft,afft (alpha fft))
+
+    multiplicity: string,optional
+    Which multiplicity property to use (MF,CF)
 
     Returns
     -------
@@ -2695,7 +2714,6 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
     Multiplicity_Fraction_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
     Plots the multiplicity time fraction over the runtime of the simulation.
     '''
-    
     consistent_solar_mass = []
     consistent_solar_mass_unb = []
     rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
@@ -2707,10 +2725,11 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
         steps = 1
     #Getting a list of primaries that stay around the target mass at the end
     for i in last_snap:
-        if lower_limit<=i.primary<=upper_limit and i.no>1:
-            consistent_solar_mass.append(i.ids[list(i.m).index(i.primary)])
-        elif i.no==1 and lower_limit<=i.m[0]<=upper_limit:
-            consistent_solar_mass_unb.append(i.ids)
+        if lower_limit<=i.primary<=upper_limit:
+            if i.no>1:
+                consistent_solar_mass.append(i.primary_id)
+            else:
+                consistent_solar_mass_unb.append(i.primary_id)
     fraction = [] #This fraction comes without ignoring the primaries that change mass
     fraction1 = [] #This fraction checks that the primaries are at a consistent mass
     masses = []
@@ -2726,31 +2745,57 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
         other_count = 0
         primary_easy = 0
         full_count = 0
+        companion_count = 0
+        companion_easy = 0
         for j in sys:
             if lower_limit<=j.primary<=upper_limit:
                 if j.no>1 and j.primary_id in consistent_solar_mass:
                     primary_count = primary_count + 1
+                    companion_count = companion_count + j.no - 1
                 elif j.no == 1 and j.primary_id in consistent_solar_mass_unb:
                     other_count = other_count + 1
                 full_count+=1
                 if j.no >1:
                     primary_easy+=1
-        if primary_count == 0 and other_count == 0:
-            fraction1.append(np.nan)
-        else:
-            fraction1.append(primary_count/(primary_count+other_count))
-        if primary_easy == 0 and full_count == 0:
-            fraction.append(np.nan)
-        else:
-            fraction.append(primary_easy/full_count)
+                    companion_easy+= j.no-1
+        if multiplicity == 'MF':
+            if primary_count == 0 and other_count == 0:
+                fraction1.append(np.nan)
+            else:
+                fraction1.append(primary_count/(primary_count+other_count))
+            if primary_easy == 0 and full_count == 0:
+                fraction.append(np.nan)
+            else:
+                fraction.append(primary_easy/full_count)
+        elif multiplicity == 'CF':
+            if companion_count == 0 and other_count == 0:
+                fraction1.append(np.nan)
+            else:
+                fraction1.append(companion_count/(companion_count+other_count))
+            if companion_easy == 0 and full_count == 0:
+                fraction.append(np.nan)
+            else:
+                fraction.append(companion_easy/full_count)
         time.append(file[i].t)
     time = np.array(time)
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
-    time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
+    if time_norm == 'afft':
+        time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
+    elif time_norm == 'fft':
+        time = time/ff_t
     if plot == True:
-        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.ylabel('Multiplicity Fraction')
-        plt.ylim([-0.1,1.1])
+        if time_norm == 'afft':
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+        elif time_norm == 'fft':
+            plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+        elif time_norm == 'Myr':
+            plt.xlabel('Time [Myr]')
+        if multiplicity == 'MF':
+            plt.ylabel('Multiplicity Fraction')
+            plt.ylim([-0.1,1.1])
+        elif multiplicity == 'CF':
+            plt.ylabel('Companion Frequency')
+            plt.ylim([-0.1,3.1])
         if rolling_avg is True:
             time = rolling_average(time,rolling_window)
             fraction = rolling_average(fraction,rolling_window)
@@ -2758,142 +2803,20 @@ def Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps=1,read_
         plt.plot(time,fraction,label = 'Multiplicity Fraction for '+str(target_mass)+' Solar Mass Stars at any time')
         plt.plot(time,fraction1,label = 'Multiplicity Fraction for Stars that remain '+str(target_mass)+' solar mass')
         if target_mass == 1:
-            plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            if multiplicity == 'MF':
+                plt.errorbar(max(time)*0.9,0.46,yerr=0.03,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+            elif multiplicity == 'CF':
+                plt.errorbar(max(time)*0.9,0.6,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
-            plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            if multiplicity == 'MF':
+                plt.errorbar(max(time)*0.9,0.93,lolims = True,yerr = 0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+            elif multiplicity == 'CF':
+                plt.errorbar(max(time)*0.9,1.8,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         plt.legend(loc = (0.3,0.9),fontsize = 14)
         plt.text(0.5,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
     elif plot == False:
-        return time,fraction,fraction1
-
-#Describes the time evolution of the Companion Frequency of different masses with two lines, one that
-#shows the multiplicity at a given time and one that only chooses stars that remain solar mass
-def Companion_Frequency_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window_Myr = 0.1):
-    '''
-    Returns the evolution of the Companion Frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
-
-    Inputs
-    ----------
-    file: list of sinkdata objects
-    The original file before system assignment.
-
-    Master_File: list of list of star system objects
-    All of the systems for the original file.
-
-    Parameters
-    ----------
-    steps : int,optional
-    The number of snapshots to include in one step. By default, it is 1 meaning every snapshot.
-
-    read_in_result :bool,optional
-    Whether to read in results or perform system assignment for each snapshot.
-
-    start : bool,optional
-    First snapshot to look at. By default, it is the first snapshot with stars of the target mass.
-        
-    target_mass: int,float,optional
-    The target primary mass to consider.
-
-    upper_limit: int,float,optional
-    The highest allowed mass for the primary.
-
-    lower_limit: int,float,optional
-    The lowest allowed mass for the primary.
-
-    rolling_avg: bool,optional
-    Whether to employ a rolling average.
-
-    rolling_window_Myr: int,float,optional
-    How much time to include in the rolling window. [in Myr]
-
-    Returns
-    -------
-    time: list
-    The times in the simulation (in free fall time).
-
-    fraction: list
-    The Companion Frequency of target mass primaries at any time.
-
-    consistent_fraction: list
-    The Companion Frequency of target mass primaries that stay the same mass at any time.
-
-    Example
-    -------
-    Companions_Frequency_Time_Evolution(M2e4_C_M_2e7,M2e4_C_M_2e7_systems,'M2e4_C_M_2e7') 
-    Plots the multiplicity time frequency over the runtime of the simulation.
-    '''
-    consistent_solar_mass = []
-    consistent_solar_mass_unb = []
-    rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
-    if read_in_result == False:
-        last_snap = system_creation(file,-1) #Getting the primaries in the last snap
-        steps = steps
-    elif read_in_result == True:
-        last_snap = Master_File[-1]
-        steps = 1
-    #Getting a list of primaries that stay around the target mass at the end
-    for i in last_snap:
-        if lower_limit<=i.primary<=upper_limit and i.no>1:
-            consistent_solar_mass.append(i.primary_id)
-        elif i.no==1 and lower_limit<=i.m[0]<=upper_limit:
-            consistent_solar_mass_unb.append(i.ids)
-    fraction = [] #This fraction comes without ignoring the primaries that change mass
-    fraction1 = [] #This fraction checks that the primaries are at a consistent mass
-    masses = []
-    time = []
-    start = Mass_Creation_Finder(file,min_mass = lower_limit)
-    #this one gets the masses and finishes off the graph of the consistent primaries
-    for i in tqdm(range(start,len(file),steps),desc = 'By Snapshot',position=0):
-        if read_in_result == False:
-            sys = system_creation(file,i)
-        elif read_in_result == True:
-            sys = Master_File[i]
-        companion_count = 0
-        other_count = 0
-        companion_easy = 0
-        full_count = 0
-        for j in sys:
-            if lower_limit<=j.primary<=upper_limit:
-                if j.no>1 and j.primary_id in consistent_solar_mass:
-                    companion_count = companion_count + j.no - 1
-                elif j.no == 1 and j.primary_id in consistent_solar_mass_unb:
-                    other_count = other_count + 1
-                full_count+=1
-                if j.no >1:
-                    companion_easy+= j.no-1
-        if companion_count == 0 and other_count == 0:
-            fraction1.append(np.nan)
-        else:
-            fraction1.append(companion_count/(full_count))
-        if companion_easy == 0 and full_count == 0:
-            fraction.append(np.nan)
-        else:
-            fraction.append(companion_easy/full_count)
-        time.append(file[i].t)
-    time = np.array(time)
-    ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
-    time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
-    if plot == True:
-        plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        plt.ylabel('Companion Frequency')
-        plt.ylim([-0.1,3.1])
-        if rolling_avg is True:
-            time = rolling_average(time,rolling_window)
-            fraction = rolling_average(fraction,rolling_window)
-            fraction1 = rolling_average(fraction1,rolling_window)
-        plt.plot(time,fraction,label = 'Companion Frequency for '+str(target_mass)+' Solar Mass Stars at any time')
-        plt.plot(time,fraction1,label = 'Companion Frequency for Stars that remain '+str(target_mass)+' solar mass')
-        if target_mass == 1:
-            plt.errorbar(max(time)*0.9,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-        elif target_mass == 10:
-            plt.errorbar(max(time)*0.9,0.6,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        plt.legend(loc = (0.3,0.9),fontsize = 14)
-        plt.text(0.7,0.1,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-        plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-    else:
         return time,fraction,fraction1
 
 def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
@@ -3844,7 +3767,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time',plot = True,label=None):
+def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'time',plot = True,label=None):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3989,14 +3912,14 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
                         if i.no-1 > 0:
                             multiprim_list[j]+= 1
                         use_ids[j].append(i.primary_id)    
-    if multiplicity == 'Fraction':
+    if multiplicity == 'MF':
         mul_list = multiprim_list/system_no_list
-    else:
+    elif multiplicity == 'CF':
         mul_list = comp_list/system_no_list
     yerr = []
     for i in range(len(mul_list)):
-        if multiplicity == 'Fraction': yerr.append(Psigma(system_no_list[i],multiprim_list[i]))
-        if multiplicity == 'Frequency': yerr.append(Lsigma(system_no_list[i],comp_list[i]))
+        if multiplicity == 'MF': yerr.append(Psigma(system_no_list[i],multiprim_list[i]))
+        if multiplicity == 'CF': yerr.append(Lsigma(system_no_list[i],comp_list[i]))
     yerr = np.array(yerr)
     if plot == True:
         #Plotting the multiplicity over age
@@ -4017,22 +3940,22 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         plt.fill_between(T_list,mul_list+yerr,mul_list-yerr,alpha = 0.3)
         #plt.errorbar(T_list,final_mul_list,xerr = np.array(dt_list)/2,yerr = yerr,marker = 'o',capsize = 5,ls = 'none')
         plt.xlabel(x_label)
-        if multiplicity == 'Fraction':
+        if multiplicity == 'MF':
             plt.ylabel('Multiplicity Fraction')
             plt.ylim([0,1])
-        elif multiplicity == 'Frequency':
+        elif multiplicity == 'CF':
             plt.ylabel('Companion Frequency')
             plt.ylim([0,3])
         #plt.ylim(bottom = -0.05)
         if target_mass == 1:
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.errorbar(max(T_list)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-            elif multiplicity == 'Frequency':
+            elif multiplicity == 'CF':
                 plt.errorbar(max(T_list)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
         elif target_mass == 10:
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.errorbar(max(T_list)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-            elif multiplicity == 'Frequency':
+            elif multiplicity == 'CF':
                 plt.errorbar(max(T_list)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
         plt.text(max(T_list)*0.9,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
         if filename is not None:
@@ -4047,7 +3970,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         elif x_axis == 'mass density':
             return np.log10(T_list),mul_list,yerr,system_no_list
 
-def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density',labels=None):
+def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density',labels=None):
     '''
     The average multiplicity vs formation time/density for multiple files.
 
@@ -4123,15 +4046,15 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
     plt.legend(fontsize=14)
     plt.xlabel(x_label)
-    if multiplicity == 'Fraction':
+    if multiplicity == 'MF':
         plt.ylabel('Multiplicity Fraction')
         plt.ylim([0,1])
-    elif multiplicity == 'Frequency':
+    elif multiplicity == 'CF':
         plt.ylabel('Companion Frequency')
         plt.ylim([0,3])
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 
-def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'Fraction',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None, label=None):
+def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None, label=None):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -4236,9 +4159,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
     for i in range(len(T_list)):
-        if multiplicity == 'Fraction':
+        if multiplicity == 'MF':
             time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
-        elif multiplicity == 'Frequency':
+        elif multiplicity == 'CF':
             time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
         mul_list.append(mul)
@@ -4321,21 +4244,21 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.9,r'%.3g $pc^{-3}$'%(dens_list[i]),color = colors[i])
         plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.8,r'%.3g $\frac{M_\odot}{pc^{3}}$'%(mass_dens_list[i]),color = colors[i])
     if target_mass == 1:
-        if multiplicity == 'Fraction':
+        if multiplicity == 'MF':
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-        elif multiplicity == 'Frequency':
+        elif multiplicity == 'CF':
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
     elif target_mass == 10:
-        if multiplicity == 'Fraction':
+        if multiplicity == 'MF':
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        elif multiplicity == 'Frequency':
+        elif multiplicity == 'CF':
             plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
     plt.legend(fontsize=14)
     plt.xlabel('Age [Myr]')
     plt.ylabel('Multiplicity Fraction')
-    if multiplicity == 'Fraction':
+    if multiplicity == 'MF':
         plt.ylim([-0.05,1.05])
-    elif multiplicity == 'Frequency':
+    elif multiplicity == 'CF':
         plt.ylim([-0.05,3.05])
         plt.ylabel('Companion Frequency')
     plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
@@ -4346,9 +4269,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        if multiplicity == 'Fraction':
+        if multiplicity == 'MF':
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 150)
-        elif multiplicity == 'Frequency':
+        elif multiplicity == 'CF':
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
 
 def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
@@ -4623,7 +4546,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,adjust_ticks=adjust_ticks)
 
-def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'Fraction',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
+def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
@@ -4700,10 +4623,10 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
 
     Examples
     -------
-    1) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Fraction',bins = 'observer')
+    1) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'MF',bins = 'observer')
     Simple multiplicity fraction plot.
 
-    2) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Frequency',bins = 'observer',filtered = True,snapshot = -1,Master_File = M2e4_C_M_J_2e7_systems)
+    2) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'CF',bins = 'observer',filtered = True,snapshot = -1,Master_File = M2e4_C_M_J_2e7_systems)
     Companion Frequency Plot with filter on. 
 
     3) Multiplicity_One_Snap_Plots(M2e4_C_M_J_2e7_systems[-1],multiplicity = 'Properties',bins = 'observer',plot = False)
@@ -4718,10 +4641,10 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     if 'q_filter' in filters:
         filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
     if only_filter is True and None not in filters:
-        systems = filtered_systems    
-    if multiplicity == 'Frequency':
+        systems = filtered_systems       
+    if multiplicity == 'CF':
         logmasslist,o1,o2,o3 = companion_frequency(systems,mass_break=mass_break,bins = bins)
-    elif multiplicity == 'Properties' or multiplicity == 'Fraction':
+    elif multiplicity == 'Properties' or multiplicity == 'MF':
         logmasslist,o1,o2,o3 = multiplicity_fraction(systems,attribute=multiplicity,mass_break=mass_break,bins = bins)
     else:
         if file is None:
@@ -4739,7 +4662,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         count = 0
         for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
             filtered_q = q_filter_one_snap(Master_File[i],min_q = q_filt_min)
-            if multiplicity == 'Frequency':
+            if multiplicity == 'CF':
                 logmasslist_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[0])
                 o1_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[1])
                 o2_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[2])
@@ -4810,14 +4733,14 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3
-    if multiplicity == 'Fraction' or multiplicity == 'Density' or multiplicity == 'Mass Density':
+    if multiplicity == 'MF' or multiplicity == 'Density' or multiplicity == 'Mass Density':
         if plot == True:
             if bins == 'continous':
                 plt.plot(logmasslist,o1,marker = '^',label = 'Raw Data')
                 if only_filter is False:
                     plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             elif bins == 'observer':
-                if multiplicity == 'Fraction':
+                if multiplicity == 'MF':
                     for i in range(len(logmasslist)-1):
                         plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
                     if only_filter is False:
@@ -4831,7 +4754,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
             error_bins = [0.1,0.3,1.0,3.25,12,16]
             plt.xlabel('Log Mass [$M_\odot$]')
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
                 plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
                 plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
@@ -4852,14 +4775,14 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             if only_filter is False:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.legend(handles = handles,fontsize=14)
         else:
             if only_filter is True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
             else:
                 return logmasslist,o1,o2,o3    
-    if multiplicity == 'Frequency':
+    if multiplicity == 'CF':
         if plot == True:
             if bins == 'continous':
                 plt.plot(logmasslist,o1,marker = 'o',label = 'Raw Data')
@@ -4897,7 +4820,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             else:
                 return logmasslist,o1,o2,o3
 
-def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'Fraction',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None,label=None):
+def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'MF',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None,label=None):
     '''
     Create a plot for a property that evolves through the simulation.
 
@@ -5009,10 +4932,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             return
         elif filename is None:
             print('Provide the filename')
-        if multiplicity == 'Fraction':
-            Multiplicity_Fraction_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
-        if multiplicity == 'Frequency':
-            Companion_Frequency_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,rolling_avg=rolling_avg,rolling_window=rolling_window,label=label)
+        MFCF_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,time_norm = time_norm,multiplicity=multiplicity)
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5110,7 +5030,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'Fraction',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None): 
+def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -5260,7 +5180,7 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'Fraction',all_companions = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5367,9 +5287,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         if which_plot == 'Multiplicity':
             bins = 'observer'
             plt.xlabel('Log Mass [$M_\odot$]')
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
-            if multiplicity == 'Frequency':
+            if multiplicity == 'CF':
                 plt.ylabel('Companion Frequency')
         if which_plot == 'Semi Major Axis':
             bins = np.linspace(-1,7,13)
@@ -5388,18 +5308,15 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 sys_no = d
                 error_one = []
                 for i in range(len(sys_no)):
-                    if multiplicity == 'Fraction':
+                    if multiplicity == 'MF':
                         error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
-                    elif multiplicity == 'Frequency':
+                    elif multiplicity == 'CF':
                         error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
                 error.append(error_one)
                 x.append(a)
                 y.append(b)
             elif which_plot == 'Multiplicity Time Evolution':
-                if multiplicity == 'Fraction':
-                    time,fraction,cons_frac = Multiplicity_Fraction_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)
-                elif multiplicity == 'Frequency':
-                    time,fraction,cons_frac = Companion_Frequency_Time_Evolution(Files[i],Systems[i],Filenames[i],upper_limit=upper_limit,lower_limit=lower_limit,plot = False)    
+                time,fraction,cons_frac = MFCF_Time_Evolution(Files[i],Systems[i],Filenames[i],steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,time_norm = time_norm,multiplicity=multiplicity)
                 if rolling_avg is True:
                     rolling_window = time_to_snaps(og_rolling_window,Files[i])
                     if rolling_window%2 == 0:
@@ -5478,7 +5395,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             for i in range(0,len(Filenames)):
                 plt.plot(x[i],y[i],label = labels[i])
                 plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
                 error_bins = [0.1,0.3,1.0,3.25,12,16]
                 plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
@@ -5488,7 +5405,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
                 plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
                 plt.ylim([-0.01,1.01])
-            elif multiplicity == 'Frequency':
+            elif multiplicity == 'CF':
                 error_values = [0.50,0.84,1.3,1.6,2.1]
                 error_bins = [1.0,3.5,7.0,12.5,16]
                 plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=0.04,xerr = [[(np.log10(1.0)-np.log10(0.8))],[np.log10(1.2)-np.log10(1.0)]],marker = 'o',capsize = 5,color = 'black')
@@ -5505,10 +5422,10 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
                 elif time_plot == 'all':
                     plt.plot(times[i],fractions[i],label = labels[i])
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-            if multiplicity == 'Fraction':
+            if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
                 plt.ylim(bottom = 0,top = 1.01)
-            if multiplicity == 'Frequency':
+            if multiplicity == 'CF':
                 plt.ylabel('Companion Frequency')
             plt.legend(fontsize=14)
         elif which_plot == 'YSO Multiplicity':
@@ -5573,7 +5490,3 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
             plt.yscale('log')
-
-#The length for the given box plot
-L = (4/3*np.pi)**(1/3)*10
-
