@@ -4751,17 +4751,19 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
                     if only_filter is False:
                         plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
-            error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
-            error_bins = [0.1,0.3,1.0,3.25,12,16]
+            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_MF = [0.08,0.15,0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
+            observation_MF_err = [0.06,0.04,0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
             plt.xlabel('Log Mass [$M_\odot$]')
             if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
-                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
-                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
+                for i in range(len(observation_mass_center)):
+                    if i == 0:
+                        temp_label = 'Observations'
+                    else:
+                        temp_label = None
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
             elif multiplicity == 'Density':
                 plt.ylabel(r'Number Density [$pc^{-3}$]')
             elif multiplicity == 'Mass Density':
@@ -4794,15 +4796,18 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 if only_filter is False:
                     for i in range(len(logmasslist_filt)-1):
                         plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
-            error_values = [0.50,0.84,1.3,1.6,2.1]
-            error_bins = [1.0,3.5,7.0,12.5,16]
+            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_CF = [0.08,0.16,0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
+            observation_CF_err = [0.06,0.04,0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
             plt.xlabel('Mass (in log solar masses)')
             plt.ylabel('Companion Frequency')
-            plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=0.04,xerr = [[(np.log10(1.0)-np.log10(0.8))],[np.log10(1.2)-np.log10(1.0)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.11,xerr = [[(np.log10(3.5)-np.log10(2))],[(np.log10(5)-np.log10(3.5))]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.2,xerr = [[(np.log10(7)-np.log10(5))],[(np.log10(9)-np.log10(7))]],marker = 'o',capsize = 5,color = 'black',label = 'Moe & DiStefano 2017')
-            plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
-            plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
+            for i in range(len(observation_mass_center)):
+                if i == 0:
+                    temp_label = 'Observations'
+                else:
+                    temp_label = None
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
             if label is not None:
                 plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
@@ -5395,24 +5400,25 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,log = False,u
             for i in range(0,len(Filenames)):
                 plt.plot(x[i],y[i],label = labels[i])
                 plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
+            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_MF = [0.08,0.15,0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
+            observation_MF_err = [0.06,0.04,0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
             if multiplicity == 'MF':
-                error_values = [0.22,0.26,0.44,0.50,0.60,0.80]
-                error_bins = [0.1,0.3,1.0,3.25,12,16]
-                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=[[0.04],[0.06]],xerr = 0.1,xuplims=True,marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.03,xerr = [[(np.log10(0.3)-np.log10(0.1))],[np.log10(0.5)-np.log10(0.3)]],marker = 'o',capsize = 5,color = 'black', label='Duchêne & Kraus 2013')
-                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.02,xerr = [[np.log10(1)-np.log10(0.7)],[np.log10(1.3)-np.log10(1)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.02,lolims = True,xerr = [[np.log10(3.25)-np.log10(1.5)],[np.log10(5)-np.log10(3.25)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.05,lolims=True,xerr = [[np.log10(12)-np.log10(8)],[np.log10(16)-np.log10(12)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[5],error_values[5],yerr=0.05,xerr = 0.1,xlolims=True,lolims = True,marker = 'o',capsize = 5,color = 'black')
+                for i in range(len(observation_mass_center)):
+                    if i == 0:
+                        temp_label = 'Observations'
+                    else:
+                        temp_label = None
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
                 plt.ylim([-0.01,1.01])
             elif multiplicity == 'CF':
-                error_values = [0.50,0.84,1.3,1.6,2.1]
-                error_bins = [1.0,3.5,7.0,12.5,16]
-                plt.errorbar(np.log10(error_bins)[0],error_values[0],yerr=0.04,xerr = [[(np.log10(1.0)-np.log10(0.8))],[np.log10(1.2)-np.log10(1.0)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[1],error_values[1],yerr=0.11,xerr = [[(np.log10(3.5)-np.log10(2))],[(np.log10(5)-np.log10(3.5))]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[2],error_values[2],yerr=0.2,xerr = [[(np.log10(7)-np.log10(5))],[(np.log10(9)-np.log10(7))]],marker = 'o',capsize = 5,color = 'black',label = 'Moe & DiStefano 2017')
-                plt.errorbar(np.log10(error_bins)[3],error_values[3],yerr=0.2,xerr = [[np.log10(12.5)-np.log10(9)],[np.log10(16)-np.log10(12.5)]],marker = 'o',capsize = 5,color = 'black')
-                plt.errorbar(np.log10(error_bins)[4],error_values[4],yerr=0.3,xlolims=True,xerr = 0.1,marker = 'o',capsize = 5,color = 'black')
+                for i in range(len(observation_mass_center)):
+                    if i == 0:
+                        temp_label = 'Observations'
+                    else:
+                        temp_label = None
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
                 plt.ylim([-0.01,3.01])
             plt.legend(fontsize=14)
         elif which_plot == 'Multiplicity Time Evolution':
