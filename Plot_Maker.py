@@ -165,13 +165,9 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         mkdir_p(new_file+'/'+path.basename(i))
     for i in tqdm(range(len(Systems)),position = 0,desc = 'Multiplicity Fraction Lifetime Tracking'):
         plt.figure(figsize = (6,6)); 
-        Plots('Multiplicity Lifetime Evolution',Systems[i],Files[i],Filenames[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='MF',label=labels[i])
-    timer.dt(text='MF evolution plots')
-    for i in tqdm(range(len(Systems)),position = 0,desc = 'Companion Frequency Lifetime Tracking'):
-        plt.figure(figsize = (6,6)); 
-        Plots('Multiplicity Lifetime Evolution',Systems[i],Files[i],Filenames[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='CF',label=labels[i])
+        Plots('Multiplicity Lifetime Evolution',Systems[i],Files[i],Filenames[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='both',label=labels[i])
         plt.close('all') 
-    timer.dt(text='CF evolution plots')
+    timer.dt(text='MF & CF evolution plots') 
     
     #Print out final timing table
     timer.list_times()

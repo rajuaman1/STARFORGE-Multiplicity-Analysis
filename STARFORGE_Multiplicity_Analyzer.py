@@ -3147,7 +3147,7 @@ def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = T
         return all_times,all_status,ids,zero_times,placeholder,birth_times,placeholder2,placeholder3,placeholder4
 
 #This function gives the multiplicity fraction at different ages
-def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
+def MFCF_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
     '''
     The average multiplicity fraction of stars born in a certain time range tracked throughout their lifetime in the simulation.
 
@@ -3227,9 +3227,13 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
     age_bins=np.linspace(0,max(time_all),max(lengths)+1)
     counted_all = status_all.copy();counted_all[status_all>=0] = 1;counted_all[status_all<0] = 0
     is_primary_all = status_all.copy();is_primary_all[status_all>0] = 1;is_primary_all[status_all<=0] = 0
+    comp_all = status_all.copy();comp_all[status_all<=0] = 0
     counted_in_bin, temp = np.histogram(time_all, bins=age_bins, weights=counted_all)
     is_prmary_in_bin, temp = np.histogram(time_all, bins=age_bins, weights=is_primary_all)
-    multiplicity_in_bin = (is_prmary_in_bin)/(counted_in_bin)
+    no_comp_in_bin,temp = np.histogram(time_all, bins=age_bins, weights=comp_all)
+    MF_in_bin = (is_prmary_in_bin)/(counted_in_bin)
+    CF_in_bin = (no_comp_in_bin)/(counted_in_bin)
+    
     age_bins_mean = (age_bins[1:] + age_bins[:-1])/2
     times = []
     for i in file:
@@ -3249,17 +3253,25 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
             plt.ylabel('Change in # of Target Mass Stars')
             plt.show()
             plt.figure()
-            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],multiplicity_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],MF_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
+            plt.ylim([-0.1,1.1])
+            plt.xlabel('Age in Myrs')
+            plt.ylabel('Average Multiplicity Fraction')
+            plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            plt.show()
+            plt.figure()
+            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],CF_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
+            plt.ylim([-0.1,3.1])
+            plt.xlabel('Age in Myrs')
+            plt.ylabel('Average Companion Frequency')
+            plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            plt.show()
         else:
-            plt.plot(age_bins_mean,multiplicity_in_bin)
+            plt.plot(age_bins_mean,MF_in_bin)
         #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
-        plt.ylim([-0.1,1.1])
-        plt.xlabel('Age in Myrs')
-        plt.ylabel('Average Multiplicity Fraction')
-        plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
         #plt.legend(fontsize = 14)
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-        plt.show()
         plt.figure()
         if select_by_time == True:
             plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],(counted_in_bin)[age_bins_mean<(times[-1]-(T+dt/2))])
@@ -3270,137 +3282,7 @@ def multiplicity_frac_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,up
         #plt.legend(fontsize = 14)
         plt.show()
     else:
-        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
-
-#This function gives the Companion Frequency at different ages
-def multiplicity_freq_and_age(file,Master_File,T = 2,dt = 0.5,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,read_in_result = True,select_by_time = True,zero = 'Formation',plot = True,steps = 1):
-    '''
-    The average Companion Frequency of stars born in a certain time range tracked throughout their lifetime in the simulation.
-
-    Inputs
-    ----------
-    file: list of sinkdata objects
-    The original file before system assignment.
-
-    Master_File: list of list of star system objects
-    All of the systems for the original file.
-
-    Parameters
-    ----------
-    T : int,float,optional
-    The time that the stars are born at.
-
-    dt :int,float,optional
-    The tolerance of the birth time. For example, if the simulation runs for 10 Myrs, T = 2 and dt = 0.5, it will choose stars born between 7.75 and 8.25 Myrs.
-
-    target_mass: int,float,optional
-    The target mass of primary to look at
-
-    upper_limit: int,float,optional
-    The upper limit of the target mass range
-
-    lower_limit: int,float,optional
-    The lower limit of the target mass range
-
-    read_in_result: bool,optional
-    Whether to perform system assignment or use the already assigned system.
-
-    select_by_time: bool,optional:
-    Whether to track all stars or only those in a time frame.
-
-    zero: string,optional
-    Whether to take the zero point as when the star was formed or stopped accreting. Use 'Formation' or 'Consistent Mass'.
-
-    plot: bool,optional
-    Whether to return the times and multiplicities or plot them.
-
-    steps: int,optional
-    The number of snapshots in one bin. If reading by result, this defaults to looking at every snapshot.
-
-    Returns
-    -------
-    age_bins: array
-    The age over which the stars are in.
-
-    companion_frequency: array
-    The average Companion Frequency of the objects in the bins.
-
-    birth_times:list
-    The formation times of each of the stars.
-
-    kept:int
-    The number of stars in the bins.
-    
-    average_dens: int,float
-    The average density in the selected range
-    
-    average_mass_dens: int,float
-    The average mass density in the selected range
-
-    Example
-    -------
-    multiplicity_freq_and_age(M2e4_C_M_J_2e7,M2e4_C_M_J_2e7_systems)
-    '''  
-    times,status,ids,maturity_times,Tend,birth_times,kept,average_dens,average_mass_dens = star_multiplicity_tracker(file,Master_File,T = T,dt = dt,read_in_result = read_in_result,plot = False,target_mass = target_mass,upper_limit=upper_limit,lower_limit=lower_limit,zero = zero,steps = steps,select_by_time=select_by_time)
-    counted_all = []
-    is_primary_all = []
-    time_all = []; status_all = []
-    lengths = []
-    #plt.figure(figsize = (15,10))
-    #for t,s in zip(times,status):
-    #    plt.plot(t,s)
-    for t,s in zip(times,status):
-        time_all += t;status_all += s
-        lengths.append(len(t))
-    time_all = np.array(time_all);status_all = np.array(status_all)
-    age_bins=np.linspace(0,max(time_all),max(lengths)+1)
-    counted_all = status_all.copy();counted_all[status_all>=0] = 1;counted_all[status_all<0] = 0
-    is_primary_all = status_all.copy();is_primary_all[status_all<=0] = 0
-    counted_in_bin, temp = np.histogram(time_all, bins=age_bins, weights=counted_all)
-    is_prmary_in_bin, temp = np.histogram(time_all, bins=age_bins, weights=is_primary_all)
-    multiplicity_in_bin = (is_prmary_in_bin)/(counted_in_bin)
-    age_bins_mean = (age_bins[1:] + age_bins[:-1])/2
-    times = []
-    for i in file:
-        times.append(i.t*code_time_to_Myr)
-    if plot == True:
-        if select_by_time == True:
-            plt.figure()
-            new_stars_count(file)
-            plt.fill_between([T-dt/2,T+dt/2],16,alpha = 0.3)
-            plt.xlabel('Simulation Time [Myr]')
-            plt.ylabel('No of New Stars')
-            plt.show()
-            plt.figure()
-            new_stars_count(file,lower_limit=lower_limit,upper_limit=upper_limit)
-            plt.fill_between([T-dt/2,T+dt/2],8,-2,alpha = 0.3)
-            plt.xlabel('Simulation Time [Myr]')
-            plt.ylabel('Change in # of Target Mass Stars')
-            plt.show()
-            plt.figure()
-            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],multiplicity_in_bin[age_bins_mean<(times[-1]-(T+dt/2))])
-        else:
-            plt.plot(age_bins_mean,multiplicity_in_bin)
-        #plt.plot(age_bins_mean,multiplicity_in_bin,label = 'Multiplicity at Age Plot')
-        plt.ylim([-0.1,1.1])
-        plt.xlabel('Age in Myrs')
-        plt.ylabel('Companion Frequency')
-        #plt.text(0.1,0.8,Files_key[n],transform = plt.gca().transAxes)
-        plt.text(0.1,0.7,'Target Mass ='+str(target_mass),transform = plt.gca().transAxes)
-        #plt.legend(fontsize = 14)
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
-        plt.show()
-        plt.figure()
-        if select_by_time == True:
-            plt.plot(age_bins_mean[age_bins_mean<(times[-1]-(T+dt/2))],(counted_in_bin)[age_bins_mean<(times[-1]-(T+dt/2))])
-        else:
-            plt.plot(age_bins_mean,(counted_in_bin))
-        plt.xlabel('Age in Myrs')
-        plt.ylabel('Number of Stars')
-        #plt.legend(fontsize = 14)
-        plt.show()
-    else:
-        return age_bins_mean,multiplicity_in_bin,birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
+        return age_bins_mean,[MF_in_bin,CF_in_bin],birth_times,kept,average_dens,average_mass_dens,is_prmary_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1],counted_in_bin[age_bins_mean<(times[-1]-(T+dt/2))][-1]
 
 def Orbital_Plot_2D(system,plot = True):
     '''Create an orbital plane projection plot of any system'''
@@ -4152,19 +4034,18 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             T_list[i] = (adaptive_times[i]+adaptive_times[i+1])/2
             dt_list[i] = (adaptive_times[i+1]-T_list[i])*2
     time_list = []
-    mul_list = []
+    MF_list = []
+    CF_list = []
     kept_list = []
     dens_list = []
     mass_dens_list = []
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     rolling_window = int((int(time_to_snaps(rolling_window_Myr,file))//2)*2+1)
     for i in range(len(T_list)):
-        if multiplicity == 'MF':
-            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_frac_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
-        elif multiplicity == 'CF':
-            time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = multiplicity_freq_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
+        time,mul,birth_times,kept,average_dens,average_mass_dens,comp_count,all_count = MFCF_and_age(file,Master_File,T_list[i],dt_list[i],zero = zero,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,plot = False)
         time_list.append(time)
-        mul_list.append(mul)
+        MF_list.append(mul[0])
+        CF_list.append(mul[1])
         kept_list.append(kept)
         dens_list.append(average_dens)
         mass_dens_list.append(average_mass_dens)
@@ -4230,48 +4111,64 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     if rolling_avg is True:
         for i in range(len(time_list)):
             time_list[i] = np.array(rolling_average(time_list[i],rolling_window))
-            mul_list[i] = np.array(rolling_average(mul_list[i],rolling_window))
+            MF_list[i] = np.array(rolling_average(MF_list[i],rolling_window))
+            CF_list[i] = np.array(rolling_average(CF_list[i],rolling_window))
     if save is True:
         if filename is None:
             print('Please provide filename')
             return
         plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 150)
-    #Plotting the multiplicity over age
-    plt.figure(figsize = (6,6))
-    for i in range(len(time_list)):
-        plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
-        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars',color = colors[i])
-        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.9,r'%.3g $pc^{-3}$'%(dens_list[i]),color = colors[i])
-        plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.8,r'%.3g $\frac{M_\odot}{pc^{3}}$'%(mass_dens_list[i]),color = colors[i])
-    if target_mass == 1:
-        if multiplicity == 'MF':
+    #Plotting the MF over age
+    if multiplicity == 'MF' or multiplicity == 'both':
+        plt.figure(figsize = (6,6))
+        mul_list = MF_list
+        for i in range(len(time_list)):
+            plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars',color = colors[i])
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.9,r'%.3g $pc^{-3}$'%(dens_list[i]),color = colors[i])
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.8,r'%.3g $\frac{M_\odot}{pc^{3}}$'%(mass_dens_list[i]),color = colors[i])
+        if target_mass == 1:
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-        elif multiplicity == 'CF':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
-    elif target_mass == 10:
-        if multiplicity == 'MF':
+        elif target_mass == 10:
             plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-        elif multiplicity == 'CF':
-            plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
-    plt.legend(fontsize=14)
-    plt.xlabel('Age [Myr]')
-    plt.ylabel('Multiplicity Fraction')
-    if multiplicity == 'MF':
+        plt.legend(fontsize=14)
+        plt.xlabel('Age [Myr]')
+        plt.ylabel('Multiplicity Fraction')
         plt.ylim([-0.05,1.05])
-    elif multiplicity == 'CF':
-        plt.ylim([-0.05,3.05])
-        plt.ylabel('Companion Frequency')
-    plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
-    if filename is not None:
-        plt.text(max(list(flatten(time_list)))/2,0.5,label)
-    adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
-    if save is True:
-        if filename is None:
-            print('Please provide filename')
-            return
-        if multiplicity == 'MF':
+        plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        if filename is not None:
+            plt.text(max(list(flatten(time_list)))/2,0.5,label)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        if save is True:
+            if filename is None:
+                print('Please provide filename')
+                return
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 150)
-        elif multiplicity == 'CF':
+    #Plotting the CF over age
+    if multiplicity == 'CF' or multiplicity == 'both':
+        plt.figure(figsize = (6,6))
+        mul_list = CF_list
+        for i in range(len(time_list)):
+            plt.plot(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)],np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)],label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1],str(kept_list[i])+' stars',color = colors[i])
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.9,r'%.3g $pc^{-3}$'%(dens_list[i]),color = colors[i])
+            plt.text(max(np.array(time_list[i])[np.array(time_list[i])<(max(times)-T_list[i]-dt_list[i]/2)])*0.9,np.array(mul_list[i])[time_list[i]<(max(times)-T_list[i]-dt_list[i]/2)][-1]*0.8,r'%.3g $\frac{M_\odot}{pc^{3}}$'%(mass_dens_list[i]),color = colors[i])
+        if target_mass == 1:
+             plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observed Value')
+        elif target_mass == 10:
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observed Values')
+        plt.legend(fontsize=14)
+        plt.xlabel('Age [Myr]')
+        plt.ylabel('Companion Frequency')
+        plt.ylim([-0.05,max(list(flatten(CF_list)))])
+        plt.text(max(list(flatten(time_list)))/2,0.8,'Star Mass = '+str(target_mass)+' $M_\odot$')
+        if filename is not None:
+            plt.text(max(list(flatten(time_list)))/2,0.5,label)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+        if save is True:
+            if filename is None:
+                print('Please provide filename')
+                return
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
 
 def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
