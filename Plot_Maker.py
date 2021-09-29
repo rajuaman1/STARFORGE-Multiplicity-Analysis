@@ -108,7 +108,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     mkdir_p(new_file)
     for n in tqdm(range(len(Files)),position = 0,desc = 'Random Sampling'):
         plt.figure(figsize = (6,6)); 
-        Plots('Mass Ratio',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,bins = np.linspace(0,1,11),label=labels[n])
+        Plots('Mass Ratio',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,bins = np.linspace(0,1,11),label=labels[n])
         plt.savefig(new_file+'/Random_Sampling_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     timer.dt(text='Random sampling figures')
     
@@ -117,7 +117,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     mkdir_p(new_file)
     for n in tqdm(range(len(Files)),position = 0,desc = 'System Mass Dist'):
         plt.figure(figsize = (6,6)); 
-        Plots('System Mass',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,label=labels[n])
+        Plots('System Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n])
         plt.savefig(new_file+'/System_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     timer.dt(text='System mass distribution figures')
         
@@ -126,7 +126,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     mkdir_p(new_file)
     for n in tqdm(range(len(Files)),position = 0,desc = 'Primary Mass Dist'):
         plt.figure(figsize = (6,6)); 
-        Plots('Primary Mass',Systems[n][-1],Files[n],Filenames[n],Master_File=Systems[n],compare=True,snapshot = -1,log = False,label=labels[n])
+        Plots('Primary Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n])
         plt.savefig(new_file+'/Primary_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     timer.dt(text='Primary mass distribution figures')
         
@@ -165,11 +165,11 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
         mkdir_p(new_file+'/'+path.basename(i))
     for i in tqdm(range(len(Systems)),position = 0,desc = 'Multiplicity Fraction Lifetime Tracking'):
         plt.figure(figsize = (6,6)); 
-        Plots('Multiplicity Lifetime Evolution',Systems[i][-1],Files[i],Filenames[i],Systems[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='MF',label=labels[i])
+        Plots('Multiplicity Lifetime Evolution',Systems[i],Files[i],Filenames[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='MF',label=labels[i])
     timer.dt(text='MF evolution plots')
     for i in tqdm(range(len(Systems)),position = 0,desc = 'Companion Frequency Lifetime Tracking'):
         plt.figure(figsize = (6,6)); 
-        Plots('Multiplicity Lifetime Evolution',Systems[i][-1],Files[i],Filenames[i],Systems[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='CF',label=labels[i])
+        Plots('Multiplicity Lifetime Evolution',Systems[i],Files[i],Filenames[i],adaptive_no=adaptive_nos[i],description=description,rolling_avg=True,multiplicity='CF',label=labels[i])
         plt.close('all') 
     timer.dt(text='CF evolution plots')
     
