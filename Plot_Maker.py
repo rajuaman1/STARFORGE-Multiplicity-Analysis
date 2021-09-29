@@ -117,7 +117,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     mkdir_p(new_file)
     for n in tqdm(range(len(Files)),position = 0,desc = 'System Mass Dist'):
         plt.figure(figsize = (6,6)); 
-        Plots('System Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n])
+        Plots('System Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n],bins = 'auto')
         plt.savefig(new_file+'/System_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     timer.dt(text='System mass distribution figures')
         
@@ -126,7 +126,7 @@ def all_plots(orig_filenames,description,labels,adaptive_bin_no = 5,read_in_resu
     mkdir_p(new_file)
     for n in tqdm(range(len(Files)),position = 0,desc = 'Primary Mass Dist'):
         plt.figure(figsize = (6,6)); 
-        Plots('Primary Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n])
+        Plots('Primary Mass',Systems[n],Files[n],Filenames[n],compare=True,snapshot = -1,log = False,label=labels[n],bins = 'auto')
         plt.savefig(new_file+'/Primary_Mass_'+orig_filenames[n]+'.png',dpi = 150); plt.close('all') ; plt.close('all') 
     timer.dt(text='Primary mass distribution figures')
         
