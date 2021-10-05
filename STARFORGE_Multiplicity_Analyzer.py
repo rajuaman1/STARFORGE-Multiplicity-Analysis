@@ -2865,7 +2865,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
     average_mass = []
     for k in tqdm(range(len(Master_File)),position = 0):
         i = Master_File[k]
-        current_time = file[k].t
+        current_time = file[k].t*code_time_to_Myr
         pcount = 0
         ubcount = 0
         tot_mass = 0
@@ -2874,7 +2874,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 2,start = 1000):
             age = 0
             for Id in j.ids:
                 if form[k] == -1:
-                    age = (current_time-file[k].val('ProtoStellarAge')[file[k].id == Id])*code_time_to_Myr
+                    age = (current_time-j.formation_time_Myr[j.ids == Id])
                     if min_age<=age<=target_age:
                         age_checker += 1
                 elif form[k] == 1:
@@ -3778,7 +3778,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
         for i in tqdm(Master_File[-1],position = 0):
             if lower_limit<=i.primary<=upper_limit:
                 for j in range(len(T_list)):
-                    if round(T_list[j]-dt_list[j]/2,4)<=round(file[first_snap_finder(i.primary_id,file)].t*code_time_to_Myr,4)<round(T_list[j]+dt_list[j]/2,4):
+                    if round(T_list[j]-dt_list[j]/2,4)<=round(i.formation_time_Myr[i.ids == i.primary_id],4)<round(T_list[j]+dt_list[j]/2,4):
                         comp_list[j] += i.no-1
                         system_no_list[j] += 1
                         if i.no-1 > 0:
@@ -3793,7 +3793,7 @@ def multiplicity_vs_formation(file,Master_File,T_list = None,dt_list = None,uppe
                         system_no_list[j] += 1
                         if i.no-1 > 0:
                             multiprim_list[j]+= 1
-                        use_ids[j].append(i.primary_id)    
+                        use_ids[j].append(i.primary_id)   
     if multiplicity == 'MF':
         mul_list = multiprim_list/system_no_list
     elif multiplicity == 'CF':
@@ -4263,11 +4263,14 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         systems = filtered_systems    
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
-         x_vals,y_vals = hist(property_dist,bins = bins)
+        bins = np.linspace(0,1,11)
+        x_vals,y_vals = hist(property_dist,bins = bins)
     elif which_plot == 'Semi Major Axis':
+        bins = np.linspace(-2,max(np.log10(property_dist)-np.log10(m_to_AU)),0.66)
         x_vals,y_vals = hist(np.log10(property_dist)-np.log10(m_to_AU),bins = bins)
     else:
-         x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
+        bins = np.linspace(min(np.log10(property_dist)),max(np.log10(property_dist)),5)
+        x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
     y_vals = np.insert(y_vals,0,0)
     #Creating the filtered systems
     if only_filter is False or 'average_filter' in filters:
@@ -4530,8 +4533,8 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     Multiplicity properties values being returned.
     '''
     if label is None: label=filename
-    if bins != 'observer' and bins != 'continous':
-        print('Please use the string "observer" or "continous" as the bins')
+    if bins is None:
+        bins == 'continous'
     if systems is None: systems = Master_File[snapshot]
     if 'time_filter' in filters:
         filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
