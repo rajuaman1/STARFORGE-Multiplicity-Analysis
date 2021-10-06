@@ -4259,17 +4259,28 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
     if 'q_filter' in filters:
         filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
+    if None in filters:
+        filtered_systems = systems
     if only_filter is True and None not in filters:
         systems = filtered_systems    
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
     if which_plot == 'Mass Ratio':
-        bins = np.linspace(0,1,11)
+        if bins is None:
+            bins = np.linspace(0,1,11)
         x_vals,y_vals = hist(property_dist,bins = bins)
     elif which_plot == 'Semi Major Axis':
-        bins = np.linspace(-2,max(np.log10(property_dist)-np.log10(m_to_AU)),0.66)
+        if bins is None:
+            data_array = np.log10(property_dist)-np.log10(m_to_AU)
+            floor = np.floor(np.min(data_array[~np.isnan(data_array)]))
+            ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
+            bins = np.linspace(floor,ceiling,(ceiling-floor)*(3/2)+1)
         x_vals,y_vals = hist(np.log10(property_dist)-np.log10(m_to_AU),bins = bins)
     else:
-        bins = np.linspace(min(np.log10(property_dist)),max(np.log10(property_dist)),5)
+        if bins is None:
+            data_array = np.log10(property_dist)
+            floor = np.floor(np.min(data_array[~np.isnan(data_array)]))
+            ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
+            bins = np.linspace(floor,ceiling,(ceiling-floor)*(3/2)+1)
         x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
     y_vals = np.insert(y_vals,0,0)
     #Creating the filtered systems
@@ -5175,29 +5186,45 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         Snapshots = list(flatten(Snapshots))
         x = []
         y = []
+        if which_plot == 'System Mass' or which_plot == 'Primary Mass' or which_plot == 'Semi Major Axis':
+            array = []
+            for i in range(len(Files)):
+                array.append(primary_total_ratio_axis(Systems[i][Snapshots[i]],lower_limit = lower_limit,upper_limit = upper_limit,all_companions=all_companions,attribute = which_plot))
+            array = list(flatten(array))
+            array = np.log10(array)
+            if which_plot == 'Semi Major Axis':
+                array = np.array(array)-np.log10(m_to_AU)
+            array = list(array)
+            floor = np.floor(min(array))
+            ceiling = np.ceil(max(array))
         if which_plot == 'System Mass':
-            bins = np.linspace(-1,3,8)
+            if bins is None:
+                bins = np.linspace(floor,ceiling,ceiling-floor+1)
             plt.xlabel('Log System Mass [$M_\odot$]')
             plt.ylabel('Number of Systems')
         if which_plot == 'Primary Mass':
-            bins = np.linspace(-1,3,8)
+            if bins is None:
+                bins = np.linspace(floor,ceiling,ceiling-floor+1)
             plt.xlabel('Log Primary Mass [$M_\odot$]')
             plt.ylabel('Number of Systems')
+        if which_plot == 'Semi Major Axis':
+            if bins is None:
+                bins = np.linspace(floor,ceiling,(ceiling-floor)*3/2+1)
         if which_plot == 'Mass Ratio':
-            bins = np.linspace(0,1,11)
+            if bins is None:
+                bins = np.linspace(0,1,11)
             plt.xlabel('q (Companion Mass Ratio)')
             plt.ylabel('Number of Systems')
             if all_companions is True:
                 plt.ylabel('Number of Companions')
         if which_plot == 'Multiplicity':
-            bins = 'observer'
+            if bins is None:
+                bins = 'observer'
             plt.xlabel('Log Mass [$M_\odot$]')
             if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
             if multiplicity == 'CF':
                 plt.ylabel('Companion Frequency')
-        if which_plot == 'Semi Major Axis':
-            bins = np.linspace(-1,7,13)
         if which_plot == 'Multiplicity':
             error = []
         times = []
