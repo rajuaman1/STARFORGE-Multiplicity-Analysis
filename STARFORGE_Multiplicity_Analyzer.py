@@ -4545,7 +4545,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     '''
     if label is None: label=filename
     if bins is None:
-        bins == 'continous'
+        bins = 'continous'
     if systems is None: systems = Master_File[snapshot]
     if 'time_filter' in filters:
         filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
