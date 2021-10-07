@@ -1066,7 +1066,7 @@ def Mass_Creation_Finder(file,min_mass = 1):
             break
     return snap
 
-def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,snapshot_num = -1,L = None):
+def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,snapshot_num = -1,L = None,starting_snap = 0):
     '''
     This function initializes the systems for a given file.
     Inputs
@@ -1093,6 +1093,9 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
 
     L: int,float,optional
     The size of periodic box in pc.
+    
+    starting_snap: int,optional
+    The first snap to perform system initialization
 
     Returns
     -------
@@ -1128,7 +1131,15 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
     elif read_in_result == False:
         if full_assignment == True:
             Result_List = []
-            for i in tqdm(range(len(file)),desc = 'Full Assignment',position = 0):
+            if starting_snap != 0:
+                print('Loading File')
+                infile = open(file_name+str('_Systems'),'rb')
+                Master_File = pickle.load(infile)
+                infile.close()
+                print('File Opened')
+                for snap in range(0,starting_snap):
+                    Result_List.append(Master_File[snap])
+            for i in tqdm(range(starting_snap,len(file)),desc = 'Full Assignment',position = 0):
                 print('Snapshot No: '+str(i)+'/'+str(len(file)-1))
                 Result_List.append(system_creation(file,i,Master_File = file,seperation_param=seperation_param,read_in_result = False,L = L))
             return Result_List #Returning the list of assigned systems
