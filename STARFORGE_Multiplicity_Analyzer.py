@@ -1308,23 +1308,23 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
     snap_1 = selected_snap-1
     snap_2 = selected_snap-2
     times = []
-    Filtered_Master_File = copy.deepcopy(Master_File)
+    filtered_systems = copy.deepcopy(Master_File[selected_snap])
     for i in tqdm(file,desc = 'Times'):
         times.append(i.t*code_time_to_Myr)
     long_ago_snap = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
     
-    for system_no,system in enumerate(tqdm(Filtered_Master_File[selected_snap],desc = 'Simple Filter Loop',position = 0)):
-        result_1 = simple_filter_one_system(system,Filtered_Master_File,comparison_snapshot=snap_1)
-        result_2 = simple_filter_one_system(result_1,Filtered_Master_File,comparison_snapshot=snap_2)
+    for system_no,system in enumerate(tqdm(Master_File[selected_snap],desc = 'Simple Filter Loop',position = 0)):
+        result_1 = simple_filter_one_system(system,Master_File,comparison_snapshot=snap_1)
+        result_2 = simple_filter_one_system(result_1,Master_File,comparison_snapshot=snap_2)
         orbital_period_check = 2*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary))/(60*60*24*365*1e6)
         orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
         if orbital_period_snap > long_ago_snap:
             snap_3 = orbital_period_snap
         else:
-            snap_3 = long_ago_snap
-        result_3 = simple_filter_one_system(result_2,Filtered_Master_File,comparison_snapshot=snap_3)
-        Filtered_Master_File[selected_snap][system_no] = result_3
-    return Filtered_Master_File[selected_snap]
+            snap3 = long_ago_snap
+        result_3 = simple_filter_one_system(result_2,Master_File,comparison_snapshot=snap_3)
+        filtered_systems[system_no] = result_3
+    return filtered_systems
 
 def default_GMC_R(initmass = 2e4):
     '''Make the default R 10 pc for a GMC of 2e4 '''
