@@ -2069,9 +2069,21 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
     else:
         return binned_times,means,error_up,error_down
 
+def momentum_angle(id1,id2,file,snapshot):
+    if id1 == id2:
+        return 0
+    else:
+        momentum1 = file[snapshot].val('BH_Specific_AngMom')[file[snapshot].id == id1][0]
+        momentum2 = file[snapshot].val('BH_Specific_AngMom')[file[snapshot].id == id2][0]
+        dot_product = np.dot(momentum1,momentum2)
+        normal1 = np.linalg.norm(momentum1);normal2 = np.linalg.norm(momentum2)
+        cosangle = dot_product/(normal1*normal2)
+        angle = np.arccos(cosangle)
+        return angle
+
 #Getting the total masses, primary masses, smaxes and companion mass ratio. Also gets the target primary masses for 
 #smaxes and companion mass ratios.
-def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio'):
+def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio',file = False):
     '''
     Returns a list of the property you chose for systems with primaries in a certain mass range.
 
@@ -2092,7 +2104,10 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     Whether to include all companions or just the most massive (for mass ratio) or all subsystems or just the subsystems with the primary and secondary (Semi Major Axis)
 
     attribute: string,optional
-    The attribute that you want. Choose from 'System Mass','Primary Mass','Mass Ratio' or 'Semi Major Axis'.
+    The attribute that you want. Choose from 'System Mass','Primary Mass','Mass Ratio', 'Semi Major Axis' or 'Angle'.
+    
+    file: list of star system objects
+    The file that the systems are from. Only temp use for angles
 
     Returns
     -------
@@ -2119,6 +2134,7 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     primary_masses = []
     mass_ratios = []
     semi_major_axes = []
+    angles = []
     for i in systems:
         if len(i.m)>1: #Make sure you only consider the multi star systems.
             masses.append(i.tot_m)
@@ -2127,11 +2143,16 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
                 if all_companions == False:
                     semi_major_axes.append(smaxis(i))
                     mass_ratios.append(i.mass_ratio)
+                    snapshot = i.snapshot_num
+                    angles.append(momentum_angle(i.primary_id,i.ids[i.m == i.secondary][0],file,snapshot))
                 elif all_companions == True: #If you want to look at all companions or subsystems.
                     semi_major_axes.append(smaxis_all(i))
+                    snapshot = i.snapshot_num
+                    snapshot = -1
                     for j in i.m:
                         if j!= i.primary:
                             mass_ratios.append(j/i.primary)
+                            angles.append(momentum_angle(i.primary_id,i.ids[i.m == j][0],file,snapshot))
     if attribute == 'System Mass':
         return masses
     elif attribute == 'Primary Mass':
@@ -2140,6 +2161,8 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
         return mass_ratios
     elif attribute == 'Semi Major Axis':
         return list(flatten(semi_major_axes))
+    elif attribute == 'Angle':
+        return angles
     else:
         return None
 
@@ -4274,7 +4297,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         filtered_systems = systems
     if only_filter is True and None not in filters:
         systems = filtered_systems    
-    property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot)
+    property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
     if which_plot == 'Mass Ratio':
         if bins is None:
             bins = np.linspace(0,1,11)
@@ -4286,19 +4309,23 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
             bins = np.linspace(floor,ceiling,(ceiling-floor)*(3/2)+1)
         x_vals,y_vals = hist(np.log10(property_dist)-np.log10(m_to_AU),bins = bins)
+    elif which_plot == 'Angle':
+        if bins is None:
+            bins = np.linspace(0,np.pi,np.pi*10)
+        x_vals,y_vals = hist(property_dist,bins = bins)
     else:
         if bins is None:
             data_array = np.log10(property_dist)
             floor = np.floor(np.min(data_array[~np.isnan(data_array)]))
             ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
-            bins = np.linspace(floor,ceiling,(ceiling-floor)*(3/2)+1)
+            bins = np.linspace(floor,ceiling,(ceiling-floor)*2+1)
         x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
     y_vals = np.insert(y_vals,0,0)
     #Creating the filtered systems
     if only_filter is False or 'average_filter' in filters:
         property_dist_filt = []
         for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
-            property_dist_filt.append(primary_total_ratio_axis(filtered_systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot))
+            property_dist_filt.append(primary_total_ratio_axis(filtered_systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file))
         x_vals_all = []
         y_vals_all = []
         count = 0
@@ -4309,6 +4336,9 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             elif which_plot == 'Semi Major Axis':
                 x_vals_all.append(hist(np.log10(property_dist_filt[count])-np.log10(m_to_AU),bins = bins)[0])
                 the_y = (hist(np.log10(property_dist_filt[count])-np.log10(m_to_AU),bins = bins)[1])
+            elif which_plot == 'Angle':
+                x_vals_all.append(hist(property_dist_filt[count],bins = bins)[0])
+                the_y = (hist(property_dist_filt[count],bins = bins)[1])
             else:
                 x_vals_all.append(hist(np.log10(property_dist_filt[count]),bins = bins)[0])
                 the_y = (hist(np.log10(property_dist_filt[count]),bins = bins)[1])
@@ -4410,6 +4440,24 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 return x_vals_filt,y_vals_filt
             else:
                 return x_vals,y_vals
+    if which_plot == 'Angle':
+        if plot == True:
+            plt.step(x_vals,y_vals,label = 'Raw Data')
+            if only_filter is False:
+                plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
+            plt.ylabel('Number of Systems')
+            plt.xlabel('Misalignment Angle (Rad)')
+            if filename is not None:
+                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')  
+            plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
+            plt.legend(fontsize=14)
+            if log == True:
+                plt.yscale('log')
+        else:
+            if only_filter is True:
+                return x_vals_filt,y_vals_filt
+            else:
+                return x_vals,y_vals
     if which_plot == 'Semi Major Axis':
         if plot == True:
             fig = plt.figure(figsize = (6,6))
@@ -4457,8 +4505,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 return x_vals,y_vals
         
     if which_plot == 'Semi-Major Axis vs q':
-        q = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit = upper_limit,attribute='Mass Ratio')
-        smaxes = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit = upper_limit,attribute='Semi Major Axis')
+        q = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit = upper_limit,attribute='Mass Ratio',file = file)
+        smaxes = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit = upper_limit,attribute='Semi Major Axis',file = file)
         plt.figure(figsize= (10,10))
         #plt.title('Mass Ratio vs Semi Major Axis for a target mass of '+str(target_mass)+' in '+Files_key[systems_key])
         plt.xlabel('Semi Major Axis (in log AU)')
@@ -5108,6 +5156,339 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
 
 def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None):
+    '''
+    Creates distribution plots for more than one file
+    Inputs
+    ----------
+    which_plot: string
+    The plot to be made.
+
+    Systems: list of list of star system objects
+    All of the Systems from all of the files you want to see.
+
+    Files:list of list of sinkdata objects
+    The list of all the files you want to see.
+
+    Filenames: list of strings
+    The names of the files that you want to see.
+
+    Snapshots: int,float
+    The snapshot number you want to look at. By default, it looks at the last one.
+
+    Parameters
+    ----------
+    log: bool,optional
+    Whether to plot the y data on a log scale.
+
+    upper_limit: int,float,optional
+    The upper mass limit of the primaries of systems of interest.
+
+    lower_limit: int,float,optional
+    The lower mass limit of the primaries of systems of interest.
+
+    target_mass: int,float,optional
+    The mass of the primaries of the systems of interest.
+
+    multiplicity: bool,optional
+    Whether to plot for the multiplicity properties(only by mass plot), multiplicity fraction or Companion Frequency.
+
+    all_companions: bool,optional
+    Whether to include all companions in the mass ratio or semi major axes.
+
+    filtered: bool,optional:
+    Whether to include the filtered results or the unfiltered results
+
+    normalized:bool,optional:
+    Whether to normalize the systems to a certain number
+
+    norm_no: int,optional:
+    The number of systems to normalize to.
+
+    time_plot:str,optional:
+    Whether to plot the consistent mass or all of the stars in the multiplicity time evolution.
+    
+    rolling_avg: bool,optional:
+    Whether to use a rolling average or not.
+    
+    rolling_window: int,optional:
+    How many points to include in the rolling average window.[in Myr]
+    
+    time_norm : str,optional
+    Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    
+    adaptive_no: list,optional
+    The number of stars in each bin for each file
+    
+    adaptive_binning: bool,optional
+    Whether to adopt adaptive binning (same no of stars in each bin)
+    
+    x_axis: string,optional
+    Whether to plot the MF/CF with the formation time/density/mass density
+    
+    zero: string,optional
+    Whether to set the zero age as 'formation' (where the star formed) or 'consistent mass' (where the star stopped accreting)
+
+    description: string,optional
+    What to save the name of the YSO plot under.
+    
+    Examples
+    ----------
+    1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
+    '''  
+    adjust_ticks=True
+    if labels is None: labels=Filenames
+    if which_plot == 'Multiplicity vs Formation':
+        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis,labels=labels)
+    else:
+        if Snapshots == None:
+            Snapshots = [[-1]]*len(Filenames)
+        Snapshots = list(flatten(Snapshots))
+        x = []
+        y = []
+        if which_plot == 'System Mass' or which_plot == 'Primary Mass' or which_plot == 'Semi Major Axis':
+            array = []
+            for i in range(len(Files)):
+                array.append(primary_total_ratio_axis(Systems[i][Snapshots[i]],lower_limit = lower_limit,upper_limit = upper_limit,all_companions=all_companions,attribute = which_plot,file = Files[i]))
+            array = list(flatten(array))
+            array = np.log10(array)
+            if which_plot == 'Semi Major Axis':
+                array = np.array(array)-np.log10(m_to_AU)
+            array = list(array)
+            floor = np.floor(min(array))
+            ceiling = np.ceil(max(array))
+        if which_plot == 'System Mass':
+            if bins is None:
+                bins = np.linspace(floor,ceiling,ceiling-floor+1)
+            plt.xlabel('Log System Mass [$M_\odot$]')
+            plt.ylabel('Number of Systems')
+        if which_plot == 'Primary Mass':
+            if bins is None:
+                bins = np.linspace(floor,ceiling,ceiling-floor+1)
+            plt.xlabel('Log Primary Mass [$M_\odot$]')
+            plt.ylabel('Number of Systems')
+        if which_plot == 'Semi Major Axis':
+            if bins is None:
+                bins = np.linspace(floor,ceiling,(ceiling-floor)*3/2+1)
+        if which_plot == 'Angle':
+            if bins is None:
+                bins = np.linspace(0,np.pi,int(np.pi*10)+1)
+            plt.xlabel('Mismatch Angle (Rad)')
+            plt.ylabel('Number of Systems')
+        if which_plot == 'Mass Ratio':
+            if bins is None:
+                bins = np.linspace(0,1,11)
+            plt.xlabel('q (Companion Mass Ratio)')
+            plt.ylabel('Number of Systems')
+            if all_companions is True:
+                plt.ylabel('Number of Companions')
+        if which_plot == 'Multiplicity':
+            if bins is None:
+                bins = 'observer'
+            plt.xlabel('Log Mass [$M_\odot$]')
+            if multiplicity == 'MF':
+                plt.ylabel('Multiplicity Fraction')
+            if multiplicity == 'CF':
+                plt.ylabel('Companion Frequency')
+        if which_plot == 'Multiplicity':
+            error = []
+        times = []
+        fractions = []
+        cons_fracs = []
+        nos = []
+        avg_mass = []
+        og_rolling_window = copy.copy(rolling_window)
+        for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
+            if which_plot == 'Multiplicity':
+                a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=False,snapshot = Snapshots[i])
+                comp_mul_no = c
+                sys_no = d
+                error_one = []
+                for i in range(len(sys_no)):
+                    if multiplicity == 'MF':
+                        error_one.append(Psigma(sys_no[i],comp_mul_no[i]))
+                    elif multiplicity == 'CF':
+                        error_one.append(Lsigma(sys_no[i],comp_mul_no[i]))
+                error.append(error_one)
+                x.append(a)
+                y.append(b)
+            elif which_plot == 'Multiplicity Time Evolution':
+                time,fraction,cons_frac = MFCF_Time_Evolution(Files[i],Systems[i],Filenames[i],steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,time_norm = time_norm,multiplicity=multiplicity)
+                if rolling_avg is True:
+                    rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                    if rolling_window%2 == 0:
+                        rolling_window -= 1
+                    rolling_window = int(rolling_window)
+                    time = rolling_average(time,rolling_window)
+                    fraction = rolling_average(fraction,rolling_window)
+                    cons_frac = rolling_average(cons_frac,rolling_window)
+                times.append(time)
+                fractions.append(fraction)
+                cons_fracs.append(cons_frac)
+            elif which_plot == 'YSO Multiplicity':
+                time = []
+                for j in range(len(Files[i])):
+                    time.append(Files[i][j].t)
+
+                time = np.array(time)
+                ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
+                if time_norm == 'afft':
+                    time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
+                elif time_norm == 'fft':
+                    time = (time/(ff_t))
+
+                if rolling_avg is True:
+                    rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                    if rolling_window%2 == 0:
+                        rolling_window -= 1
+                    rolling_window = int(rolling_window)
+                    time = rolling_average(time,rolling_window)
+                times.append(time)
+                fraction,no,am = YSO_multiplicity(Files[i],Systems[i],min_age = min_age,target_age = target_age)
+                if rolling_avg is True:
+                    fraction = rolling_average(fraction,rolling_window)
+                    no = rolling_average(no,rolling_window)
+                    am = rolling_average(am,rolling_window)
+                fractions.append(fraction)
+                nos.append(no)
+                avg_mass.append(am)
+            else:
+                a,b = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=False,snapshot = Snapshots[i])
+                if normalized == True:
+                    b = b*norm_no/sum(b)
+                x.append(a)
+                y.append(b)
+        if which_plot == 'Semi Major Axis':
+            fig = plt.figure(figsize = (6,6))
+            ax1 = fig.add_subplot(111)
+            for i in range(len(Files)):
+                ax1.step(x[i],y[i],label = labels[i])
+            ax1.vlines(np.log10(20),0,max(y[0]))
+            pands = []
+            for i in Systems[0][-1]:
+                if i.no>1 and lower_limit<=i.primary<=upper_limit:
+                    pands.append(i.primary+i.secondary)
+            average_pands = np.average(pands)*1.9891e30 
+            ax1.set_xlabel('Log Semi Major Axis [AU]',fontsize=14)
+            ax1.set_ylabel('Number of Systems',fontsize=14)
+            if all_companions == True:
+                ax1.set_ylabel('Number of Sub-Systems',fontsize=14)
+            ax2 = ax1.twiny(); adjust_ticks=False
+            ax2.set_xlabel('Log Period [Days]',fontsize=14)
+            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
+            ax2.set_xlim(logperiod_lims)
+            if upper_limit == 1.3 and lower_limit == 0.7:
+                periods = np.linspace(3.5,7.5,num = 5)
+                k = ((10**periods)*24*60*60)
+                smaxes3 = ((6.67e-11*(k**2)*average_pands)/(4*np.pi**2))
+                smaxes = np.log10((smaxes3**(1/3))/m_to_AU)
+                error_values_small = np.array([6,7,9,9,10])
+                error_values_big = np.array([18,27,31,23,21])
+                error_values_comb = (error_values_small+error_values_big)
+                dy_comb = np.sqrt(error_values_comb)
+                ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+            ax1.legend(fontsize=14)
+        elif which_plot == 'Multiplicity':
+            for i in range(0,len(Filenames)):
+                plt.plot(x[i],y[i],label = labels[i])
+                plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
+            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_MF = [0.08,0.15,0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
+            observation_MF_err = [0.06,0.04,0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
+            observation_CF = [0.08,0.16,0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
+            observation_CF_err = [0.06,0.04,0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+            if multiplicity == 'MF':
+                for i in range(len(observation_mass_center)):
+                    if i == 0:
+                        temp_label = 'Observations'
+                    else:
+                        temp_label = None
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                plt.ylim([-0.01,1.01])
+            elif multiplicity == 'CF':
+                for i in range(len(observation_mass_center)):
+                    if i == 0:
+                        temp_label = 'Observations'
+                    else:
+                        temp_label = None
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                plt.ylim([-0.01,3.01])
+            plt.legend(fontsize=14)
+        elif which_plot == 'Multiplicity Time Evolution':
+            for i in range(len(Files)):
+                if time_plot == 'consistent mass':
+                    plt.plot(times[i],cons_fracs[i],label = labels[i])
+                elif time_plot == 'all':
+                    plt.plot(times[i],fractions[i],label = labels[i])
+            plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            if multiplicity == 'MF':
+                plt.ylabel('Multiplicity Fraction')
+                plt.ylim(bottom = 0,top = 1.01)
+            if multiplicity == 'CF':
+                plt.ylabel('Companion Frequency')
+            plt.legend(fontsize=14)
+        elif which_plot == 'YSO Multiplicity':
+            if description is not None:
+                save = True
+                output_dir = description
+                new_file = output_dir+'/YSO'
+                mkdir_p(new_file)
+            else:
+                save = False
+            for i in range(len(Files)):
+                plt.plot(times[i],fractions[i],label = labels[i])
+            if time_norm == 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm == 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm == 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.ylabel('YSO Multiplicity Fraction')
+            plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
+            plt.fill_betweenx(np.linspace(0.3,0.4,100),0,max(list(flatten(times))),color = 'black',alpha = 0.3)
+            plt.fill_betweenx(np.linspace(0.25,0.15,100),0,max(list(flatten(times))),color = 'purple',alpha = 0.3)
+            plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 16)
+            plt.text(0.1,0.32,'Class 0 Orion',fontsize = 16)
+            plt.text(0.1,0.2,'Class 1 Orion',fontsize = 16)
+            plt.legend(fontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save == True:
+                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 150)
+            plt.figure(figsize = (6,6))
+            for i in range(len(Files)):
+                plt.plot(times[i],nos[i],label = labels[i])
+            plt.ylabel('Number of YSOs')
+            if time_norm == 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm == 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm == 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.legend(fontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save == True:
+                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 150)
+            plt.figure(figsize = (6,6))
+            for i in range(len(Files)):
+                plt.plot(times[i],avg_mass[i],label = labels[i])
+            plt.ylabel('Average Mass of YSOs')
+            if time_norm == 'Myr':
+                plt.xlabel('Time [Myr]')
+            elif time_norm == 'fft':
+                plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
+            elif time_norm == 'afft':
+                plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
+            plt.legend(fontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+            if save == True:
+                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150)
+        else:
+            for i in range(0,len(Filenames)):
+                plt.step(x[i],y[i],label = labels[i])
+            plt.legend(fontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
+        if log == True:
+            plt.yscale('log')
     '''
     Creates distribution plots for more than one file
     Inputs
