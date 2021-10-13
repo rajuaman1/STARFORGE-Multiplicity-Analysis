@@ -1332,7 +1332,7 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
         if orbital_period_snap > long_ago_snap:
             snap_3 = orbital_period_snap
         else:
-            snap3 = long_ago_snap
+            snap_3 = long_ago_snap
         result_3 = simple_filter_one_system(result_2,Master_File,comparison_snapshot=snap_3)
         filtered_systems[system_no] = result_3
     return filtered_systems
