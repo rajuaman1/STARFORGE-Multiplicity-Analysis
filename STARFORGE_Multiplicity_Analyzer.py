@@ -2660,9 +2660,12 @@ def randomly_distributed_companions(systems,file,snapshot,lower_limit = 1/1.5,up
             no3 = no3 + 1
         elif i.no == 4:
             no4 = no4 + 1
-    w2 = no2/(no2+no3+no4)
-    w3 = no3/(no2+no3+no4)
-    w4 = no4/(no2+no3+no4)
+    if no2+no3+no4 == 0:
+        w2 = np.nan;w3 = np.nan;w4 = np.nan
+    else:
+        w2 = no2/(no2+no3+no4)
+        w3 = no3/(no2+no3+no4)
+        w4 = no4/(no2+no3+no4)
     
     m_sorted = np.sort(file[snapshot].m[file[snapshot].m<(target_mass)])
     Nstars = len(m_sorted)
