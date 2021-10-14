@@ -1223,67 +1223,68 @@ def q_filter(Master_File):
 def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
     'Working the simple filter onto one system'
     was_primary_there = False
+    new_system = copy.copy(system)
     for previous_sys in Master_File[comparison_snapshot]:
         if system.primary_id == previous_sys.primary_id:
             previous_target_system = previous_sys
             was_primary_there = True
     if was_primary_there == False: #If primary wasn't there, we make a new system of just the primary
-        system.no = 1
-        system.ids = np.array([system.primary_id])
-        system.secondary = 0
-        system.x = system.x[system.m == system.primary]
-        system.v = system.v[system.m == system.primary]
-        system.age_Myr = system.age_Myr[system.m == system.primary]
-        system.final_masses = system.final_masses[system.m == system.primary]
-        system.formation_time_Myr = system.formation_time_Myr[system.m == system.primary]
-        system.init_star_vol_density= system.init_star_vol_density[system.m == system.primary]
-        system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
-        system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
-        system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
-        system.multip_state = system.multip_state[system.m == system.primary]
-        system.m = np.array([system.primary])
-        system.mass_ratio = 0
-        system.tot_m = system.primary
-        system.structured_ids = [system.primary_id]
-        system.smaxis = 0
-        return system
-    og_system = copy.copy(system)
+        new_system.no = 1
+        new_system.ids = np.array([system.primary_id])
+        new_system.secondary = 0
+        new_system.x = system.x[system.m == system.primary]
+        new_system.v = system.v[system.m == system.primary]
+        new_system.age_Myr = system.age_Myr[system.m == system.primary]
+        new_system.final_masses = system.final_masses[system.m == system.primary]
+        new_system.formation_time_Myr = system.formation_time_Myr[system.m == system.primary]
+        new_system.init_star_vol_density= system.init_star_vol_density[system.m == system.primary]
+        new_system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
+        new_system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
+        new_system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
+        new_system.multip_state = system.multip_state[system.m == system.primary]
+        new_system.m = np.array([system.primary])
+        new_system.mass_ratio = 0
+        new_system.tot_m = system.primary
+        new_system.structured_ids = [system.primary_id]
+        new_system.smaxis = 0
+        return new_system
+    og_system = system
     for ides in og_system.ids: #Checking all the ids in the snap
-        if ides not in previous_target_system.ids and ides != og_system.primary_id: #If any of the companions arent there
+        if ides not in previous_target_system.ids and ides != system.primary_id: #If any of the companions arent there
             if system.no == 4:
                 state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
                 for idd in og_system.structured_ids:
                     if isinstance(idd,list):
                         state += len(idd)
             remove_mass = system.m[np.array(system.ids) == ides]
-            system.ids = system.ids[system.m != remove_mass]
-            system.x = system.x[system.m != remove_mass]
-            system.v = system.v[system.m != remove_mass]
-            system.no -= 1
-            system.age_Myr = system.age_Myr[system.m != remove_mass]
-            system.final_masses = system.final_masses[system.m != remove_mass]
-            system.formation_time_Myr = system.formation_time_Myr[system.m != remove_mass]
-            system.init_star_vol_density= system.init_star_vol_density[system.m != remove_mass]
-            system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
-            system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
-            system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
-            system.multip_state = system.multip_state[system.m != remove_mass]
-            system.m = system.m[system.m != remove_mass]
-            system.tot_m = sum(system.m)
-            if system.no == 1:
-                system.mass_ratio = 0
-                system.secondary = 0 #Remove the secondary if the remaining star is solitary
-                system.structured_ids = [system.primary_id]
-            if system.no == 2:
-                system.structured_ids = list(system.ids)
+            new_system.ids = system.ids[system.m != remove_mass]
+            new_system.x = system.x[system.m != remove_mass]
+            new_system.v = system.v[system.m != remove_mass]
+            new_system.no -= 1
+            new_system.age_Myr = system.age_Myr[system.m != remove_mass]
+            new_system.final_masses = system.final_masses[system.m != remove_mass]
+            new_system.formation_time_Myr = system.formation_time_Myr[system.m != remove_mass]
+            new_system.init_star_vol_density= system.init_star_vol_density[system.m != remove_mass]
+            new_system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
+            new_system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
+            new_system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
+            new_system.multip_state = system.multip_state[system.m != remove_mass]
+            new_system.m = system.m[system.m != remove_mass]
+            new_system.tot_m = sum(system.m)
+            if new_system.no == 1:
+                new_system.mass_ratio = 0
+                new_system.secondary = 0 #Remove the secondary if the remaining star is solitary
+                new_system.structured_ids = [system.primary_id]
+            if new_system.no == 2:
+                new_system.structured_ids = list(new_system.ids)
                 secondary = 0
-                for j in system.m:
-                    if j < system.primary and j > secondary:
+                for j in new_system.m:
+                    if j < new_system.primary and j > secondary:
                         secondary = j
-                system.secondary = secondary
-                system.mass_ratio = secondary/system.primary
-            if system.no == 3:
-                removed_list = copy.deepcopy(system.structured_ids) 
+                new_system.secondary = secondary
+                new_system.mass_ratio = secondary/new_system.primary
+            if new_system.no == 3:
+                removed_list = copy.deepcopy(new_system.structured_ids) 
                 nested_remove(removed_list,float(ides))
                 if state == 4:
                     for index,value in enumerate(removed_list):
@@ -1299,19 +1300,19 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                                 removed_list[index] = value[0]
                             elif isinstance(value,list) and len(value) == 2:
                                 removed_list[index] = list(flatten(value))
-                system.structured_ids = removed_list
+                new_system.structured_ids = removed_list
                 secondary = 0
                 for j in system.m:
                     if j < system.primary and j > secondary:
                         secondary = j
-                system.secondary = secondary
-                system.mass_ratio = secondary/system.primary
-                system.smaxis = smaxis(system)
-                system.smaxis_all = smaxis_all(system)
+                new_system.secondary = secondary
+                new_system.mass_ratio = secondary/system.primary
+                new_system.smaxis = smaxis(system)
+                new_system.smaxis_all = smaxis_all(system)
                 #Add secondary
     return system
 
-def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
+def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2):
     if file[selected_snap].t*code_time_to_Myr<long_ago:
         #We cant look at a snapshot before 0.5 Myr 
         print('The selected snapshot is too early to use')
@@ -1323,13 +1324,13 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5):
     for i in tqdm(file,desc = 'Times'):
         times.append(i.t*code_time_to_Myr)
     long_ago_snap = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
-    
     for system_no,system in enumerate(tqdm(Master_File[selected_snap],desc = 'Simple Filter Loop',position = 0)):
         result_1 = simple_filter_one_system(system,Master_File,comparison_snapshot=snap_1)
         result_2 = simple_filter_one_system(result_1,Master_File,comparison_snapshot=snap_2)
-        orbital_period_check = 2*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary))/(60*60*24*365*1e6)
+        orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(60*60*24*365*1e6)
         orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
-        if orbital_period_snap > long_ago_snap:
+        if orbital_period_check > long_ago:
+            print(orbital_period_check)
             snap_3 = orbital_period_snap
         else:
             snap_3 = long_ago_snap
