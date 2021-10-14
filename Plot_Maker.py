@@ -66,7 +66,6 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, do_last
     pickle.dump(output,outfile)
     outfile.close()
 
-
 def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window_Myr=0.1,time_norm = 'afft',zero = 'Formation'):
     Filenames = orig_filenames.copy()
     timer = Timer()
@@ -77,7 +76,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     Files = load_files(Filenames)
     Systems = []
     for i in tqdm(range(len(Files)),position = 0,desc = 'Loading the Systems'):
-         Systems.append(system_initialization(Files[i] ,Filenames[i],read_in_result=read_in_result))
+         Systems.append(system_initialization(Files[i] ,Filenames[i],read_in_result=read_in_result,full_assignment = True))
     output_dir = description
     mkdir_p(output_dir)
     timer.dt(text='File initialization')
@@ -101,11 +100,19 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     plt.figure(figsize = (6,6)); print('\n Making q distribution plot for Solar-type stars...')
     Multi_Plot('Mass Ratio',Systems,Files,Filenames,upper_limit=1.3,lower_limit=0.7,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no)
     plt.savefig(description+'/Mass_Ratio_Solar_'+description+'.png',dpi = 150); plt.close('all') 
+    plt.figure(figsize = (6,6)); print('\n Making angular distribution plot for all stars...')
+    Multi_Plot('Angle',Systems,Files,Filenames,upper_limit=1.3e7,lower_limit=0,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no)
+    plt.savefig(description+'/Angle_all_'+description+'.png',dpi = 150); plt.close('all') 
+    plt.figure(figsize = (6,6)); print('\n Making angular distribution plot for Solar-type stars...')
+    Multi_Plot('Angle',Systems,Files,Filenames,upper_limit=1.3,lower_limit=0.7,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no)
+    plt.savefig(description+'/Angle_Solar_'+description+'.png',dpi = 150); plt.close('all') 
     timer.dt(text='Multi plot figures')
     
     if Snapshots == None:
         Snapshots = [[-1]]*len(Filenames)
     Snapshots = list(flatten(Snapshots))
+    
+    print('\nSingle Plots ...')
     
     #Random Sampling files
     new_file = output_dir+'/Random_Sampling'
