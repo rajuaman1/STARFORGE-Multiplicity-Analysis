@@ -1310,7 +1310,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                 new_system.smaxis = smaxis(system)
                 new_system.smaxis_all = smaxis_all(system)
                 #Add secondary
-    return system
+    return new_system
 
 def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2):
     if file[selected_snap].t*code_time_to_Myr<long_ago:
