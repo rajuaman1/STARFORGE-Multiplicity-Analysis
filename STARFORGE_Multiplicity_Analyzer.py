@@ -4314,7 +4314,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         x_vals,y_vals = hist(np.log10(property_dist)-np.log10(m_to_AU),bins = bins)
     elif which_plot == 'Angle':
         if bins is None:
-            bins = np.linspace(0,np.pi,np.pi*10)
+            bins = np.linspace(0,np.pi,10)
         x_vals,y_vals = hist(property_dist,bins = bins)
     else:
         if bins is None:
@@ -5274,7 +5274,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 bins = np.linspace(floor,ceiling,(ceiling-floor)*3/2+1)
         if which_plot == 'Angle':
             if bins is None:
-                bins = np.linspace(0,np.pi,int(np.pi*10)+1)
+                bins = np.linspace(0,np.pi,10)
             plt.xlabel('Mismatch Angle (Rad)')
             plt.ylabel('Number of Systems')
         if which_plot == 'Mass Ratio':
