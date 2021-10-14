@@ -1330,7 +1330,6 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_
         orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(60*60*24*365*1e6)
         orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
         if orbital_period_check > long_ago:
-            print(orbital_period_check)
             snap_3 = orbital_period_snap
         else:
             snap_3 = long_ago_snap
