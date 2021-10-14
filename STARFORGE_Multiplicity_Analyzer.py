@@ -5139,7 +5139,7 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
     weights:list
     The weights of each bin
     '''
-    One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Mass Ratio','Semi Major Axis vs q']
+    One_System_Plots = ['System Mass','Primary Mass','Semi Major Axis','Angle','Mass Ratio','Semi Major Axis vs q']
     Time_Evo_Plots = ['Multiplicity Time Evolution','Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity']
     if label is None: label=filename
     if which_plot in One_System_Plots:
