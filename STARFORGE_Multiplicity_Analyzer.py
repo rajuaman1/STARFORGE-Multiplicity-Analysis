@@ -4292,13 +4292,12 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     adjust_ticks=True
     if label is None: label=filename
     if systems is None: systems = Master_File[snapshot]
+    filtered_systems = systems
     if 'time_filter' in filters:
         filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
     if 'q_filter' in filters:
-        filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
-    if None in filters:
-        filtered_systems = systems
-    if only_filter is True and None not in filters:
+        filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min)
+    if only_filter is True:
         systems = filtered_systems    
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
     if which_plot == 'Mass Ratio':
@@ -4385,11 +4384,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     plt.step(x_vals,y_vals,label = 'Mass Dist for Systems')
                 else:
                     plt.step(x_vals,y_vals,label = 'Mass Dist for Primaries')
-                plt.step(tot_m,vals,label = 'Stellar Mass Dist (IMF)')
-                plt.legend(fontsize=14)
+                plt.step(tot_m+0.01,vals,label = 'Stellar Mass Dist (IMF)')
+                plt.legend(fontsize=18)
             elif only_filter is False:
                 plt.step(x_vals,y_vals,label = 'Raw Data')
-                plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
+                plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 plt.legend(fontsize=14)
             else:
                 plt.step(x_vals,y_vals)
@@ -4397,8 +4396,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.yscale('log')
             if filename is not None:
                 plt.text(0.7,0.7,label,transform = plt.gca().transAxes,horizontalalignment = 'left')
-            plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
         else:
             if only_filter is True:
                 return x_vals_filt,y_vals_filt
@@ -4408,11 +4407,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         if plot == True:
             plt.step(x_vals,y_vals,label = 'Raw Data')
             if only_filter is False:
-                plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
+                plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             plt.ylabel('Number of Systems')
             plt.xlabel('q (Companion Mass Dist)')
             if filename is not None:
-                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')  
+                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')  
             plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
             if compare == True:
                 if snapshot is None:
@@ -4430,12 +4429,13 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     plt.vlines((x_vals_filt[-1]+x_vals_filt[-2]+0.02)/2,y_vals_filt[-1]-np.sqrt(y_vals_filt[-1]),y_vals_filt[-1]+np.sqrt(y_vals_filt[-1]),linestyles=':')
                     plt.vlines((x_vals_filt[4]+x_vals_filt[3]+0.02)/2,y_vals_filt[4]-np.sqrt(y_vals_filt[4]),y_vals_filt[4]+np.sqrt(y_vals_filt[4]),linestyles=':')
                     plt.vlines((x_vals_filt[1]+x_vals_filt[2]+0.02)/2,y_vals_filt[2]-np.sqrt(y_vals_filt[2]),y_vals_filt[2]+np.sqrt(y_vals_filt[2]),linestyles=':')
-                plt.step(x_vals,IMF*sum(y_vals)/sum(IMF),label = 'Stellar Mass Distribution (IMF)')
+                plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'Stellar Mass Distribution (IMF)')
                 if all_companions == True:
                     plt.ylabel('Number of Companions')
                 else:
-                    plt.step(x_vals,Weighted_IMF*sum(y_vals)/sum(Weighted_IMF),label = 'Weighted IMF')
+                    plt.step(x_vals+0.01,(Weighted_IMF*sum(y_vals)/sum(Weighted_IMF))+0.01,label = 'Weighted IMF')
             plt.legend(fontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
             if log == True:
                 plt.yscale('log')
         else:
@@ -4447,15 +4447,16 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         if plot == True:
             plt.step(x_vals,y_vals,label = 'Raw Data')
             if only_filter is False:
-                plt.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
+                plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             plt.ylabel('Number of Systems')
             plt.xlabel('Misalignment Angle (Rad)')
             if filename is not None:
-                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')  
-            plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')
-            plt.legend(fontsize=14)
+                plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')  
+            plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
+            plt.legend(fontsize=18)
             if log == True:
                 plt.yscale('log')
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
         else:
             if only_filter is True:
                 return x_vals_filt,y_vals_filt
@@ -4463,11 +4464,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 return x_vals,y_vals
     if which_plot == 'Semi Major Axis':
         if plot == True:
-            fig = plt.figure(figsize = (6,6))
+            fig = plt.figure(figsize = (10,10))
             ax1 = fig.add_subplot(111)
             ax1.step(x_vals,y_vals,label = 'Raw Data')
             if only_filter is False:
-                ax1.step(x_vals_filt,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
+                ax1.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             ax1.vlines(np.log10(20),0,max(y_vals))
             pands = []
             for i in systems:
@@ -4496,11 +4497,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ax1.set_ylabel('Number of Systems')
             if all_companions == True:
                 ax1.set_ylabel('Number of Sub Systems')
-            ax1.legend(fontsize = 14)
+            ax1.legend(fontsize = 18)
             adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
-            fig.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left')  
+            fig.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $M_\odot$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)  
             if filename is not None:
-                fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left') 
+                fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18) 
         else:
             if only_filter is True:
                 return x_vals_filt,y_vals_filt
@@ -4516,8 +4517,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         plt.ylabel('Mass Ratio')
         plt.scatter(np.log10(smaxes)-np.log10(m_to_AU),q)
         if filename is not None:
-            plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,adjust_ticks=adjust_ticks)
+            plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+        adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24,adjust_ticks=adjust_ticks)
 
 def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
     '''
@@ -4609,12 +4610,13 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     if bins is None:
         bins = 'continous'
     if systems is None: systems = Master_File[snapshot]
+    filtered_systems = systems
     if 'time_filter' in filters:
         filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
     if 'q_filter' in filters:
-        filtered_systems = q_filter_one_snap(systems,min_q=q_filt_min)
-    if only_filter is True and None not in filters:
-        systems = filtered_systems       
+        filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min)
+    if only_filter is True:
+        systems = filtered_systems    
     if multiplicity == 'CF':
         logmasslist,o1,o2,o3 = companion_frequency(systems,mass_break=mass_break,bins = bins)
     elif multiplicity == 'Properties' or multiplicity == 'MF':
@@ -4698,9 +4700,9 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.ylabel(r'Number Density [$pc^{-3}$]')
             elif multiplicity == 'Mass Density Separate':
                 plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
-            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
             if filename is not None:
-                plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+                plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
         else:
             if only_filter is True:
                 return logmasslist_filt,o1_filt,o2_filt,o3_filt
@@ -4741,9 +4743,9 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.ylabel(r'Number Density [$pc^{-3}$]')
             elif multiplicity == 'Mass Density':
                 plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
-            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
             if filename is not None:
-                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
@@ -4773,7 +4775,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
             observation_CF = [0.08,0.16,0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
             observation_CF_err = [0.06,0.04,0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
-            plt.xlabel('Mass (in log solar masses)')
+            plt.xlabel('Log Mass [$M_\odot$]')
             plt.ylabel('Companion Frequency')
             for i in range(len(observation_mass_center)):
                 if i == 0:
@@ -4782,7 +4784,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     temp_label = None
                 plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
             if label is not None:
-                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
@@ -4790,7 +4792,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
             plt.legend(handles = handles,fontsize=14)
-            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
             plt.figure()
         else:
             if only_filter is True:
