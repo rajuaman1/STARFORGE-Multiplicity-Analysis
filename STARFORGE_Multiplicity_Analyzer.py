@@ -2822,6 +2822,8 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
         time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
     elif time_norm == 'fft':
         time = time/ff_t
+    else:
+        time = time*code_time_to_Myr
     if plot == True:
         if time_norm == 'afft':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
@@ -4902,7 +4904,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             return
         elif filename is None:
             print('Provide the filename')
-        MFCF_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,time_norm = time_norm,multiplicity=multiplicity)
+        MFCF_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,time_norm = time_norm,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window)
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -4944,6 +4946,8 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
                 alpha = file_properties(filename,param = 'alpha')
                 ff_t = ff_t*np.sqrt(alpha)
             prop_times = (prop_times/ff_t)
+        else:
+            prop_times = np.array(prop_times)*code_time_to_Myr
 
         
         if rolling_avg is True:
