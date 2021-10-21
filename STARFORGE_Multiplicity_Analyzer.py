@@ -4313,7 +4313,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             data_array = np.log10(property_dist)-np.log10(m_to_AU)
             floor = np.floor(np.min(data_array[~np.isnan(data_array)]))
             ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
-            bins = np.linspace(floor,ceiling,(ceiling-floor)*(3/2)+1)
+            bins = np.linspace(floor,ceiling,int((ceiling-floor)*(3/2)+1))
         x_vals,y_vals = hist(np.log10(property_dist)-np.log10(m_to_AU),bins = bins)
     elif which_plot == 'Angle':
         if bins is None:
