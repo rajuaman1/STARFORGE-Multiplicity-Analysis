@@ -5259,17 +5259,17 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             ceiling = np.ceil(max(array))
         if which_plot == 'System Mass':
             if bins is None:
-                bins = np.linspace(floor,ceiling,ceiling-floor+1)
+                bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log System Mass [$M_\odot$]')
             plt.ylabel('Number of Systems')
         if which_plot == 'Primary Mass':
             if bins is None:
-                bins = np.linspace(floor,ceiling,ceiling-floor+1)
+                bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log Primary Mass [$M_\odot$]')
             plt.ylabel('Number of Systems')
         if which_plot == 'Semi Major Axis':
             if bins is None:
-                bins = np.linspace(floor,ceiling,(ceiling-floor)*3/2+1)
+                bins = np.linspace(floor,ceiling,int((ceiling-floor)*3/2+1))
         if which_plot == 'Angle':
             if bins is None:
                 bins = np.linspace(0,np.pi,10)
@@ -5298,6 +5298,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         nos = []
         avg_mass = []
         og_rolling_window = copy.copy(rolling_window)
+        offsets = range(0,len(Filenames))
+        offsets = 0.01*np.array(offsets)
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
             if which_plot == 'Multiplicity':
                 a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i])
@@ -5362,7 +5364,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
             for i in range(len(Files)):
-                ax1.step(x[i],y[i],label = labels[i])
+                ax1.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
             ax1.vlines(np.log10(20),0,max(y[0]))
             pands = []
             for i in Systems[0][-1]:
@@ -5485,7 +5487,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150)
         else:
             for i in range(0,len(Filenames)):
-                plt.step(x[i],y[i],label = labels[i])
+                plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
             plt.legend(fontsize=14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
