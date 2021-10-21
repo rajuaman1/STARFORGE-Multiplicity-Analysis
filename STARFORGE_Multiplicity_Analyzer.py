@@ -1247,7 +1247,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         new_system.m = np.array([new_system.primary])
         new_system.mass_ratio = 0
         new_system.tot_m = new_system.primary
-        new_system.structured_ids = [new_system.primary_id]
+        new_system.structured_ids = np.array([new_system.primary_id])
         new_system.smaxis = 0
         return new_system
     og_system = system
@@ -1276,9 +1276,9 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             if new_system.no == 1:
                 new_system.mass_ratio = 0
                 new_system.secondary = 0 #Remove the secondary if the remaining star is solitary
-                new_system.structured_ids = [system.primary_id]
+                new_system.structured_ids = np.array([system.primary_id])
             if new_system.no == 2:
-                new_system.structured_ids = list(new_system.ids)
+                new_system.structured_ids = np.array(list(new_system.ids))
                 secondary = 0
                 for j in new_system.m:
                     if j < new_system.primary and j > secondary:
@@ -1304,8 +1304,8 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                                 removed_list[index] = list(flatten(value))
                 new_system.structured_ids = removed_list
                 secondary = 0
-                for j in system.m:
-                    if j < system.primary and j > secondary:
+                for j in new_system.m:
+                    if j < new_system.primary and j > secondary:
                         secondary = j
                 new_system.secondary = secondary
                 new_system.mass_ratio = secondary/system.primary
