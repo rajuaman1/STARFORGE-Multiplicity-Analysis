@@ -1206,8 +1206,8 @@ def q_filter_one_snap(systems,min_q = 0.1):
                                     elif isinstance(value,list) and len(value) == 2:
                                         removed_list[index] = list(flatten(value)) 
                         j.structured_ids = removed_list
-                    j.smaxis = smaxis(j)
-                    j.smaxis_all = smaxis_all(j)
+                    #j.smaxis = smaxis(j)
+                    #j.smaxis_all = smaxis_all(j)
                     Filtered_Master_File[i] = j
     return Filtered_Master_File
 
@@ -4909,8 +4909,10 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             print('Use Plot == True')
             return
         multiplicity_and_age_combined(file,Master_File,filename = filename,T_list=T,dt_list=dt,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero = zero,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window,min_time_bin=min_time_bin,adaptive_binning=adaptive_binning,adaptive_no=adaptive_no,description=description,label=label)
+        adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
     if which_plot == 'Multiplicity vs Formation':
         multiplicity_vs_formation(file,Master_File,T_list = T,dt_list = dt,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,filename = filename,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,plot = plot,label=label)
+        adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
     if which_plot == 'YSO Multiplicity':
         if Master_File is None:
             print('provide master file')
@@ -5345,7 +5347,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 nos.append(no)
                 avg_mass.append(am)
             else:
-                a,b = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=False,snapshot = Snapshots[i])
+                a,b = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i])
                 if normalized == True:
                     b = b*norm_no/sum(b)
                 x.append(a)
