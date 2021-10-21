@@ -1172,7 +1172,7 @@ def q_filter_one_snap(systems,min_q = 0.1):
                     j.init_star_mass_density = j.init_star_mass_density[j.m != k]
                     j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
                     j.ZAMS_age = j.ZAMS_age[j.m != k]
-                    j.multip_state = j.multip_state[j.m != k]
+                    j.multip_state = j.multip_state[j.m != k] 
                     j.m = j.m[j.m != k]
                     if j.no == 1:
                         j.secondary = 0
@@ -1206,8 +1206,8 @@ def q_filter_one_snap(systems,min_q = 0.1):
                                     elif isinstance(value,list) and len(value) == 2:
                                         removed_list[index] = list(flatten(value)) 
                         j.structured_ids = removed_list
-                    #j.smaxis = smaxis(j)
-                    #j.smaxis_all = smaxis_all(j)
+                    j.smaxis = smaxis(j)
+                    j.smaxis_all = smaxis_all(j)
                     Filtered_Master_File[i] = j
     return Filtered_Master_File
 
@@ -1228,24 +1228,26 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         if system.primary_id == previous_sys.primary_id:
             previous_target_system = previous_sys
             was_primary_there = True
+    if system.no == 1:
+        return new_system
     if was_primary_there == False: #If primary wasn't there, we make a new system of just the primary
         new_system.no = 1
-        new_system.ids = np.array([system.primary_id])
+        new_system.ids = np.array([new_system.primary_id])
         new_system.secondary = 0
-        new_system.x = system.x[system.m == system.primary]
-        new_system.v = system.v[system.m == system.primary]
-        new_system.age_Myr = system.age_Myr[system.m == system.primary]
-        new_system.final_masses = system.final_masses[system.m == system.primary]
-        new_system.formation_time_Myr = system.formation_time_Myr[system.m == system.primary]
-        new_system.init_star_vol_density= system.init_star_vol_density[system.m == system.primary]
-        new_system.init_star_mass_density = system.init_star_mass_density[system.m == system.primary]
-        new_system.stellar_evol_stages = system.stellar_evol_stages[system.m == system.primary]
-        new_system.ZAMS_age = system.ZAMS_age[system.m == system.primary]
-        new_system.multip_state = system.multip_state[system.m == system.primary]
-        new_system.m = np.array([system.primary])
+        new_system.x = new_system.x[new_system.m == new_system.primary]
+        new_system.v = new_system.v[new_system.m == new_system.primary]
+        new_system.age_Myr = new_system.age_Myr[new_system.m == new_system.primary]
+        new_system.final_masses = new_system.final_masses[new_system.m == new_system.primary]
+        new_system.formation_time_Myr = new_system.formation_time_Myr[new_system.m == new_system.primary]
+        new_system.init_star_vol_density= new_system.init_star_vol_density[new_system.m == new_system.primary]
+        new_system.init_star_mass_density = new_system.init_star_mass_density[new_system.m == new_system.primary]
+        new_system.stellar_evol_stages = new_system.stellar_evol_stages[new_system.m == new_system.primary]
+        new_system.ZAMS_age = new_system.ZAMS_age[new_system.m == new_system.primary]
+        new_system.multip_state = new_system.multip_state[new_system.m == new_system.primary]
+        new_system.m = np.array([new_system.primary])
         new_system.mass_ratio = 0
-        new_system.tot_m = system.primary
-        new_system.structured_ids = [system.primary_id]
+        new_system.tot_m = new_system.primary
+        new_system.structured_ids = [new_system.primary_id]
         new_system.smaxis = 0
         return new_system
     og_system = system
@@ -1256,21 +1258,21 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                 for idd in og_system.structured_ids:
                     if isinstance(idd,list):
                         state += len(idd)
-            remove_mass = system.m[np.array(system.ids) == ides]
-            new_system.ids = system.ids[system.m != remove_mass]
-            new_system.x = system.x[system.m != remove_mass]
-            new_system.v = system.v[system.m != remove_mass]
+            remove_mass = new_system.m[np.array(new_system.ids) == ides]
+            new_system.ids = new_system.ids[new_system.m != remove_mass]
+            new_system.x = new_system.x[new_system.m != remove_mass]
+            new_system.v = new_system.v[new_system.m != remove_mass]
             new_system.no -= 1
-            new_system.age_Myr = system.age_Myr[system.m != remove_mass]
-            new_system.final_masses = system.final_masses[system.m != remove_mass]
-            new_system.formation_time_Myr = system.formation_time_Myr[system.m != remove_mass]
-            new_system.init_star_vol_density= system.init_star_vol_density[system.m != remove_mass]
-            new_system.init_star_mass_density = system.init_star_mass_density[system.m != remove_mass]
-            new_system.stellar_evol_stages = system.stellar_evol_stages[system.m != remove_mass]
-            new_system.ZAMS_age = system.ZAMS_age[system.m != remove_mass]
-            new_system.multip_state = system.multip_state[system.m != remove_mass]
-            new_system.m = system.m[system.m != remove_mass]
-            new_system.tot_m = sum(system.m)
+            new_system.age_Myr = new_system.age_Myr[new_system.m != remove_mass]
+            new_system.final_masses = new_system.final_masses[new_system.m != remove_mass]
+            new_system.formation_time_Myr = new_system.formation_time_Myr[new_system.m != remove_mass]
+            new_system.init_star_vol_density= new_system.init_star_vol_density[new_system.m != remove_mass]
+            new_system.init_star_mass_density = new_system.init_star_mass_density[new_system.m != remove_mass]
+            new_system.stellar_evol_stages = new_system.stellar_evol_stages[new_system.m != remove_mass]
+            new_system.ZAMS_age = new_system.ZAMS_age[new_system.m != remove_mass]
+            new_system.multip_state = new_system.multip_state[new_system.m != remove_mass]
+            new_system.m = new_system.m[new_system.m != remove_mass]
+            new_system.tot_m = sum(new_system.m)
             if new_system.no == 1:
                 new_system.mass_ratio = 0
                 new_system.secondary = 0 #Remove the secondary if the remaining star is solitary
@@ -4663,7 +4665,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     o2 = o2_filt
                     o3 = o3_filt
         else:
-            filtered_q = Master_File[i]
+            filtered_q = Master_File[snapshot]
             if 'time_filter' in filters:
                 filtered_q = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
             if 'q_filter' in filters:
