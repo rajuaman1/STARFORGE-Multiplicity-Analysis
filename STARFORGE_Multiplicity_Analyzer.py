@@ -4636,7 +4636,11 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         o3_all = []
         count = 0
         for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
-            filtered_q = q_filter_one_snap(Master_File[i],min_q = q_filt_min)
+            filtered_q = Master_File[i]
+            if 'time_filter' in filters:
+                filtered_q = full_simple_filter(Master_File,file,i,long_ago = time_filt_min)
+            if 'q_filter' in filters:
+                filtered_q = q_filter_one_snap(filtered_q,min_q = q_filt_min)
             if multiplicity == 'CF':
                 logmasslist_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[0])
                 o1_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[1])
