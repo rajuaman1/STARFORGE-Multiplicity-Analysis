@@ -4324,7 +4324,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             data_array = np.log10(property_dist)
             floor = np.floor(np.min(data_array[~np.isnan(data_array)]))
             ceiling = np.ceil(np.max(data_array[~np.isnan(data_array)]))      
-            bins = np.linspace(floor,ceiling,(ceiling-floor)*2+1)
+            bins = np.linspace(floor,ceiling,int((ceiling-floor)*2+1))
         x_vals,y_vals = hist(np.log10(property_dist),bins = bins)
     y_vals = np.insert(y_vals,0,0)
     #Creating the filtered systems
