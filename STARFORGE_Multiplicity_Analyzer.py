@@ -5299,7 +5299,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         avg_mass = []
         og_rolling_window = copy.copy(rolling_window)
         offsets = range(0,len(Filenames))
-        offsets = 0.01*np.array(offsets)
+        if which_plot == 'Mass Ratio':
+            offsets = 0.01*np.array(offsets)
+        elif which_plot == 'Angle':
+            offsets = 0.02*np.array(offsets)
+        else:
+            offsets = 0.1*np.array(offsets)
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
             if which_plot == 'Multiplicity':
                 a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i])
