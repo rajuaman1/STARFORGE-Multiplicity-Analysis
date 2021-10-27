@@ -1150,7 +1150,7 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
 def q_filter_one_snap(systems,min_q = 0.1):
     #Change Master_File to file snapshot
     '''The q filter as applied to one snapshot'''
-    Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
+    Filtered_Master_File = copy.copy(systems) #Creating a new copy of the master file
     for i,j in enumerate(Filtered_Master_File):
         if j.no>1:
             for k in j.m:
@@ -1317,8 +1317,8 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
 def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2):
     if file[selected_snap].t*code_time_to_Myr<long_ago:
         #We cant look at a snapshot before 0.5 Myr 
-        print('The selected snapshot is too early to use')
-        return np.nan
+        #print('The selected snapshot is too early to use')
+        return Master_File[selected_snap]
     snap_1 = selected_snap-1
     snap_2 = selected_snap-2
     times = []
