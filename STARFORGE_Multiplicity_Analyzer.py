@@ -1147,69 +1147,74 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
             return system_creation(file,snapshot_num,Master_File = file,seperation_param=seperation_param,read_in_result = False,L = L)
 
 #This is a filter for minimum q for one snapshot
-def q_filter_one_snap(systems,min_q = 0.1):
-    #Change Master_File to file snapshot
+def q_filter_one_snap(systems,min_q = 0.1,filter_in_class = True):
     '''The q filter as applied to one snapshot'''
-    Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
-    for i,j in enumerate(Filtered_Master_File):
-        if j.no>1:
-            for k in j.m:
-                if k/j.primary < min_q:
-                    if j.no == 4:
-                        state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
-                        for idd in j.structured_ids:
-                            if isinstance(idd,list):
-                                state += len(idd)
-                    remove_id = np.array(j.ids)[j.m == k] #The id that we have to remove
-                    j.ids = j.ids[j.m != k]
-                    j.x = j.x[j.m != k]
-                    j.v = j.v[j.m != k]
-                    j.no -= 1
-                    j.age_Myr = j.age_Myr[j.m != k]
-                    j.final_masses = j.final_masses[j.m != k]
-                    j.formation_time_Myr = j.formation_time_Myr[j.m != k]
-                    j.init_star_vol_density = j.init_star_vol_density[j.m != k]
-                    j.init_star_mass_density = j.init_star_mass_density[j.m != k]
-                    j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
-                    j.ZAMS_age = j.ZAMS_age[j.m != k]
-                    j.multip_state = j.multip_state[j.m != k] 
-                    j.m = j.m[j.m != k]
-                    if j.no == 1:
-                        j.secondary = 0
-                    else:
-                        j.secondary = np.max(j.m[j.m!=j.primary])
-                    j.mass_ratio = j.secondary/j.primary
-                    j.tot_m = sum(j.m)
-                    if j.no == 1:
-                        j.mass_ratio = 0
-                        j.secondary = 0 #Remove the secondary if the remaining star is solitary
-                        j.structured_ids = [j.ids]
-                    if j.no == 2:
-                        j.structured_ids = list(j.ids) #The secondary isn't going to be removed if there's 2 stars remaining
-                    if j.no == 3:
-                        removed_list = copy.deepcopy(j.structured_ids) 
-                        checker = remove_id[0] #The remove ID is in an array so we make it single
-                        checker = float(checker) #It is an np float so we make it a float
-                        nested_remove(removed_list,checker)
-                        if state == 4:
-                            for index,value in enumerate(removed_list):
-                                if isinstance(value,list):
-                                    if len(value) == 1:
-                                        removed_list[index] = value[0]
-                        elif state == 2:
-                            if len(removed_list) == 1:
-                                removed_list = removed_list[0]
-                            if len(removed_list) == 2:
+    if filter_in_class is True:
+        filtered_systems = []
+        for system_no,system in enumerate(systems):
+            filtered_systems.append(system.filter['q'])
+        return filtered_systems
+    else:
+        Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
+        for i,j in enumerate(Filtered_Master_File):
+            if j.no>1:
+                for k in j.m:
+                    if k/j.primary < min_q:
+                        if j.no == 4:
+                            state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
+                            for idd in j.structured_ids:
+                                if isinstance(idd,list):
+                                    state += len(idd)
+                        remove_id = np.array(j.ids)[j.m == k] #The id that we have to remove
+                        j.ids = j.ids[j.m != k]
+                        j.x = j.x[j.m != k]
+                        j.v = j.v[j.m != k]
+                        j.no -= 1
+                        j.age_Myr = j.age_Myr[j.m != k]
+                        j.final_masses = j.final_masses[j.m != k]
+                        j.formation_time_Myr = j.formation_time_Myr[j.m != k]
+                        j.init_star_vol_density = j.init_star_vol_density[j.m != k]
+                        j.init_star_mass_density = j.init_star_mass_density[j.m != k]
+                        j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
+                        j.ZAMS_age = j.ZAMS_age[j.m != k]
+                        j.multip_state = j.multip_state[j.m != k] 
+                        j.m = j.m[j.m != k]
+                        if j.no == 1:
+                            j.secondary = 0
+                        else:
+                            j.secondary = np.max(j.m[j.m!=j.primary])
+                        j.mass_ratio = j.secondary/j.primary
+                        j.tot_m = sum(j.m)
+                        if j.no == 1:
+                            j.mass_ratio = 0
+                            j.secondary = 0 #Remove the secondary if the remaining star is solitary
+                            j.structured_ids = [j.ids]
+                        if j.no == 2:
+                            j.structured_ids = list(j.ids) #The secondary isn't going to be removed if there's 2 stars remaining
+                        if j.no == 3:
+                            removed_list = copy.deepcopy(j.structured_ids) 
+                            checker = remove_id[0] #The remove ID is in an array so we make it single
+                            checker = float(checker) #It is an np float so we make it a float
+                            nested_remove(removed_list,checker)
+                            if state == 4:
                                 for index,value in enumerate(removed_list):
-                                    if isinstance(value,list) and len(value) == 1:
-                                        removed_list[index] = value[0]
-                                    elif isinstance(value,list) and len(value) == 2:
-                                        removed_list[index] = list(flatten(value)) 
-                        j.structured_ids = removed_list
-                    j.smaxis = smaxis(j)
-                    j.smaxis_all = smaxis_all(j)
-                    Filtered_Master_File[i] = j
-    return Filtered_Master_File
+                                    if isinstance(value,list):
+                                        if len(value) == 1:
+                                            removed_list[index] = value[0]
+                            elif state == 2:
+                                if len(removed_list) == 1:
+                                    removed_list = removed_list[0]
+                                if len(removed_list) == 2:
+                                    for index,value in enumerate(removed_list):
+                                        if isinstance(value,list) and len(value) == 1:
+                                            removed_list[index] = value[0]
+                                        elif isinstance(value,list) and len(value) == 2:
+                                            removed_list[index] = list(flatten(value)) 
+                            j.structured_ids = removed_list
+                        j.smaxis = smaxis(j)
+                        j.smaxis_all = smaxis_all(j)
+                        Filtered_Master_File[i] = j
+        return Filtered_Master_File
 
 #This function applies the q filter to all snapshots
 def q_filter(Master_File):
@@ -1314,29 +1319,41 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                 #Add secondary
     return new_system
 
-def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2):
-    if file[selected_snap].t*code_time_to_Myr<long_ago:
-        #We cant look at a snapshot before 0.5 Myr 
-        #print('The selected snapshot is too early to use')
-        return Master_File[selected_snap]
-    snap_1 = selected_snap-1
-    snap_2 = selected_snap-2
-    times = []
-    filtered_systems = copy.deepcopy(Master_File[selected_snap])
-    for i in file:
-        times.append(i.t*code_time_to_Myr)
-    long_ago_snap = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
-    for system_no,system in enumerate(Master_File[selected_snap]):
-        result_1 = simple_filter_one_system(system,Master_File,comparison_snapshot=snap_1)
-        result_2 = simple_filter_one_system(result_1,Master_File,comparison_snapshot=snap_2)
-        orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(60*60*24*365*1e6)
-        orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
-        if orbital_period_check > long_ago:
-            snap_3 = orbital_period_snap
-        else:
-            snap_3 = long_ago_snap
-        result_3 = simple_filter_one_system(result_2,Master_File,comparison_snapshot=snap_3)
-        filtered_systems[system_no] = result_3
+def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2,filter_in_class = True):
+    if filter_in_class is True:
+        filtered_systems = []
+        for system_no,system in enumerate(systems):
+            filtered_systems.append(system.filter['time'])
+        return filtered_systems
+    else:
+        if file[selected_snap].t*code_time_to_Myr<long_ago:
+            #We cant look at a snapshot before 0.5 Myr 
+            #print('The selected snapshot is too early to use')
+            return Master_File[selected_snap]
+        snap_1 = selected_snap-1
+        snap_2 = selected_snap-2
+        times = []
+        filtered_systems = copy.deepcopy(Master_File[selected_snap])
+        for i in file:
+            times.append(i.t*code_time_to_Myr)
+        long_ago_snap = closest(times,file[selected_snap].t*code_time_to_Myr - long_ago,param = 'index')
+        for system_no,system in enumerate(Master_File[selected_snap]):
+            result_1 = simple_filter_one_system(system,Master_File,comparison_snapshot=snap_1)
+            result_2 = simple_filter_one_system(result_1,Master_File,comparison_snapshot=snap_2)
+            orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(60*60*24*365*1e6)
+            orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
+            if orbital_period_check > long_ago:
+                snap_3 = orbital_period_snap
+            else:
+                snap_3 = long_ago_snap
+            result_3 = simple_filter_one_system(result_2,Master_File,comparison_snapshot=snap_3)
+            filtered_systems[system_no] = result_3
+        return filtered_systems
+
+def get_q_and_time(systems):
+    filtered_systems = []
+    for system_no,system in enumerate(systems):
+        filtered_systems.append(system.filter['q+time'])
     return filtered_systems
 
 def default_GMC_R(initmass = 2e4):
