@@ -1150,7 +1150,7 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
 def q_filter_one_snap(systems,min_q = 0.1):
     #Change Master_File to file snapshot
     '''The q filter as applied to one snapshot'''
-    Filtered_Master_File = copy.copy(systems) #Creating a new copy of the master file
+    Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
     for i,j in enumerate(Filtered_Master_File):
         if j.no>1:
             for k in j.m:
