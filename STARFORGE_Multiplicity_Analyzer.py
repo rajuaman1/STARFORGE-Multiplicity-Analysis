@@ -4229,7 +4229,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
                 return
             plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
 
-def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
+def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None,filter_in_class = True):
     '''
     Create the plots for one snapshot
     Inputs
@@ -4296,6 +4296,9 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     label: string,optional
     The label to use on the plot
     
+    filter_in_class: bool,optional
+    If the filter is saved in the class definition.
+    
     Returns
     -------
     x_vals: list
@@ -4314,10 +4317,13 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     if label is None: label=filename
     if systems is None: systems = Master_File[snapshot]
     filtered_systems = systems
-    if 'time_filter' in filters:
-        filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
-    if 'q_filter' in filters:
-        filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min)
+    if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
+        filtered_systems = get_q_and_time(filtered_systems)
+    else:
+        if 'time_filter' in filters:
+            filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class)
+        if 'q_filter' in filters:
+            filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min,filter_in_class=filter_in_class)
     if only_filter is True:
         systems = filtered_systems    
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
@@ -4528,7 +4534,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24,adjust_ticks=adjust_ticks)
 
-def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None):
+def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None,filter_in_class = True):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
@@ -4581,6 +4587,9 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     label: string,optional
     The label to put on the plot
     
+    filter_in_class: bool,optional
+    If the filter is saved in the class definition.
+    
     Returns
     -------
     x_vals: list
@@ -4619,10 +4628,13 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         bins = 'continous'
     if systems is None: systems = Master_File[snapshot]
     filtered_systems = systems
-    if 'time_filter' in filters:
-        filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
-    if 'q_filter' in filters:
-        filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min)
+    if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
+        filtered_systems = get_q_and_time(filtered_systems)
+    else:
+        if 'time_filter' in filters:
+            filtered_systems = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class)
+        if 'q_filter' in filters:
+            filtered_systems = q_filter_one_snap(filtered_systems,min_q=q_filt_min,filter_in_class=filter_in_class)
     if only_filter is True:
         systems = filtered_systems
     if multiplicity == 'CF':
@@ -4646,10 +4658,13 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         if 'average_filter' in filters:
             for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
                 filtered_q = Master_File[i]
-                if 'time_filter' in filters:
-                    filtered_q = full_simple_filter(Master_File,file,i,long_ago = time_filt_min)
-                if 'q_filter' in filters:
-                    filtered_q = q_filter_one_snap(filtered_q,min_q = q_filt_min)
+                if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
+                    filtered_q = get_q_and_time(Master_File[i])
+                else:
+                    if 'time_filter' in filters:
+                        filtered_q = full_simple_filter(Master_File,file,i,long_ago = time_filt_min,filter_in_class=filter_in_class)
+                    if 'q_filter' in filters:
+                        filtered_q = q_filter_one_snap(filtered_q,min_q=q_filt_min,filter_in_class=filter_in_class)
                 if multiplicity == 'CF':
                     logmasslist_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[0])
                     o1_all.append(companion_frequency(filtered_q,mass_break=mass_break,bins = bins)[1])
@@ -4685,10 +4700,13 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     o3 = o3_filt
         else:
             filtered_q = Master_File[snapshot]
-            if 'time_filter' in filters:
-                filtered_q = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min)
-            if 'q_filter' in filters:
-                filtered_q = q_filter_one_snap(filtered_q,min_q = q_filt_min)
+            if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
+                filtered_q = get_q_and_time(Master_File[snapshot])
+            else:
+                if 'time_filter' in filters:
+                    filtered_q = full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class)
+                if 'q_filter' in filters:
+                    filtered_q = q_filter_one_snap(filtered_q,min_q=q_filt_min,filter_in_class=filter_in_class)
             if multiplicity == 'CF':
                 logmasslist_filt,o1_filt,o2_filt,o3_filt = companion_frequency(filtered_q,mass_break=mass_break,bins = bins)
             else:
@@ -5023,7 +5041,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None): 
+def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None,filter_in_class = True): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -5145,6 +5163,9 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
     
     description: string,optional
     What to save the name of the Multiplicity Tracker plot under.
+    
+    filter_in_class: bool,optional
+    If the filter is saved in the class definition.
 
     Returns
     -------
@@ -5159,21 +5180,21 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
     if label is None: label=filename
     if which_plot in One_System_Plots:
         if plot == True:
-            One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
+            One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
         else:
-            return One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
+            return One_Snap_Plots(which_plot,Master_File = Master_File,file = file,systems = systems,filename = filename,snapshot = snapshot,upper_limit = upper_limit,lower_limit = lower_limit,target_mass = target_mass,all_companions = all_companions,bins = bins,log = log,compare = compare,plot = plot,read_in_result = read_in_result,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
     elif which_plot == 'Multiplicity':
         if plot == True:
-            Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
+            Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
         else:
-            return Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label)
+            return Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
     elif which_plot in Time_Evo_Plots:
         if plot == True:
             Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
 
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5248,6 +5269,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
 
     description: string,optional
     What to save the name of the YSO plot under.
+    
+    filter_in_class: bool,optional
+    If the filter is saved in the class definition.
     
     Examples
     ----------
@@ -5324,7 +5348,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             offsets = 0.1*np.array(offsets)
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
             if which_plot == 'Multiplicity':
-                a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i])
+                a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i],filter_in_class = filter_in_class)
                 comp_mul_no = c
                 sys_no = d
                 error_one = []
@@ -5377,7 +5401,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 nos.append(no)
                 avg_mass.append(am)
             else:
-                a,b = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i])
+                a,b = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i],filter_in_class = filter_in_class)
                 if normalized == True:
                     b = b*norm_no/sum(b)
                 x.append(a)
@@ -5514,3 +5538,4 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
             plt.yscale('log')
+
