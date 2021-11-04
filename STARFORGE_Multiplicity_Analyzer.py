@@ -1322,7 +1322,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
 def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.5,no_of_orbits = 2,filter_in_class = True):
     if filter_in_class is True:
         filtered_systems = []
-        for system_no,system in enumerate(systems):
+        for system_no,system in enumerate(Master_File[selected_snap]):
             filtered_systems.append(system.filter['time'])
         return filtered_systems
     else:
