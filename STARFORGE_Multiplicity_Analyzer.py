@@ -1175,6 +1175,7 @@ def q_filter_one_snap(systems,min_q = 0.1,filter_in_class = True):
                         j.formation_time_Myr = j.formation_time_Myr[j.m != k]
                         j.init_star_vol_density = j.init_star_vol_density[j.m != k]
                         j.init_star_mass_density = j.init_star_mass_density[j.m != k]
+                        j.init_density = {'number': j.init_star_vol_density, 'mass': j.init_star_mass_density}
                         j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
                         j.ZAMS_age = j.ZAMS_age[j.m != k]
                         j.multip_state = j.multip_state[j.m != k] 
@@ -1246,6 +1247,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         new_system.formation_time_Myr = new_system.formation_time_Myr[new_system.m == new_system.primary]
         new_system.init_star_vol_density= new_system.init_star_vol_density[new_system.m == new_system.primary]
         new_system.init_star_mass_density = new_system.init_star_mass_density[new_system.m == new_system.primary]
+        new_system.init_density = {'number': new_system.init_star_vol_density, 'mass': new_system.init_star_mass_density}
         new_system.stellar_evol_stages = new_system.stellar_evol_stages[new_system.m == new_system.primary]
         new_system.ZAMS_age = new_system.ZAMS_age[new_system.m == new_system.primary]
         new_system.multip_state = new_system.multip_state[new_system.m == new_system.primary]
@@ -1273,6 +1275,7 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
             new_system.formation_time_Myr = new_system.formation_time_Myr[new_system.m != remove_mass]
             new_system.init_star_vol_density= new_system.init_star_vol_density[new_system.m != remove_mass]
             new_system.init_star_mass_density = new_system.init_star_mass_density[new_system.m != remove_mass]
+            new_system.init_density = {'number': new_system.init_star_vol_density, 'mass': new_system.init_star_mass_density}
             new_system.stellar_evol_stages = new_system.stellar_evol_stages[new_system.m != remove_mass]
             new_system.ZAMS_age = new_system.ZAMS_age[new_system.m != remove_mass]
             new_system.multip_state = new_system.multip_state[new_system.m != remove_mass]
