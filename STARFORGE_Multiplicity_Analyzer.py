@@ -2379,8 +2379,8 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     number_densities = []
     for i in tqdm(systems,position = 0,desc = 'processing all systems'):
         selection_index = (i.m>=i.primary*selection_ratio)
-        mass_densities.append(i.init_density['mass'][selection_index])
-        number_densities.append(i.init_density['number'][selection_index])
+        mass_densities.append(i.init_star_mass_density[selection_index])
+        number_densities.append(i.init_star_vol_density[selection_index])
         state.append(i.multip_state[selection_index])
         m.append(i.m)
     mass_densities = np.concatenate(mass_densities)
@@ -2463,7 +2463,7 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
                 solo_mdens_error.append(mass_dens_bins[i][j])
                 all_dens_error.append(dens_bins[i][j])
                 all_mdens_error.append(mass_dens_bins[i][j])
-            elif bins[i][j] == 1:
+            elif bins[i][j] >= 1:
                 primary_count = primary_count + 1
                 primary_dens += dens_bins[i][j]
                 primary_mdens += mass_dens_bins[i][j]
