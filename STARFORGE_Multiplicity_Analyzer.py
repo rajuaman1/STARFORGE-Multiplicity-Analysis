@@ -5396,16 +5396,20 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             array = list(array)
             floor = np.floor(min(array))
             ceiling = np.ceil(max(array))
+        if normalized is True:
+            normal_str = 'Normalized '
+        else:
+            normal_str = ''
         if which_plot == 'System Mass':
             if bins is None:
                 bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log System Mass [$M_\odot$]')
-            plt.ylabel('Number of Systems')
+            plt.ylabel(normal_str+'Number of Systems')
         if which_plot == 'Primary Mass':
             if bins is None:
                 bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log Primary Mass [$M_\odot$]')
-            plt.ylabel('Number of Systems')
+            plt.ylabel(normal_str+'Number of Systems')
         if which_plot == 'Semi Major Axis':
             if bins is None:
                 bins = np.linspace(floor,ceiling,int((ceiling-floor)*3/2+1))
@@ -5413,12 +5417,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             if bins is None:
                 bins = np.linspace(0,np.pi,10)
             plt.xlabel('Mismatch Angle (Rad)')
-            plt.ylabel('Number of Systems')
+            plt.ylabel(normal_str+'Number of Systems')
         if which_plot == 'Mass Ratio':
             if bins is None:
                 bins = np.linspace(0,1,11)
             plt.xlabel('q (Companion Mass Ratio)')
-            plt.ylabel('Number of Systems')
+            plt.ylabel(normal_str+'Number of Systems')
             if all_companions is True:
                 plt.ylabel('Number of Companions')
         if which_plot == 'Multiplicity':
@@ -5516,9 +5520,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                     pands.append(i.primary+i.secondary)
             average_pands = np.average(pands)*1.9891e30 
             ax1.set_xlabel('Log Semi Major Axis [AU]',fontsize=14)
-            ax1.set_ylabel('Number of Systems',fontsize=14)
+            ax1.set_ylabel(normal_str+'Number of Systems',fontsize=14)
             if all_companions == True:
-                ax1.set_ylabel('Number of Sub-Systems',fontsize=14)
+                ax1.set_ylabel(normal_str+'Number of Sub-Systems',fontsize=14)
             ax2 = ax1.twiny(); adjust_ticks=False
             ax2.set_xlabel('Log Period [Days]',fontsize=14)
             logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
