@@ -1228,7 +1228,7 @@ def q_filter(Master_File):
 def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
     'Working the simple filter onto one system'
     was_primary_there = False
-    new_system = copy.copy(system)
+    new_system = copy.deepcopy(system)
     for previous_sys in Master_File[comparison_snapshot]:
         if system.primary_id == previous_sys.primary_id:
             previous_target_system = previous_sys
