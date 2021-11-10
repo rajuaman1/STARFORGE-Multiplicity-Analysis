@@ -5227,6 +5227,68 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
         else:
             return Time_Evolution_Plots(which_plot,Master_File,file,filename=filename,steps = steps,target_mass = target_mass,T = T,dt = dt,target_age = target_age,min_age = min_age,read_in_result = read_in_result,start = start,upper_limit = upper_limit,lower_limit = lower_limit,plot = plot,multiplicity = multiplicity,zero = zero,select_by_time = select_by_time,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,min_time_bin = min_time_bin,adaptive_binning = adaptive_binning,adaptive_no = adaptive_no,x_axis = x_axis,description=description)
 
+def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,filter_display = 'sub-filter',label=None,filter_in_class = True,include_error = True):
+    if filter_display != 'sub-filter':
+        if filter_display == 'none':
+            filters = [None]
+            only_filter = True
+        if filter_display == 'top-level':
+            only_filter = True
+        if filter_display == 'comparison':
+            only_filter = False
+        Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
+    else:
+        filter_labels = ['Simulation Data','q Corrected','Time Corrected','q and Time Corrected']
+        filter_names = [[None],['q_filter'],['time_filter'],['q_filter','time_filter']]
+        logmasslists = []
+        o1s = [];o2s = [];o3s = []
+        linestyles = ['-',':','--','-.']
+        for i in range(len(filter_names)):
+            logmasslist,o1,o2,o3 = Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = False,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filter_names[i],avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = True,label=label,filter_in_class = filter_in_class)
+            error = []
+            for o3_err,o2_err in zip(o3,o2):
+                if multiplicity == 'MF':
+                    error.append(Lsigma(o3_err,o2_err))
+                else:
+                    error.append(Psigma(o3_err,o2_err))
+            error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
+            if include_error is True:
+                plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
+            plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
+            plt.xlabel('Log Mass [$M_\odot$]')
+        if multiplicity == 'MF':
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
+            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
+            for i in range(len(observation_mass_center)):
+                if i == 0:
+                    temp_label = 'Observations'
+                else:
+                    temp_label = None
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+            plt.ylabel('Multiplicity Fraction')
+            bottom,top = plt.ylim()
+            if top >1:
+                plt.ylim(bottom,1)
+        if multiplicity == 'CF':
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
+            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+            for i in range(len(observation_mass_center)):
+                if i == 0:
+                    temp_label = 'Observations'
+                else:
+                    temp_label = None
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+            plt.ylabel('Companion Frequency')
+            bottom,top = plt.ylim()
+            if top >3:
+                plt.ylim(bottom,3)
+        adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
+        plt.legend(fontsize = 14)
+        
 def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True):
     '''
     Creates distribution plots for more than one file
