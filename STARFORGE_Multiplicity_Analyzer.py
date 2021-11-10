@@ -4537,7 +4537,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24,adjust_ticks=adjust_ticks)
 
-def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None,filter_in_class = True):
+def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,label=None,filter_in_class = True,style = 'line'):
     '''
     Create a plot for the multiplicity over a mass range for a single snapshot.
 
@@ -4752,20 +4752,35 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
             elif bins == 'observer':
                 if multiplicity == 'MF':
-                    for i in range(len(logmasslist)-1):
-                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
-                    if only_filter is False:
-                        for i in range(len(logmasslist_filt)-1):
-                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                    if style == 'box':
+                        for i in range(len(logmasslist)-1):
+                            plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Psigma(o3[i],o2[i]),o1[i]-Psigma(o3[i],o2[i]),alpha = 0.6,color = '#ff7f0e')
+                        if only_filter is False:
+                            for i in range(len(logmasslist_filt)-1):
+                                plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Psigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Psigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                    elif style == 'line':
+                        error = []
+                        for o3_err,o2_err in zip(o3,o2):
+                            error.append(Psigma(o3_err,o2_err))
+                        error = np.array(error,dtype=float);o1 = np.array(o1,dtype=float)
+                        plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.6,color = '#ff7f0e')
+                        plt.plot(logmasslist,o1,color = 'black')
+                        if only_filter is False:
+                            error_filt = []
+                            for o3_err,o2_err in zip(o3_filt,o2_filt):
+                                error_filt.append(Psigma(o3_err,o2_err))
+                            error_filt = np.array(error_filt,dtype=float);o1_filt = np.array(o1_filt,dtype=float)
+                            plt.fill_between(logmasslist_filt,o1_filt+error_filt,o1_filt-error_filt,alpha = 0.6,color = '#1f77b4',hatch=r"\\")
+                            plt.plot(logmasslist_filt,o1_filt,color = 'black',linestyle = '--')
                 else:
                     plt.plot(logmasslist,np.log10(o1),marker = '^')
                     plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
                     if only_filter is False:
                         plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
-            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_MF = [0.08,0.15,0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
-            observation_MF_err = [0.06,0.04,0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
+            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
             plt.xlabel('Log Mass [$M_\odot$]')
             if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
@@ -4799,15 +4814,30 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 if only_filter is False:
                     plt.plot(logmasslist_filt,o1_filt,marker = 'o',label = 'After Corrections',linestyle = ':')
             elif bins == 'observer':
-                for i in range(len(logmasslist)-1):
-                    plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Lsigma(o3[i],o2[i]),o1[i]-Lsigma(o3[i],o2[i]),color = '#ff7f0e',alpha = 0.6)
-                if only_filter is False:
-                    for i in range(len(logmasslist_filt)-1):
-                        plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
-            observation_mass_center = [0.0385,0.065,0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0195,0.015,0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_CF = [0.08,0.16,0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
-            observation_CF_err = [0.06,0.04,0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+                if style =='box':
+                    for i in range(len(logmasslist)-1):
+                        plt.fill_between([logmasslist[i],logmasslist[i+1]],o1[i]+Lsigma(o3[i],o2[i]),o1[i]-Lsigma(o3[i],o2[i]),color = '#ff7f0e',alpha = 0.6)
+                    if only_filter is False:
+                        for i in range(len(logmasslist_filt)-1):
+                            plt.fill_between([logmasslist_filt[i],logmasslist_filt[i+1]],o1_filt[i]+Lsigma(o3_filt[i],o2_filt[i]),o1_filt[i]-Lsigma(o3_filt[i],o2_filt[i]),alpha = 0.3,color = '#1f77b4',hatch=r"\\")
+                elif style == 'line':
+                    error = []
+                    for o3_err,o2_err in zip(o3,o2):
+                        error.append(Lsigma(o3_err,o2_err))
+                    error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
+                    plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.6,color = '#ff7f0e')
+                    plt.plot(logmasslist,o1,color = 'black')
+                    if only_filter is False:
+                        error_filt = []
+                        for o3_err,o2_err in zip(o3_filt,o2_filt):
+                            error_filt.append(Lsigma(o3_err,o2_err))
+                        error_filt = np.array(error_filt,dtype=float);o1_filt = np.array(o1_filt,dtype=float)
+                        plt.fill_between(logmasslist_filt,o1_filt+error_filt,o1_filt-error_filt,alpha = 0.6,color = '#1f77b4',hatch=r"\\")
+                        plt.plot(logmasslist_filt,o1_filt,color = 'black',linestyle = '--')
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
+            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
+            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
             plt.xlabel('Log Mass [$M_\odot$]')
             plt.ylabel('Companion Frequency')
             for i in range(len(observation_mass_center)):
