@@ -2103,6 +2103,56 @@ def momentum_angle(id1,id2,file,snapshot):
         angle = np.arccos(cosangle)
         return angle
 
+def Seperation_Tracking(file,systems,rolling_avg = False):
+    filtered_systems = get_q_and_time(systems[-1])
+    tracking_systems = []
+    for j in filtered_systems:
+        if j.no == 2 and j.primary>0.08:
+            tracking_systems.append(j)
+    x_axis = []
+    y_axis = []
+    initial_sep = []
+    for i in tqdm(tracking_systems,position=0):
+        smaxes,times = distance_tracker_binaries(Files[0],Systems[0],i.ids,plot = False,rolling_avg=False)
+        x_axis.append(times)
+        y_axis.append(smaxes)
+        initial_sep.append(np.array(smaxes)[np.array(times) == 0])
+    seperations = np.linspace(2,6,5)
+    seperation_random = np.insert(seperations,0,0)
+    x_axis_sep = []
+    y_axis_sep = []
+    for i in range(len(seperations)):
+        x_axis_sep.append([])
+        y_axis_sep.append([])
+    for i in range(len(initial_sep)):
+        for j in range(len(seperations)):
+            if seperation_random[j]<=initial_sep[i][0]<=seperation_random[j+1]:
+                x_axis_sep[j].append(x_axis[i])
+                y_axis_sep[j].append(y_axis[i])
+    for i in tqdm(range(len(x_axis_sep))):
+        plt.figure(figsize = (10,10))
+        rolling_window = time_to_snaps(0.1,file)
+        if rolling_window%2 == 0:
+            rolling_window -= 1
+        rolling_window = int(rolling_window)
+        maximum = 0
+        for j in range(len(x_axis_sep[i])):
+            if rolling_avg is True:
+                x_axis_rolled = rolling_average(x_axis_sep[i][j])
+                y_axis_rolled = rolling_average(y_axis_sep[i][j])
+                plt.plot(x_axis_rolled,y_axis_rolled)
+                if np.max(y_axis_rolled) > maximum:
+                    maximum = np.max(y_axis_rolled)
+            else:
+                plt.plot(x_axis_sep[i][j],y_axis_sep[i][j])
+                if np.max(y_axis_sep[i][j])>maximum:
+                    maximum = np.max(y_axis_sep[i][j])
+        plt.xlabel('Age [Myr]')
+        plt.ylabel('Log Seperation [AU]')
+        plt.text(0,maximum,'Log '+str(seperation_random[i].round(2))+' AU''< Initial Seperation < Log '+str(seperation_random[i+1].round(2))+' AU')
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+        plt.savefig('Upto '+str(seperation_random[i+1].round(2))+'.png',dpi = 100,bbox_inches = 'tight')
+
 #Getting the total masses, primary masses, smaxes and companion mass ratio. Also gets the target primary masses for 
 #smaxes and companion mass ratios.
 def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio',file = False):
