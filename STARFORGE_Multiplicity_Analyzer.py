@@ -2113,7 +2113,7 @@ def Seperation_Tracking(file,systems,rolling_avg = False):
     y_axis = []
     initial_sep = []
     for i in tqdm(tracking_systems,position=0):
-        smaxes,times = distance_tracker_binaries(Files[0],Systems[0],i.ids,plot = False,rolling_avg=False)
+        smaxes,times = distance_tracker_binaries(file,systems,i.ids,plot = False,rolling_avg=False)
         x_axis.append(times)
         y_axis.append(smaxes)
         initial_sep.append(np.array(smaxes)[np.array(times) == 0])
