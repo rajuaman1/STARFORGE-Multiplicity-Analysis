@@ -794,43 +794,23 @@ def smaxis_all(system):
     if k.no == 1: #Single star has no smaxis
         smaxis = 0
         return smaxis
-    if len(k.m) == 2 and k.m[0] == k.m[1]:
-        primary_id = k.ids[0]
-        primary_mass = k.m[0]
-        secondary_id = k.ids[1]
-        secondary_mass = k.m[1]
-        sec_ind = 1
-    else:
-        primary_id = k.primary_id
-        primary_mass = k.primary
-        secondary_id = np.array(k.ids)[k.m == k.secondary]
-        if isinstance(secondary_id,np.ndarray):
-            secondary_id = secondary_id[0]
-        secondary_mass = 0
-    for i in range(len(k.m)):
-        if k.m[i] < primary_mass and k.m[i]> secondary_mass:
-            secondary_mass = k.m[i]
-            sec_ind = i
+
+    primary_id = k.primary_id
+    primary_mass = k.primary
+    prim_ind = np.argmax(k.ids==k.primary_id)
+    sec_ind = np.argmax((k.m <= primary_mass) & (k.ids != primary_id))
+    secondary_id = k.ids[sec_ind]
+    secondary_mass = k.m[sec_ind]
+
     if k.no == 3:
-        k.m += np.arange(len(k.m))*1e-6 #hack to fix the complicated logic below or equal masses
-        tert_mass = k.m[k.m < secondary_mass][0]
-        # tert_id = np.array(k.ids)[k.m == tert_mass][0]
-        tert_x = k.x[k.m == tert_mass][0]
-        tert_v = k.v[k.m == tert_mass][0]
-    elif k.no == 4:
-        tert_mass = k.m[k.m < secondary_mass][0]
-        # tert_id = np.array(k.ids)[k.m == tert_mass][0]
-        tert_x = k.x[k.m == tert_mass][0]
-        tert_v = k.v[k.m == tert_mass][0]
-        
-        # quart_mass = k.m[k.m < secondary_mass][1]
-        # quart_id = np.array(k.ids)[k.m == quart_mass][0]
-        # quart_x = k.x[k.m == quart_mass][0]
-        # quart_v = k.v[k.m == quart_mass][0]
+        tert_ind = np.argmax((k.m <= secondary_mass) & (k.ids != secondary_id))
+        tert_mass = k.m[tert_ind]
+        tert_x = k.x[tert_ind]
+        tert_v = k.v[tert_ind]
         
     if k.no == 2: #If there's two stars, only one possible semi major axis 
-        vel_prim = k.v[np.argmax(k.m)]
-        x_prim = k.x[np.argmax(k.m)]
+        vel_prim = k.v[prim_ind]
+        x_prim = k.x[prim_ind]
         vel_sec = k.v[sec_ind]
         x_sec = k.x[sec_ind]
         
@@ -890,9 +870,7 @@ def smaxis_all(system):
             secondary_mass = np.array(k.m)[np.array(k.ids) == i[0]]+np.array(k.m)[np.array(k.ids) == i[1]]
             semiax3 = semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
         elif sum(struc_list) == 2: #It is a hierarchial system
-            structure = []
             for i in k.structured_ids:
-                substructure = []
                 if isinstance(i,list):
                     for j in i:
                         if isinstance(j,list):
@@ -977,6 +955,7 @@ class star_system:
             else:
                 multiplicity_state[i] = -1
         self.multip_state = multiplicity_state
+        self.filter = np.nan
            
 # Main Function of the program
 def system_creation(file,snapshot_num,Master_File,seperation_param = None,read_in_result = False,L = None):
@@ -5450,9 +5429,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             array = np.log10(array)
             if which_plot == 'Semi Major Axis':
                 array = np.array(array)-np.log10(m_to_AU)
-            array = list(array)
-            floor = np.floor(min(array))
-            ceiling = np.ceil(max(array))
+            #array = list(array)
+            floor = np.floor(np.min(array[np.isfinite(array)]))
+            ceiling = np.ceil(np.max(array[np.isfinite(array)]))
         if normalized is True:
             normal_str = 'Normalized '
         else:
