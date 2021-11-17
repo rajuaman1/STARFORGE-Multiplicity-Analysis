@@ -812,20 +812,21 @@ def smaxis_all(system):
             secondary_mass = k.m[i]
             sec_ind = i
     if k.no == 3:
+        k.m += np.arange(len(k.m))*1e-6 #hack to fix the complicated logic below or equal masses
         tert_mass = k.m[k.m < secondary_mass][0]
-        tert_id = np.array(k.ids)[k.m == tert_mass][0]
+        # tert_id = np.array(k.ids)[k.m == tert_mass][0]
         tert_x = k.x[k.m == tert_mass][0]
         tert_v = k.v[k.m == tert_mass][0]
     elif k.no == 4:
         tert_mass = k.m[k.m < secondary_mass][0]
-        tert_id = np.array(k.ids)[k.m == tert_mass][0]
+        # tert_id = np.array(k.ids)[k.m == tert_mass][0]
         tert_x = k.x[k.m == tert_mass][0]
         tert_v = k.v[k.m == tert_mass][0]
         
-        quart_mass = k.m[k.m < secondary_mass][1]
-        quart_id = np.array(k.ids)[k.m == quart_mass][0]
-        quart_x = k.x[k.m == quart_mass][0]
-        quart_v = k.v[k.m == quart_mass][0]
+        # quart_mass = k.m[k.m < secondary_mass][1]
+        # quart_id = np.array(k.ids)[k.m == quart_mass][0]
+        # quart_x = k.x[k.m == quart_mass][0]
+        # quart_v = k.v[k.m == quart_mass][0]
         
     if k.no == 2: #If there's two stars, only one possible semi major axis 
         vel_prim = k.v[np.argmax(k.m)]
@@ -1066,7 +1067,7 @@ def Mass_Creation_Finder(file,min_mass = 1):
             break
     return snap
 
-def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,snapshot_num = -1,L = None,starting_snap = 0):
+def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,redo_all=False, snapshot_num = -1,L = None,starting_snap = 0):
     '''
     This function initializes the systems for a given file.
     Inputs
@@ -1081,9 +1082,11 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
     ----------
     read_in_result : bool,optional
     Whether to read in the result from pickle files or do system assignment.
-
     full_assignment: bool,optional
     Whether to perform system assignment on all snapshots.
+    
+    redo_all: bool,optional
+    If enabled all snapshots are recalculated even if previous system data exists
     
     seperation_param: float
     If not None the simulation volume is subdivided into boxes whose of seperation_param size and the systm assignment is carried out in them inependetly
@@ -1131,12 +1134,16 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
     elif read_in_result == False:
         if full_assignment == True:
             Result_List = []
-            if starting_snap != 0:
-                print('Loading File')
+            if redo_all or (not path.exists(file_name+str('_Systems'))):
+                starting_snap=0
+            if (not redo_all or starting_snap>0) and path.exists(file_name+str('_Systems')):
+                print('Loading File '+file_name+str('_Systems'))
                 infile = open(file_name+str('_Systems'),'rb')
                 Master_File = pickle.load(infile)
                 infile.close()
-                print('File Opened')
+                print('File loaded')
+                if starting_snap==0:
+                    starting_snap = len(Master_File)
                 for snap in range(0,starting_snap):
                     Result_List.append(Master_File[snap])
             for i in tqdm(range(starting_snap,len(file)),desc = 'Full Assignment',position = 0):
