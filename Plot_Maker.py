@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -66,7 +66,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, do_last
     pickle.dump(output,outfile)
     outfile.close()
 
-def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'afft',zero = 'Formation'):
+def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'afft',zero = 'Formation',filter_in_class = False):
     Filenames = orig_filenames.copy()
     timer = Timer()
     timer.start()
@@ -97,14 +97,14 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             if plot_type == 'Multiplicity':
                 for multiplicity in ['MF','CF']:
                     plt.figure(figsize = (6,6));print('\n Making '+multiplicity+' plot...')
-                    Multi_Plot(plot_type,Systems,Files,Filenames,multiplicity=multiplicity,labels=labels,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min)
+                    Multi_Plot(plot_type,Systems,Files,Filenames,multiplicity=multiplicity,labels=labels,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,filter_in_class = filter_in_class)
                     plt.savefig(new_file+'/'+multiplicity+'_'+description+'.png',dpi = 150);plt.close('all') 
             else:
                 for upper_limit,lower_limit in zip([1.3e7,1.3],[0,0.7]):
                     plt.figure(figsize = (6,6))
                     if upper_limit == 1.3e7: print('\n Making '+plot_type+' distribution plot for all stars...');star_type = 'all';
                     elif upper_limit == 1.3: print('\n Making '+plot_type+' distribution plot for Solar-type stars...');star_type = 'solar';
-                    Multi_Plot(plot_type,Systems,Files,Filenames,upper_limit=upper_limit,lower_limit=lower_limit,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no)
+                    Multi_Plot(plot_type,Systems,Files,Filenames,upper_limit=upper_limit,lower_limit=lower_limit,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no,filter_in_class = filter_in_class)
                     plt.savefig(new_file+'/'+str(plot_type)+'_'+star_type+'_'+description+'.png',dpi = 150, bbox_inches="tight"); plt.close('all') 
             timer.dt(text='Multi plot figures')
     
@@ -126,7 +126,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             only_filter = True
         for n in tqdm(range(len(Files)),position = 0,desc = plot_type):
             plt.figure(figsize = (6,6))
-            Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity) 
+            Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class) 
             plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
         timer.dt(text= plot_type+'figures')
     
@@ -135,7 +135,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     for i in range(len(Files)):
         for multiplicity in ['MF','CF']:
             plt.figure(figsize = (6,6))
-            Multiplicity_One_Snap_Plots_Filters(Systems[i],Files[i],multiplicity = multiplicity)
+            Multiplicity_One_Snap_Plots_Filters(Systems[i],Files[i],multiplicity = multiplicity,filter_in_class = filter_in_class)
             plt.savefig(new_file+'/'+multiplicity+'_Filters_'+orig_filenames[i]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
 
     #Formation Density vs Multiplicity Plots
