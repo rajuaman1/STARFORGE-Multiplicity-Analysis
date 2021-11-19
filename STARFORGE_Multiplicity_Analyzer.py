@@ -1046,7 +1046,7 @@ def Mass_Creation_Finder(file,min_mass = 1):
             break
     return snap
 
-def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,redo_all=False, snapshot_num = -1,L = None,starting_snap = 0):
+def system_initialization(file,file_name,read_in_result = True,seperation_param = None,full_assignment = False,redo_all=False, snapshot_num = -1,L = None,starting_snap = 0, no_subdivision_for_last_snaps=1):
     '''
     This function initializes the systems for a given file.
     Inputs
@@ -1078,6 +1078,9 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
     
     starting_snap: int,optional
     The first snap to perform system initialization
+    
+    no_subdivision_for_last_snaps: int, optional
+    Sets the number of snapshots at the end of the simulation for which system assignment is done without subdivision, 0 by default
 
     Returns
     -------
@@ -1127,7 +1130,11 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
                     Result_List.append(Master_File[snap])
             for i in tqdm(range(starting_snap,len(file)),desc = 'Full Assignment',position = 0):
                 print('Snapshot No: '+str(i)+'/'+str(len(file)-1))
-                Result_List.append(system_creation(file,i,Master_File = file,seperation_param=seperation_param,read_in_result = False,L = L))
+                if i>=(len(file)-no_subdivision_for_last_snaps):
+                    seperation_param_to_use = None
+                else:
+                    seperation_param_to_use = seperation_param
+                Result_List.append(system_creation(file,i,Master_File = file,seperation_param=seperation_param_to_use,read_in_result = False,L = L))
             return Result_List #Returning the list of assigned systems
         else:#Returning just one snapshot
             return system_creation(file,snapshot_num,Master_File = file,seperation_param=seperation_param,read_in_result = False,L = L)
@@ -2749,7 +2756,7 @@ def randomly_distributed_companions(systems,file,snapshot,lower_limit = 1/1.5,up
 
 #Describes the time evolution of the MF/CF of different masses with two lines, one that
 #shows the multiplicity at a given time and one that only chooses stars that remain solar mass
-def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',multiplicity = 'MF'):
+def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,start = 0,target_mass = 1,upper_limit = 1.5,lower_limit = 1/1.5,plot = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'atff',multiplicity = 'MF'):
     '''
     Returns the evolution of the multiplicity fraction or companion frequency for a selected primary mass, either the fraction at a time or only for stars that dont accrete more.
 
@@ -2788,7 +2795,7 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
     How much time to include in the rolling window. [in Myr]
     
     time_norm : string,optional
-    Which normalization to use for time (Myr,fft,afft (alpha fft))
+    Which normalization to use for time (Myr,tff,atff (alpha tff))
 
     multiplicity: string,optional
     Which multiplicity property to use (MF,CF)
@@ -2874,16 +2881,16 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
         time.append(file[i].t)
     time = np.array(time)
     ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
-    if time_norm == 'afft':
+    if time_norm == 'atff':
         time = (time/(ff_t*np.sqrt(file_properties(filename,param = 'alpha'))))
-    elif time_norm == 'fft':
+    elif time_norm == 'tff':
         time = time/ff_t
     else:
         time = time*code_time_to_Myr
     if plot == True:
-        if time_norm == 'afft':
+        if time_norm == 'atff':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
-        elif time_norm == 'fft':
+        elif time_norm == 'tff':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
         elif time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
@@ -4776,8 +4783,8 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             elif multiplicity == 'Mass Density Separate':
                 plt.ylabel(r'Mass Density [$\frac{M_\odot}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
-            if filename is not None:
-                plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+            # if filename is not None:
+            #     plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
         else:
             return logmasslist,o1,o2,o3
     if multiplicity == 'MF' or multiplicity == 'Density' or multiplicity == 'Mass Density':
@@ -4896,7 +4903,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         else:
             return logmasslist,o1,o2,o3
 
-def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'MF',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None,label=None):
+def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T = None,dt = None,target_age = 1,filename = None,min_age = 0,read_in_result = True,start = 0,upper_limit = 1.3,lower_limit = 0.7,plot = True,multiplicity = 'MF',zero = 'Consistent Mass',select_by_time = True,rolling_avg = False,rolling_window = 0.1,time_norm = 'tff',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None,label=None):
     '''
     Create a plot for a property that evolves through the simulation.
 
@@ -4965,7 +4972,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
     Time to include in the rolling average. [in Myr]
     
     time_norm : str,optional
-    Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    Whether to use the simulation time in Myr('Myr'), in free fall time('tff'), or in free fall time and sqrt alpha ('atff')
     
     min_time_bin: int,optional
     The minimum time bin to plot on the time histogram
@@ -5046,7 +5053,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         if time_norm != 'Myr':
             prop_times = np.array(prop_times)
             ff_t = t_ff(file_properties(filename,param = 'm'),file_properties(filename,param = 'r'))
-            if time_norm == 'afft':
+            if time_norm == 'atff':
                 alpha = file_properties(filename,param = 'alpha')
                 ff_t = ff_t*np.sqrt(alpha)
             prop_times = (prop_times/ff_t)
@@ -5074,9 +5081,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm == 'fft':
+        elif time_norm == 'tff':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm == 'afft':
+        elif time_norm == 'atff':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('YSO Multiplicity Fraction')
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
@@ -5090,9 +5097,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.yscale('log')
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm == 'fft':
+        elif time_norm == 'tff':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm == 'afft':
+        elif time_norm == 'atff':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Number of Young Stars')
         #plt.legend(fontsize=14)
@@ -5103,14 +5110,14 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         #plt.plot(times,av2,label = 'Consistent Mass')
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
-        elif time_norm == 'fft':
+        elif time_norm == 'tff':
             plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-        elif time_norm == 'afft':
+        elif time_norm == 'atff':
             plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
         plt.ylabel('Average Mass of Young Stars')
 
 #Function that contains all the plots
-def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'afft',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None,filter_in_class = True,MFCF_plot_style = 'line'): 
+def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'tff',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None,filter_in_class = True,MFCF_plot_style = 'line'): 
     '''
     Create a plot or gives you the values to create a plot for the whole system.
 
@@ -5216,7 +5223,7 @@ def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -
     The time in the rolling window.[in Myr]
     
     time_norm : str,optional
-    Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    Whether to use the simulation time in Myr('Myr'), in free fall time('tff'), or in free fall time and sqrt alpha ('atff')
     
     min_time_bin: int,optional
     The minimum time bin to plot on the time histogram
@@ -5328,7 +5335,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
         adjust_font(fig=plt.gcf(), ax_fontsize=24, labelfontsize=24)
         plt.legend(fontsize = 14)
         
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'afft',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'tff',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5387,7 +5394,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
     How many points to include in the rolling average window.[in Myr]
     
     time_norm : str,optional
-    Whether to use the simulation time in Myr('Myr'), in free fall time('fft'), or in free fall time and sqrt alpha ('afft')
+    Whether to use the simulation time in Myr('Myr'), in free fall time('tff'), or in free fall time and sqrt alpha ('atff')
     
     adaptive_no: list,optional
     The number of stars in each bin for each file
@@ -5518,9 +5525,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
 
                 time = np.array(time)
                 ff_t = t_ff(file_properties(Filenames[i],param = 'm'),file_properties(Filenames[i],param = 'r'))
-                if time_norm == 'afft':
+                if time_norm == 'atff':
                     time = (time/(ff_t*np.sqrt(file_properties(Filenames[i],param = 'alpha'))))
-                elif time_norm == 'fft':
+                elif time_norm == 'tff':
                     time = (time/(ff_t))
 
                 if rolling_avg is True:
@@ -5626,9 +5633,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.plot(times[i],fractions[i],label = labels[i])
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm == 'fft':
+            elif time_norm == 'tff':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm == 'afft':
+            elif time_norm == 'atff':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.ylabel('YSO Multiplicity Fraction')
             plt.fill_betweenx(np.linspace(0.35,0.5,100),0,max(list(flatten(times))),color = 'orange',alpha = 0.3)
@@ -5647,9 +5654,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.ylabel('Number of YSOs')
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm == 'fft':
+            elif time_norm == 'tff':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm == 'afft':
+            elif time_norm == 'atff':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -5661,9 +5668,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.ylabel('Average Mass of YSOs')
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
-            elif time_norm == 'fft':
+            elif time_norm == 'tff':
                 plt.xlabel(r'Time [$\frac{t}{t_{ff}}$]')
-            elif time_norm == 'afft':
+            elif time_norm == 'atff':
                 plt.xlabel(r'Time [$\frac{t}{\sqrt{\alpha}t_{ff}}$]')
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)

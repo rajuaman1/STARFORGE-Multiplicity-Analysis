@@ -50,15 +50,11 @@ alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 
 datafolder='' #use '' if in the same directory as script
 
-def redo_system_assignment(filename,datafolder='',seperation_param=None, do_last_10_with_no_sep=True):
+def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10):
     file_path = filename
     if datafolder !='': file_path = datafolder + '/' + filename
     file = load_files(file_path)[0]
-    output = system_initialization(file,filename,read_in_result=False,full_assignment= True,seperation_param=seperation_param)
-    
-    if do_last_10_with_no_sep and (not (seperation_param is None) ):
-        for i in tqdm(range(-10,0)):
-            output[i] = system_creation(file,i,'',seperation_param=None,read_in_result=False)
+    output = system_initialization(file,file_path,read_in_result=False,full_assignment= True,seperation_param=seperation_param,no_subdivision_for_last_snaps=no_subdivision_for_last_snaps)
     #Saving to file
     outfilename=filename+'_Systems'
     if datafolder !='': outfilename = datafolder + '/' + outfilename
@@ -182,9 +178,17 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     #Print out final timing table
     timer.list_times()
 
-#redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
-#redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
-#redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, do_last_10_with_no_sep=True)
+# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2)
+# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2)
+##redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2)
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
 
 
@@ -193,7 +197,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
 #all_plots(BOX_filenames,'BOX',BOX_labels)
 #all_plots(metal_filenames,'metal',metal_labels)
 #all_plots(mu_filenames,'magnetic',mu_labes)
-#all_plots(ISRF_filenames,'ISRF',ISRF_labels)
+all_plots(ISRF_filenames,'ISRF',ISRF_labels)
 #all_plots(alt_filenames,'realizations',alt_labels)
 
 
