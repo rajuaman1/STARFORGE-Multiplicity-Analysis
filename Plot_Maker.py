@@ -39,9 +39,9 @@ sigma_filenames = ['M2e4_C_M_J_RT_W_R30_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_R
 sigma_labels = [r'$\Sigma = 6.3\,M_\mathrm{\odot}/\mathrm{pc}^2$',r'$\Sigma = 63\,M_\mathrm{\odot}/\mathrm{pc}^2$', r'$\Sigma = 630\,M_\mathrm{\odot}/\mathrm{pc}^2$']
 BOX_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_2e7_BOX','M2e4_C_M_J_RT_W_nodriving_2e7_BOX']
 BOX_labels = [r'Sphere', r'Box', r'Box, decaying']
-metal_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_Zx01_2e7','M2e4_C_M_J_RT_W_Zx001_2e7']
+metal_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_Zx01_2e7','M2e4_C_M_J_RT_W_Zx001_2e7']
 metal_labels = [r'$\mathrm{Z/Z_\odot}=1$',r'$\mathrm{Z/Z_\odot}=0.1$',r'$\mathrm{Z/Z_\odot}=0.01$']
-mu_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_hiB_2e7','M2e4_C_M_J_RT_W_vhiB_2e7'] 
+mu_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_hiB_2e7','M2e4_C_M_J_RT_W_vhiB_2e7'] 
 mu_labes = [r'$\mu=4.2$',r'$\mu=1.3$',r'$\mu=0.42$']
 ISRF_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_ISRFx10_2e7','M2e4_C_M_J_RT_W_ISRFx100_2e7']
 ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
@@ -192,13 +192,13 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
 
 
-#all_plots(alpha_filenames,'alpha',alpha_labels)
-#all_plots(sigma_filenames,'sigma',sigma_labels)
-#all_plots(BOX_filenames,'BOX',BOX_labels)
-#all_plots(metal_filenames,'metal',metal_labels)
-#all_plots(mu_filenames,'magnetic',mu_labes)
-all_plots(ISRF_filenames,'ISRF',ISRF_labels)
-#all_plots(alt_filenames,'realizations',alt_labels)
+# all_plots(alpha_filenames,'alpha',alpha_labels)
+# all_plots(sigma_filenames,'sigma',sigma_labels)
+# all_plots(BOX_filenames,'BOX',BOX_labels)
+# all_plots(metal_filenames,'metal',metal_labels)
+# all_plots(mu_filenames,'magnetic',mu_labes)
+#all_plots(ISRF_filenames,'ISRF',ISRF_labels)
+all_plots(alt_filenames,'realizations',alt_labels)
 
 
 
