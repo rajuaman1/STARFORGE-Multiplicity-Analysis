@@ -2094,7 +2094,7 @@ def momentum_angle(id1,id2,file,snapshot):
         normal1 = np.linalg.norm(momentum1);normal2 = np.linalg.norm(momentum2)
         cosangle = dot_product/(normal1*normal2)
         angle = np.arccos(cosangle)
-        return angle
+        return angle*180/np.pi
 
 def Seperation_Tracking(file,systems,rolling_avg = False):
     filtered_systems = get_q_and_time(systems[-1])
@@ -4496,9 +4496,9 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
                 plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
                 if only_filter is False:
-                    plt.vlines((x_vals_filt[-1]+x_vals_filt[-2]+0.02)/2,y_vals_filt[-1]-np.sqrt(y_vals_filt[-1]),y_vals_filt[-1]+np.sqrt(y_vals_filt[-1]),linestyles=':')
-                    plt.vlines((x_vals_filt[4]+x_vals_filt[3]+0.02)/2,y_vals_filt[4]-np.sqrt(y_vals_filt[4]),y_vals_filt[4]+np.sqrt(y_vals_filt[4]),linestyles=':')
-                    plt.vlines((x_vals_filt[1]+x_vals_filt[2]+0.02)/2,y_vals_filt[2]-np.sqrt(y_vals_filt[2]),y_vals_filt[2]+np.sqrt(y_vals_filt[2]),linestyles=':')
+                    plt.vlines((x_vals_filt[-1]+x_vals_filt[-2]+0.02)/2,y_vals_filt[-1]-np.sqrt(y_vals_filt[-1]),y_vals_filt[-1]+np.sqrt(y_vals_filt[-1]),linestyles=':',color = '#ff7f0e')
+                    plt.vlines((x_vals_filt[4]+x_vals_filt[3]+0.02)/2,y_vals_filt[4]-np.sqrt(y_vals_filt[4]),y_vals_filt[4]+np.sqrt(y_vals_filt[4]),linestyles=':',color = '#ff7f0e')
+                    plt.vlines((x_vals_filt[1]+x_vals_filt[2]+0.02)/2,y_vals_filt[2]-np.sqrt(y_vals_filt[2]),y_vals_filt[2]+np.sqrt(y_vals_filt[2]),linestyles=':',color = '#ff7f0e')
                 plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'Stellar Mass Distribution (IMF)')
                 if all_companions == True:
                     plt.ylabel('Number of Companions')
@@ -4517,7 +4517,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             plt.ylabel('Number of Systems')
             plt.xlabel('Misalignment Angle (Rad)')
-            plt.plot(np.linspace(0,np.pi,31),max(y_vals)*np.sin(np.linspace(0,np.pi,31)),linestyle = '--',label = 'Random Distribution')
+            x_pected = np.linspace(0,180,31)
+            plt.plot(x_pected,max(y_vals)*np.sin(x_pected*np.pi/180),linestyle = '--',label = 'Random Distribution')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')  
             plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
@@ -5301,7 +5302,8 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
                     error.append(Psigma(o3_err,o2_err))
             error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
             if include_error is True:
-                plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
+                if filter_labels[i] == 'Simulation Data' or filter_labels[i] == 'q and Time Corrected':
+                    plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
             plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
         if multiplicity == 'MF':
@@ -5691,7 +5693,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
             if which_plot == 'Angle':
                 x_pected = np.linspace(0,180,31)
-                y_pected = max(flatten(y))*np.sin(x_pected)
+                y_pected = max(flatten(y))*np.sin(x_pected*np.pi/180)
                 plt.plot(x_pected,y_pected,label = 'Random Distribution',linestyle = ':')
             plt.legend(fontsize=14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
