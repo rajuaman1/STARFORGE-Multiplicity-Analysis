@@ -4375,7 +4375,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
     if which_plot == 'Mass Ratio':
         if bins is None:
-            bins = np.linspace(0,1,11)
+            if len(property_dist)/5 < 10:
+                noofbins = int(len(property_dist)/5)
+            else:
+                noofbins = 10
+            bins = np.linspace(0,1,noofbins+1)
         x_vals,y_vals = hist(property_dist,bins = bins)
     elif which_plot == 'Semi Major Axis':
         if bins is None:
