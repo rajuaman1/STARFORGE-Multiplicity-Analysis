@@ -4517,6 +4517,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
             plt.ylabel('Number of Systems')
             plt.xlabel('Misalignment Angle (Rad)')
+            plt.plot(np.linspace(0,np.pi,31),max(y_vals)*np.sin(np.linspace(0,np.pi,31)),linestyle = '--',label = 'Random Distribution')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')  
             plt.text(0.5,0.5,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
@@ -4821,10 +4822,10 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     plt.fill_between(logmasslist,np.log10(o1+o2),np.log10(o1)-(np.log10(o1+o2)-np.log10(o1)),alpha = 0.3)
                     if only_filter is False:
                         plt.plot(logmasslist_filt,o1_filt,marker = '^',linestyle = ':',label = 'After Corrections')
-            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
-            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
+            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04]
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             if multiplicity == 'MF':
                 plt.ylabel('Multiplicity Fraction')
@@ -4878,10 +4879,10 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                         error_filt = np.array(error_filt,dtype=float);o1_filt = np.array(o1_filt,dtype=float)
                         plt.fill_between(logmasslist_filt,o1_filt+error_filt,o1_filt-error_filt,alpha = 0.6,color = '#1f77b4',hatch=r"\\")
                         plt.plot(logmasslist_filt,o1_filt,color = 'black',linestyle = '--')
-            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
-            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8]
+            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3]
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             plt.ylabel('Companion Frequency')
             for i in range(len(observation_mass_center)):
@@ -5304,10 +5305,10 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
         if multiplicity == 'MF':
-            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
-            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
+            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04]
             for i in range(len(observation_mass_center)):
                 if i == 0:
                     temp_label = 'Observations'
@@ -5319,10 +5320,10 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             if top >1:
                 plt.ylim(bottom,1)
         if multiplicity == 'CF':
-            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
-            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8]
+            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3]
             for i in range(len(observation_mass_center)):
                 if i == 0:
                     temp_label = 'Observations'
@@ -5586,12 +5587,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             for i in range(0,len(Filenames)):
                 plt.plot(x[i],y[i],label = labels[i])
                 plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
-            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5,33.5]
-            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5,16.5]
-            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93,0.96]
-            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04,0.04]
-            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8,2.1]
-            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3,0.3]
+            observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
+            observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+            observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
+            observation_MF_err = [0.07,0.04,0.03,0.02,0.02,np.nan,0.03,0.04,0.03,0.07,0.06,0.05,0.04]
+            observation_CF = [0.19,0.20,0.21,0.27,0.38,0.60,np.nan,np.nan,0.62,0.99,1.28,1.55,1.8]
+            observation_CF_err = [0.07,0.04,0.03,0.03,0.03,0.04,np.nan,np.nan,0.04,0.13,0.17,0.24,0.3]
             if multiplicity == 'MF':
                 for i in range(len(observation_mass_center)):
                     if i == 0:
@@ -5688,6 +5689,10 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         else:
             for i in range(0,len(Filenames)):
                 plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
+            if which_plot == 'Angle':
+                x_pected = np.linspace(0,180,31)
+                y_pected = max(flatten(y))*np.sin(x_pected)
+                plt.plot(x_pected,y_pected,label = 'Random Distribution',linestyle = ':')
             plt.legend(fontsize=14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
