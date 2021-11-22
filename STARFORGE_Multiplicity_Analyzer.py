@@ -907,7 +907,7 @@ class star_system:
             self.ids = [ids]
             self.no = 1
         self.ids = np.array(self.ids,dtype=np.int64)
-        index = np.isin(data[n].id,self.ids)
+        index = np.array([np.argmax(data[n].id==sinkid) for sinkid in self.ids])
         self.m = data[n].m[index]
         self.x = data[n].x[index,:]
         self.v = data[n].v[index,:]
