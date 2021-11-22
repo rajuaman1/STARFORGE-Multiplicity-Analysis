@@ -48,13 +48,13 @@ ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
 alt_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2']
 alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 
-datafolder='' #use '' if in the same directory as script
+datafolder='D:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
-def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10):
+def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10, redo_all=False):
     file_path = filename
     if datafolder !='': file_path = datafolder + '/' + filename
     file = load_files(file_path)[0]
-    output = system_initialization(file,file_path,read_in_result=False,full_assignment= True,seperation_param=seperation_param,no_subdivision_for_last_snaps=no_subdivision_for_last_snaps)
+    output = system_initialization(file,file_path,read_in_result=False,full_assignment= True,seperation_param=seperation_param,no_subdivision_for_last_snaps=no_subdivision_for_last_snaps,redo_all=redo_all)
     #Saving to file
     outfilename=filename+'_Systems'
     if datafolder !='': outfilename = datafolder + '/' + outfilename
@@ -183,17 +183,18 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     #Print out final timing table
     timer.list_times()
 
-# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2)
-# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2)
-##redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2)
+redo_all_main=True
+
+# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
 
 
