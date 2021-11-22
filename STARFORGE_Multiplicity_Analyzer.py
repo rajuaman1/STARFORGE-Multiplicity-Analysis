@@ -4487,7 +4487,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.step(x_vals,y_vals,label = 'Simulation Data')
                 #plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*i,y_vals_filt[filter_label]+0.05*i,label = filter_label, linestyle = linestyle)
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
                 plt.legend(fontsize=14)
             else:
                 plt.step(x_vals,y_vals)
@@ -4505,7 +4505,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*i,y_vals_filt[filter_label]+0.05*i,label = filter_label, linestyle = linestyle)
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
             plt.ylabel('Number of Systems')
             plt.xlabel('q (Companion Mass Dist)')
             # if filename is not None:
@@ -4545,7 +4545,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*i,y_vals_filt[filter_label]+0.05*i,label = filter_label, linestyle = linestyle)
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
             plt.ylabel('Number of Systems')
             plt.xlabel('Misalignment Angle (Rad)')
             x_pected = np.linspace(0,180,31)
@@ -4568,7 +4568,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             if only_filter is False:
                 #ax1.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    ax1.step(x_vals_filt[filter_label]-0.05*i,y_vals_filt[filter_label]+0.1*i,label = filter_label, linestyle = linestyle)
+                    ax1.step(x_vals_filt[filter_label]-0.05*(i+1),y_vals_filt[filter_label]+0.1*(i+1),label = filter_label, linestyle = linestyle)
             ax1.vlines(np.log10(20),0,max(y_vals))
             pands = []
             for i in systems:
