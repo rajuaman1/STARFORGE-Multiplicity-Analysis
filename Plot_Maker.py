@@ -62,7 +62,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
     pickle.dump(output,outfile)
     outfile.close()
 
-def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False):
+def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False):
     Filenames = orig_filenames.copy()
     timer = Timer()
     timer.start()
@@ -110,20 +110,25 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
         Snapshots = [[-1]]*len(Filenames)
     Snapshots = list(flatten(Snapshots))
     
-    Plot_name = ['Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties']
-    Plot_key = ['Mass Ratio','System Mass','Primary Mass','Multiplicity']
+    Plot_name = ['Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties', 'Semi_Major_Axis']
+    Plot_key = ['Mass Ratio','System Mass','Primary Mass','Multiplicity', 'Semi Major Axis']
     
     for plot_type,plot_key in zip(Plot_name,Plot_key):
         new_file = output_dir+'/'+plot_type
         mkdir_p(new_file)
-        only_filter = False
-        if plot_type == 'Multiplicity_Properties':
+        only_filter = False; filters = ['q_filter','time_filter']; plot_intermediate_filters=True
+        if plot_key == 'Mass Ratio' or plot_key == 'Multiplicity':
             multiplicity = 'Properties'
-            only_filter = True
+            filters = [None]; only_filter = True; plot_intermediate_filters=False
         for n in tqdm(range(len(Files)),position = 0,desc = plot_type):
             plt.figure(figsize = (6,6))
-            Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class) 
+            Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters) 
             plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
+            if plot_key in ['Semi Major Axis']:
+                plt.figure(figsize = (6,6))
+                Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,upper_limit = 1e4,lower_limit=0,plot_intermediate_filters = plot_intermediate_filters) 
+                plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'_all.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
+                
         timer.dt(text= plot_type+'figures')
     
     new_file = output_dir+'/Multiplicity_Filters'
