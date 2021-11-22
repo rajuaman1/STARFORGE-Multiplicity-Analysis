@@ -50,11 +50,11 @@ alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 
 datafolder='D:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
-def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10, redo_all=False):
+def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10, redo_all=False,L = None):
     file_path = filename
     if datafolder !='': file_path = datafolder + '/' + filename
     file = load_files(file_path)[0]
-    output = system_initialization(file,file_path,read_in_result=False,full_assignment= True,seperation_param=seperation_param,no_subdivision_for_last_snaps=no_subdivision_for_last_snaps,redo_all=redo_all)
+    output = system_initialization(file,file_path,read_in_result=False,full_assignment= True,seperation_param=seperation_param,no_subdivision_for_last_snaps=no_subdivision_for_last_snaps,redo_all=redo_all,L = L)
     #Saving to file
     outfilename=filename+'_Systems'
     if datafolder !='': outfilename = datafolder + '/' + outfilename
