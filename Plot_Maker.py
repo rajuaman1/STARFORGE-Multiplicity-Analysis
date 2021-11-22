@@ -136,7 +136,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     for i in range(len(Files)):
         for multiplicity in ['MF','CF']:
             plt.figure(figsize = (6,6))
-            Multiplicity_One_Snap_Plots_Filters(Systems[i],Files[i],multiplicity = multiplicity,filter_in_class = filter_in_class)
+            Multiplicity_One_Snap_Plots_Filters(Systems[i],Files[i],multiplicity = multiplicity,filter_in_class = filter_in_class,include_error=True)
             plt.savefig(new_file+'/'+multiplicity+'_Filters_'+orig_filenames[i]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
 
     #Formation Density vs Multiplicity Plots

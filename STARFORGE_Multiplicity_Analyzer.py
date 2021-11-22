@@ -23,21 +23,19 @@ from os import makedirs,path
 
 #Convert the simulation time to Myrs
 code_time_to_Myr = 978.461942384
-
 #Convert AU to m (divide by this if you have a result in m)
 m_to_AU = 149597870700.0
-
 #Convert pc to AU
 pc_to_AU = 206264.806
-
 #Convert pc to m
 pc_to_m = 3.08567758e16
-
 #G in SI Units
 G = 6.67e-11
-
 #Solar Mass to kg
 msun_to_kg = 1.9891e30
+#seconds to day
+s_to_day = 60 * 60*24
+s_to_yr = 3.154e7
 
 #The length for the given box plot
 L = (4/3*np.pi)**(1/3)*10
@@ -249,6 +247,7 @@ def Psigma(n,k,limit=10):
         if k==n: k=n-1 #so that we get nonzero estimate
         if k==0: k=1 #so that we get nonzero estimate
         return sigmabinom(n,k) #use binomial apprximation
+
 
 def Lsigma(n,k,limit=10):
     '''Companion Frequency Error Function'''
@@ -1336,7 +1335,7 @@ def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.1,no_of_
         for system_no,system in enumerate(Master_File[selected_snap]):
             result_1 = simple_filter_one_system(system,Master_File,comparison_snapshot=snap_1)
             result_2 = simple_filter_one_system(result_1,Master_File,comparison_snapshot=snap_2)
-            orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(60*60*24*365*1e6)
+            orbital_period_check = (no_of_orbits*2*np.pi*np.sqrt(((smaxis(system))**3)/(6.67e-11*system.primary*msun_to_kg)))/(s_to_yr*1e6)
             orbital_period_snap = closest(times,file[selected_snap].t*code_time_to_Myr - orbital_period_check,param = 'index')
             if orbital_period_check > long_ago:
                 snap_3 = orbital_period_snap
@@ -4029,7 +4028,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     for i in range(len(Files)):
         plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i])
         plt.plot(x_array[i],final_mul_list[i])
-    plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left')
+    plt.text(0.5,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
     plt.legend(fontsize=14)
     plt.xlabel(x_label)
     if multiplicity == 'MF':
@@ -4511,7 +4510,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.05,0.9,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left')
+                plt.text(0.02,0.9,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left')
             if compare == True:
                 if snapshot is None:
                     print('Please provide snapshots')
@@ -4553,7 +4552,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.05,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
+                plt.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
             plt.legend(fontsize=18)
             if log == True:
                 plt.yscale('log')
@@ -4580,7 +4579,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ax2 = ax1.twiny()
             adjust_ticks=False
             ax2.set_xlabel('Log Period [Days]')
-            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
+            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(s_to_day))
             ax2.set_xlim(logperiod_lims)
             if upper_limit == 1.3 and lower_limit == 0.7:
                 periods = np.linspace(3.5,7.5,num = 5)
@@ -4600,7 +4599,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ax1.legend(fontsize = 18)
             adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
             if upper_limit<1000:
-                fig.text(0.05,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)  
+                fig.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)  
             # if filename is not None:
             #     fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18) 
         else:
@@ -5325,20 +5324,18 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
         filter_labels = ['Simulation Data',r'q>%3.2g'%(q_filt_min),r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min)]
         filter_labels.append(filter_labels[-2]+' & '+filter_labels[-1])
         filter_names = [[None],['q_filter'],['time_filter'],['q_filter','time_filter']]
-        logmasslists = []
-        o1s = [];o2s = [];o3s = []
         linestyles = ['-',':','--','-.']
         for i in range(len(filter_names)):
             logmasslist,o1,o2,o3 = Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = False,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filter_names[i],avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = True,label=label,filter_in_class = filter_in_class)
             error = []
             for o3_err,o2_err in zip(o3,o2):
                 if multiplicity == 'MF':
-                    error.append(Lsigma(o3_err,o2_err))
-                else:
                     error.append(Psigma(o3_err,o2_err))
+                else:
+                    error.append(Lsigma(o3_err,o2_err))
             error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
             if include_error is True:
-                if filter_labels[i] == 'Simulation Data' or filter_labels[i] == 'q and Time Corrected':
+                if filter_labels[i] == 'Simulation Data' or filter_labels[i] == filter_labels[-1]:
                     plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
             plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
@@ -5608,7 +5605,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 ax1.set_ylabel(normal_str+'Number of Sub-Systems',fontsize=14)
             ax2 = ax1.twiny(); adjust_ticks=False
             ax2.set_xlabel('Log Period [Days]',fontsize=14)
-            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(60*60*24))
+            logperiod_lims = np.log10(2*np.pi*np.sqrt(((10**np.array(ax1.get_xlim())*m_to_AU)**3)/(6.67e-11*average_pands))/(s_to_day))
             ax2.set_xlim(logperiod_lims)
             if upper_limit == 1.3 and lower_limit == 0.7:
                 periods = np.linspace(3.5,7.5,num = 5)
