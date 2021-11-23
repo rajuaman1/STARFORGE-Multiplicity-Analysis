@@ -193,18 +193,19 @@ redo_all_main=False
 # redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
 
 
-# all_plots(alpha_filenames,'alpha',alpha_labels)
+#all_plots(alpha_filenames,'alpha',alpha_labels)
 # all_plots(sigma_filenames,'sigma',sigma_labels)
 # all_plots(BOX_filenames,'BOX',BOX_labels)
 # all_plots(metal_filenames,'metal',metal_labels)
 # all_plots(mu_filenames,'magnetic',mu_labes)
-#all_plots(ISRF_filenames,'ISRF',ISRF_labels)
-all_plots(alt_filenames,'realizations',alt_labels)
+# all_plots(ISRF_filenames,'ISRF',ISRF_labels)
+# all_plots(alt_filenames,'realizations',alt_labels)
 
 
 
