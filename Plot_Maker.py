@@ -183,12 +183,12 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     #Print out final timing table
     timer.list_times()
 
-redo_all_main=True
+redo_all_main=False
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
