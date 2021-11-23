@@ -5596,12 +5596,13 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.ylim([-0.01,3.01])
             plt.legend(fontsize=14)
         elif which_plot == 'Multiplicity Time Evolution':
+            plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 if time_plot == 'consistent mass':
                     plt.plot(times[i],cons_fracs[i],label = labels[i])
                 elif time_plot == 'all':
                     plt.plot(times[i],fractions[i],label = labels[i])
-            plt.text(0.01,0.01,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
+            plt.text(0.01,0.03,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
             elif time_norm == 'tff':
