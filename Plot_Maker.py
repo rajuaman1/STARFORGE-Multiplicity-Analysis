@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -62,7 +62,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
     pickle.dump(output,outfile)
     outfile.close()
 
-def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False):
+def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None):
     Filenames = orig_filenames.copy()
     timer = Timer()
     timer.start()
@@ -93,14 +93,14 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             if plot_type == 'Multiplicity':
                 for multiplicity in ['MF','CF']:
                     plt.figure(figsize = (6,6));print('\n Making '+multiplicity+' plot...')
-                    Multi_Plot(plot_type,Systems,Files,Filenames,multiplicity=multiplicity,labels=labels,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,filter_in_class = filter_in_class)
+                    Multi_Plot(plot_type,Systems,Files,Filenames,multiplicity=multiplicity,labels=labels,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,filter_in_class = filter_in_class, colors=colors)
                     plt.savefig(new_file+'/'+multiplicity+'_'+description+'.png',dpi = 150);plt.close('all') 
             else:
                 for upper_limit,lower_limit in zip([1.3e7,1.3],[0,0.7]):
                     plt.figure(figsize = (6,6))
                     if upper_limit == 1.3e7: print('\n Making '+plot_type+' distribution plot for all stars...');star_type = 'all';
                     elif upper_limit == 1.3: print('\n Making '+plot_type+' distribution plot for Solar-type stars...');star_type = 'solar';
-                    Multi_Plot(plot_type,Systems,Files,Filenames,upper_limit=upper_limit,lower_limit=lower_limit,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no,filter_in_class = filter_in_class)
+                    Multi_Plot(plot_type,Systems,Files,Filenames,upper_limit=upper_limit,lower_limit=lower_limit,labels=labels,bins = bins,log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,normalized = normalized,norm_no = norm_no,filter_in_class = filter_in_class, colors=colors)
                     plt.savefig(new_file+'/'+str(plot_type)+'_'+star_type+'_'+description+'.png',dpi = 150, bbox_inches="tight"); plt.close('all') 
             timer.dt(text='Multi plot figures')
     
@@ -152,12 +152,12 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     for multiplicity in ['MF','CF']:
         for density in ['density','mass density']:
             plt.figure(figsize = (6,6)); print('\n Making '+multiplicity+' vs formation '+density+' plot...')
-            Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis=density,multiplicity=multiplicity,labels=labels,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm)
+            Multi_Plot('Multiplicity vs Formation',Systems,Files,Filenames,adaptive_no=adaptive_nos,x_axis=density,multiplicity=multiplicity,labels=labels,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm, colors=colors)
             plt.savefig(new_file+'/'+density+'_'+multiplicity+'_'+description+'.png',dpi = 150,bbox_inches="tight"); plt.close('all')
     
     #YSO
     plt.figure(figsize = (6,6)); print('\n YSO multiplicity plot...')
-    Multi_Plot('YSO Multiplicity',Systems,Files,Filenames,description=description,labels=labels,target_age=target_age,min_age=min_age,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm)
+    Multi_Plot('YSO Multiplicity',Systems,Files,Filenames,description=description,labels=labels,target_age=target_age,min_age=min_age,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm, colors=colors)
     timer.dt(text='YSO Plot')
     
     #Multiplicity Time Evolution
@@ -166,7 +166,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     plt.figure(figsize = (6,6)); print('\n Multiplicity Time Evolution plot...')
     for plot_type in ['all','consistent mass']:
         for multiplicity_type in ['MF','CF']:
-            Multi_Plot('Multiplicity Time Evolution',Systems,Files,Filenames,description=description,labels=labels,time_plot = plot_type,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,multiplicity=multiplicity_type)
+            Multi_Plot('Multiplicity Time Evolution',Systems,Files,Filenames,description=description,labels=labels,time_plot = plot_type,rolling_avg=rolling_avg,rolling_window=rolling_window_Myr,time_norm = time_norm,multiplicity=multiplicity_type, colors=colors)
             plt.savefig(new_file+'/'+str(plot_type)+str(multiplicity_type)+'.png',dpi = 150,bbox_inches="tight"); plt.close('all')
     timer.dt(text='Multiplicity Time Evolution')
     
@@ -184,6 +184,9 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     timer.list_times()
 
 redo_all_main=False
+sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequential=True)
+sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
+colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
@@ -196,16 +199,20 @@ redo_all_main=False
 # redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-#alpha_filenames = ['M2e4_C_M_J_RT_W_2e7_alt']
+# redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 
 
-#all_plots(alpha_filenames,'alpha',alpha_labels)
-# all_plots(sigma_filenames,'sigma',sigma_labels)
-# all_plots(BOX_filenames,'BOX',BOX_labels)
-# all_plots(metal_filenames,'metal',metal_labels)
-# all_plots(mu_filenames,'magnetic',mu_labes)
-# all_plots(ISRF_filenames,'ISRF',ISRF_labels)
-# all_plots(alt_filenames,'realizations',alt_labels)
+
+# all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3)
+all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3)
+all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3)
+all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3)
+all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3)
+all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3)
+all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_2)
 
 
 

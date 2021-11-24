@@ -10,16 +10,18 @@ from tqdm import tqdm
 from get_sink_data import sinkdata
 from pandas.core.common import flatten
 import re
-from scipy.special import gamma as Gamma,gammaincc as GammaInc,factorial
+from scipy.special import gamma as Gamma,gammaincc as GammaInc
 import random 
+import matplotlib
 import matplotlib.patches as mpatches
 import copy
 import itertools
 from scipy import stats, optimize
 from scipy.spatial import cKDTree
-from sys import exit
+#from sys import exit
 from errno import EEXIST
 from os import makedirs,path
+from palettable.colorbrewer.qualitative import Set1_5, Set1_8, Dark2_8,Set3_12
 
 #Convert the simulation time to Myrs
 code_time_to_Myr = 978.461942384
@@ -114,6 +116,43 @@ def time_to_snaps(time,file):
     time_per_snap = (file[1].t-file[0].t)*code_time_to_Myr
     no_of_snaps = (time/time_per_snap).round(0)
     return no_of_snaps
+
+def set_colors_and_styles(colors, styles, N, multiples=1, dark=False, cmap=None,sequential=False):
+    if colors is None:
+        if sequential and (N<=4):
+            #colors_base = ['#a1dab4', '#41b6c4', '#2c7fb8','#253494']
+            colors_base = [(161/255,218/255,180/255),(65/255,182/255,196/255),(44/255,127/255,184/255),(37/255,52/255,148/255) ]
+            colors = [colors_base[int(i/N*len(colors_base))] for i in range(N)]
+        else:
+            if (N<=5):
+                #colors=['k', 'g', 'r', 'b', 'm', 'brown', 'orange', 'cyan', 'gray', 'olive']
+    #            if dark:
+    #                colors=Dark1_5.mpl_colors[:N]
+    #            else:
+                    colors=Set1_5.mpl_colors[:N]
+            elif (N<=8):
+                if dark:
+                    colors=Dark2_8.mpl_colors[:N]
+                else:
+                    colors=Set1_8.mpl_colors[:N]
+            elif (N<=12):
+                    colors=Set3_12.mpl_colors[:N] 
+            else:
+                if cmap is None:
+                    cm=matplotlib.cm.get_cmap()
+                else:
+                    cm=matplotlib.cm.get_cmap(cmap)
+                colors=[cm(i/N) for i in range(N)]
+    if styles is None:
+        styles=np.full(N,'-')
+    if multiples>1:
+        colors_old=colors[:]; styles_old=styles[:]
+        colors=[]; styles=[]
+        for i in range(N):
+            for j in range(multiples):
+                colors.append(colors_old[i])
+                styles.append(styles_old[j])
+    return colors, styles
 
 #Remove the brown dwarfs for a data
 def Remove_Brown_Dwarfs(data,minmass = 0.08):
@@ -3784,7 +3823,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
         xvals = bins
     return xvals,weights
 
-def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,adaptive_no = 20,x_axis = 'time',plot = True,label=None):
+def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,adaptive_no = 20,x_axis = 'time',plot = True,label=None, color = 'k'):
     '''
     The average multiplicity of stars born in certain time ranges tracked throughout their lifetime in the simulation.
 
@@ -3894,8 +3933,8 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
     if plot == True:
         #Plotting the multiplicity over age
         plt.figure(figsize = (6,6))
-        plt.plot(bins,plot_y)
-        plt.fill_between(bins,plot_y+plot_y_err,plot_y-plot_y_err,alpha = 0.3)
+        plt.plot(bins,plot_y, color=color)
+        plt.fill_between(bins,plot_y+plot_y_err,plot_y-plot_y_err,alpha = 0.3, color=color)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         plt.ylim(ylim)      
@@ -3915,7 +3954,7 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
     return bins, plot_y,plot_y_err
 
-def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density',labels=None):
+def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',min_time_bin = 0.2,adaptive_binning = True,x_axis = 'density',labels=None, colors=None):
     '''
     The average multiplicity vs formation time/density for multiple files.
 
@@ -3969,13 +4008,15 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
     -------
     multiplicity_vs_formation(Files,Systems,adaptive_binning = True,adaptive_no = [20,20])
     '''
+    if colors is None:
+        colors, _ = set_colors_and_styles(None, None, len(Filenames),  dark=True)
     if labels is None: labels=Filenames
     adaptive_no = adaptive_no*len(Files)
     x_array = []
     final_mul_list = []
     yerrs = []
     for i in tqdm(range(len(Files)),position = 0):
-        x,final_mul,yerr = multiplicity_vs_formation(Files[i],Systems[i],upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = True,label=labels[i])
+        x,final_mul,yerr = multiplicity_vs_formation(Files[i],Systems[i],upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass,zero=zero,multiplicity=multiplicity,min_time_bin=min_time_bin,adaptive_no=adaptive_no[i],x_axis=x_axis,plot = True,label=labels[i], color=colors[i])
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
         plt.savefig(x_axis+'_'+multiplicity+'_'+str(i)+'.png', dpi=150) #let's just save these for now
         plt.close()
@@ -3988,8 +4029,8 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         x_label = r'Log Formation Density [$\mathrm{M_\odot}pc^{-3}$]'
     plt.figure(figsize = (6,6))
     for i in range(len(Files)):
-        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i])
-        plt.plot(x_array[i],final_mul_list[i])
+        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i], color=colors[i])
+        plt.plot(x_array[i],final_mul_list[i], color=colors[i])
     plt.text(0.01,0.01,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
     plt.legend(fontsize=14)
     plt.xlabel(x_label)
@@ -5322,7 +5363,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
         adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
         plt.legend(fontsize = 14)
         
-def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'tff',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True):
+def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 1,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=False,rolling_window=0.1,time_norm = 'tff',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True, colors=None):
     '''
     Creates distribution plots for more than one file
     Inputs
@@ -5405,10 +5446,14 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
     ----------
     1) Multi_Plot('Mass Ratio',Systems,Files,Filenames,normalized=True)
     '''  
+    
+    if colors is None:
+        colors, _ = set_colors_and_styles(None, None, len(Filenames),  dark=True)
+    
     adjust_ticks=True
     if labels is None: labels=Filenames
     if which_plot == 'Multiplicity vs Formation':
-        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis,labels=labels)
+        multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = adaptive_no,T_list = None,dt_list = None,upper_limit=upper_limit,lower_limit = lower_limit,target_mass = target_mass,zero = zero,multiplicity = multiplicity,adaptive_binning = adaptive_binning,x_axis = x_axis,labels=labels, colors=colors)
     else:
         if Snapshots == None:
             Snapshots = [[-1]]*len(Filenames)
@@ -5542,7 +5587,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
             for i in range(len(Files)):
-                ax1.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
+                ax1.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i], color=colors[i])
             ax1.vlines(np.log10(20),0,max(y[0]))
             pands = []
             for i in Systems[0][-1]:
@@ -5570,8 +5615,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             ax1.legend(fontsize=14)
         elif which_plot == 'Multiplicity':
             for i in range(0,len(Filenames)):
-                plt.plot(x[i],y[i],label = labels[i])
-                plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15)
+                plt.plot(x[i],y[i],label = labels[i],color=colors[i])
+                plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15, color=colors[i])
             observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
             observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
             observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
@@ -5599,9 +5644,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 if time_plot == 'consistent mass':
-                    plt.plot(times[i],cons_fracs[i],label = labels[i])
+                    plt.plot(times[i],cons_fracs[i],label = labels[i], color=colors[i])
                 elif time_plot == 'all':
-                    plt.plot(times[i],fractions[i],label = labels[i])
+                    plt.plot(times[i],fractions[i],label = labels[i], color=colors[i])
             plt.text(0.01,0.03,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
@@ -5624,7 +5669,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             else:
                 save = False
             for i in range(len(Files)):
-                plt.plot(times[i],fractions[i],label = labels[i])
+                plt.plot(times[i],fractions[i],label = labels[i], color=colors[i])
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
             elif time_norm == 'tff':
@@ -5644,7 +5689,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 150)
             plt.figure(figsize = (6,6))
             for i in range(len(Files)):
-                plt.plot(times[i],nos[i],label = labels[i])
+                plt.plot(times[i],nos[i],label = labels[i], color=colors[i])
             plt.ylabel('Number of YSOs')
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
@@ -5658,11 +5703,8 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 150)
             plt.figure(figsize = (6,6))
             for i in range(len(Files)):
-                plt.plot(times[i],avg_mass[i],label = labels[i])
-            plt.ylabel('Average Mass of YSOs')
-            
-            print('ln5670: ',time_norm,time_norm == 'tff')
-            
+                plt.plot(times[i],avg_mass[i],label = labels[i], color=colors[i])
+            plt.ylabel('Average Mass of YSOs')           
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
             elif time_norm == 'tff':
@@ -5675,11 +5717,11 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150)
         else:
             for i in range(0,len(Filenames)):
-                plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i])
+                plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i],color=colors[i])
             if which_plot == 'Angle':
                 x_pected = np.linspace(0,180,31)
                 y_pected = max(flatten(y))*np.sin(x_pected*np.pi/180)
-                plt.plot(x_pected,y_pected,label = 'Random Distribution',linestyle = ':')
+                plt.plot(x_pected,y_pected,label = 'Random Distribution',linestyle = ':', color='k')
             plt.legend(fontsize=14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:
