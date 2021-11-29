@@ -4159,11 +4159,11 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,max(new_stars_co),alpha  = 0.3,label = '%g Myr'%(round(T_list[i],1)))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],plt.ylim()[0],plt.ylim()[1],alpha  = 0.3,label = '%g Myr'%(round(T_list[i],1)))
     plt.legend(fontsize=14)
     # if filename is not None:
     #     plt.text(max(times)/2,max(new_stars_co),path.basename(filename))
-    plt.text(0.02,0.3,'Primary Mass = '+str(target_mass)+' $\mathrm{M_\odot}$',transform = plt.gca().transAxes)
+    plt.text(0.02,0.9,'Primary Mass = '+str(target_mass)+' $\mathrm{M_\odot}$',transform = plt.gca().transAxes)
     plt.xlabel('Time [Myr]')
     plt.ylabel('Number of New Stars')
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -4171,7 +4171,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/New_Stars_Histogram.png',dpi = 150)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/New_Stars_Histogram.png',dpi = 150, bbox_inches='tight')
     #Creating the plot of stellar densities
     number_densities = []
     mass_densities = []
@@ -4195,7 +4195,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 150)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 150, bbox_inches='tight')
     #Mass Density Plots
     plt.figure(figsize = (6,6))
     density_evolution(mass_densities,times,filename = filename,density = 'mass',bins=adaptive_times)
@@ -4213,7 +4213,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         if filename is None:
             print('Please provide filename')
             return
-        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 150)
+        plt.savefig(new_file+'/'+str(path.basename(filename))+'/Mass_Density_Evolution.png',dpi = 150, bbox_inches='tight')
     #Plotting the MF over age
     if multiplicity == 'MF' or multiplicity == 'both':
         plt.figure(figsize = (6,6))
@@ -4238,7 +4238,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             if filename is None:
                 print('Please provide filename')
                 return
-            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 150)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Multiplicity_Fraction_Lifetime_Evolution.png',dpi = 150, bbox_inches='tight')
     #Plotting the CF over age
     if multiplicity == 'CF' or multiplicity == 'both':
         plt.figure(figsize = (6,6))
@@ -4263,7 +4263,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             if filename is None:
                 print('Please provide filename')
                 return
-            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150)
+            plt.savefig(new_file+'/'+path.basename(str(filename))+'/Companion_Frequency_Lifetime_Evolution.png',dpi = 150, bbox_inches='tight')
 
 def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,snapshot = -1,upper_limit = 1.3,lower_limit = 0.7,target_mass = None,all_companions = True,bins = 10,log = True,compare = False,plot = True,read_in_result = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,only_filter = True,label=None,filter_in_class = True, plot_intermediate_filters = False):
     '''
@@ -4468,11 +4468,12 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 vals = vals*sum(y_vals)/sum(vals)
                 plt.xlabel('Log Mass[$\mathrm{M_\odot}$]')
                 if which_plot == 'System Mass':
-                    plt.step(x_vals,y_vals,label = 'Mass Dist for Systems')
+                    plt.step(x_vals,y_vals,label = 'Systems')
                 else:
-                    plt.step(x_vals,y_vals,label = 'Mass Dist for Primaries')
-                plt.step(tot_m+0.01,vals,label = 'Stellar Mass Dist (IMF)')
-                plt.legend(fontsize=18)
+                    plt.step(x_vals,y_vals,label = 'Primary stars')
+                    plt.ylabel('Number of stars')
+                plt.step(tot_m+0.01,vals,label = 'All stars (IMF)')
+                plt.legend(fontsize=14)
             elif only_filter is False:
                 plt.step(x_vals,y_vals,label = 'Simulation Data')
                 #plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
@@ -4491,17 +4492,17 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             return x_vals,y_vals
     if which_plot == 'Mass Ratio':
         if plot == True:
-            plt.step(x_vals,y_vals,label = 'Simulation Data')
+            plt.step(x_vals,y_vals,label = 'Companions')
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
             plt.ylabel('Number of Systems')
-            plt.xlabel('q (Companion Mass Dist)')
+            plt.xlabel(r'q ($M/M_\mathrm{p}$)')
             # if filename is not None:
-            #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')  
+            #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.02,0.9,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left')
+                plt.text(0.98,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right')
             if compare == True:
                 if snapshot is None:
                     print('Please provide snapshots')
@@ -4519,9 +4520,9 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),linestyles=':',color = '#ff7f0e')
                     plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]+0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),linestyles=':',color = '#ff7f0e')
                     plt.vlines((x_vals_filt[filters_to_plot[-1]][1]+x_vals_filt[filters_to_plot[-1]][2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][2]-np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),y_vals_filt[filters_to_plot[-1]][2]+np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),linestyles=':',color = '#ff7f0e')
-                plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'Stellar Mass Distribution (IMF)')
+                plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'All stars (IMF)')
                 if all_companions == True:
-                    plt.ylabel('Number of Companions')
+                    plt.ylabel('Number of stars')
                 else:
                     plt.step(x_vals+0.01,(Weighted_IMF*sum(y_vals)/sum(Weighted_IMF))+0.01,label = 'Weighted IMF')
             plt.legend(fontsize=14)
@@ -4536,16 +4537,16 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle)
             plt.ylabel('Number of Systems')
-            plt.xlabel('Misalignment Angle (Rad)')
+            plt.xlabel('Misalignment Angle [°]')
             x_pected = np.linspace(0,180,31)
             plt.plot(x_pected,max(y_vals)*np.sin(x_pected*np.pi/180),linestyle = '--',label = 'Random Alignment')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)
-            plt.legend(fontsize=18)
+                plt.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
+            plt.legend(fontsize=14)
             if log == True:
                 plt.yscale('log')
             adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
@@ -4588,12 +4589,12 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ax1.set_ylabel('Number of Systems')
             if all_companions == True:
                 ax1.set_ylabel('Number of Sub Systems')
-            ax1.legend(fontsize = 18)
+            ax1.legend(fontsize = 16)
             adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
             if upper_limit<1000:
-                fig.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18)  
+                fig.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)  
             # if filename is not None:
-            #     fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize = 18) 
+            #     fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14) 
         else:
             return x_vals,y_vals
     if which_plot == 'Semi-Major Axis vs q':
@@ -4605,7 +4606,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         plt.ylabel('Mass Ratio')
         plt.scatter(np.log10(smaxes)-np.log10(m_to_AU),q)
         # if filename is not None:
-        #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+        #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
         adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16,adjust_ticks=adjust_ticks)
 
 def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,only_filter = True,label=None,filter_in_class = True,style = 'line'):
@@ -4813,7 +4814,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.ylabel(r'Mass Density [$\frac{\mathrm{M_\odot}}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             # if filename is not None:
-            #     plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+            #     plt.text(0.7,0.9,filename,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
         else:
             return logmasslist,o1,o2,o3
     if multiplicity == 'MF' or multiplicity == 'Density' or multiplicity == 'Mass Density':
@@ -4868,7 +4869,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.ylabel(r'Mass Density [$\frac{\mathrm{M_\odot}}{pc^3}$]')
             adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
             if filename is not None:
-                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+                plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
@@ -4919,7 +4920,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     temp_label = None
                 plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
             if label is not None:
-                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 18,horizontalalignment = 'left')
+                plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
             line = mpatches.Patch(label = 'Raw Data',color='#ff7f0e',alpha = 0.6)
             handles.extend([line])
@@ -5037,7 +5038,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
     3)Time_Evolution_Plots("YSO Multiplicity",M2e4_C_M_J_2e7_systems,M2e4_C_M_J_2e7,min_age = 0,target_age = 1)
     The multiplicity of stars of younger than the target age and older than the minimum age.
     '''
-    if label is None: label=filename
+    if label is None: label = path.basename(filename)
     if which_plot == 'Multiplicity Time Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5104,9 +5105,9 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.fill_betweenx(np.linspace(0.35,0.5,100),left_limit,right_limit,color = 'orange',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.3,0.4,100),left_limit,right_limit,color = 'black',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.25,0.15,100),left_limit,right_limit,color = 'purple',alpha = 0.3)
-        plt.text(0.1,0.45,'Class 0 Perseus',fontsize = 16)
-        plt.text(0.1,0.32,'Class 0 Orion',fontsize = 16)
-        plt.text(0.1,0.2,'Class 1 Orion',fontsize = 16)
+        plt.text(0.1+left_limit,0.45,'Class 0 Perseus',fontsize = 16,horizontalalignment = 'left')
+        plt.text(0.1+left_limit,0.32,'Class 0 Orion',fontsize = 16,horizontalalignment = 'left')
+        plt.text(0.1+left_limit,0.2,'Class 1 Orion',fontsize = 16,horizontalalignment = 'left')
         
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
@@ -5117,12 +5118,13 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.ylabel('YSO Multiplicity Fraction')
         adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=16)
         plt.xlim((left_limit,right_limit))
+        plt.savefig('YSO_MF_'+label+'.png',dpi = 150, bbox_inches='tight')
+        
         plt.figure()
-        if label is not None:
-            plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
+        # if label is not None:
+        #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
         plt.plot(prop_times,cou1,label = '< '+str(target_age)+' Myr Stars in Simulation')
         plt.legend(fontsize=14)
-        
         plt.yscale('log')
         if time_norm == 'Myr':
             plt.xlabel('Time [Myr]')
@@ -5132,6 +5134,8 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
         plt.ylabel('Number of Young Stars')
         #plt.legend(fontsize=14)
+        plt.savefig('YSO_count_'+label+'.png',dpi = 150, bbox_inches='tight')
+        
         plt.figure()
         plt.plot(prop_times,av1,label = 'Formation')
         #[start_snap:end_snap]
@@ -5144,6 +5148,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif time_norm == 'atff':
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
         plt.ylabel('Average Mass of Young Stars')
+        plt.savefig('YSO_avg_mass_'+label+'.png',dpi = 150, bbox_inches='tight')
 
 #Function that contains all the plots
 def Plots(which_plot,Master_File,file,filename = None,systems = None,snapshot= -1,target_mass=1,target_age=1,upper_limit = 1.3,lower_limit = 0.7,mass_break = 2,T = [1],dt = [0.5],min_age = 0,all_companions = True,bins = None,log = True,compare = False,plot = True,multiplicity = 'MF',steps = 1,read_in_result = True,start = 0,zero = 'Formation',select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,only_filter = True,rolling_avg = False,rolling_window_Myr = 0.1,time_norm = 'tff',min_time_bin = 0.2,adaptive_binning = True,adaptive_no = 20,x_axis = 'mass density',description = None, label=None,filter_in_class = True,MFCF_plot_style = 'line',plot_intermediate_filters = False): 
@@ -5687,7 +5692,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 150)
+                plt.savefig(new_file+'/YSO_Multiplicity_'+description+'.png',dpi = 150, bbox_inches='tight')
             plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 plt.plot(times[i],nos[i],label = labels[i], color=colors[i])
@@ -5701,7 +5706,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 150)
+                plt.savefig(new_file+'/YSO_Number_'+description+'.png',dpi = 150, bbox_inches='tight')
             plt.figure(figsize = (6,6))
             for i in range(len(Files)):
                 plt.plot(times[i],avg_mass[i],label = labels[i], color=colors[i])
@@ -5715,7 +5720,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             plt.legend(fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
             if save == True:
-                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150)
+                plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150, bbox_inches='tight')
         else:
             for i in range(0,len(Filenames)):
                 plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i],color=colors[i])
