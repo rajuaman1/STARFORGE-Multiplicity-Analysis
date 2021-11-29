@@ -64,6 +64,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
 
 def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None):
     Filenames = orig_filenames.copy()
+    print(Filenames)
     timer = Timer()
     timer.start()
     if datafolder!='':

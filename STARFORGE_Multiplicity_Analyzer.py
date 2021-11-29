@@ -4511,9 +4511,10 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     return
                 Weighted_IMF,IMF = randomly_distributed_companions(systems,file,snapshot,mass_ratio=bins,plot = False,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass)
                 IMF = np.insert(IMF,0,0)
-                plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 0.3)
-                plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
-                plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
+                if len(x_vals)>4:
+                    plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 0.3)
+                    plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
+                    plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
                 if only_filter is False:
                     plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),linestyles=':',color = '#ff7f0e')
                     plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]+0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),linestyles=':',color = '#ff7f0e')
