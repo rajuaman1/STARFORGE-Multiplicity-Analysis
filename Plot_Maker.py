@@ -114,8 +114,8 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             Snapshots = [[-1]]*len(Filenames)
         Snapshots = list(flatten(Snapshots))
         
-        Plot_name = ['Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties', 'Semi_Major_Axis', 'Angle', 'YSO_Multiplicity']
-        Plot_key = ['Mass Ratio','System Mass','Primary Mass','Multiplicity', 'Semi Major Axis', 'Angle', 'YSO Multiplicity']
+        Plot_name = ['Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties', 'Semi_Major_Axis', 'Angle', 'YSO_Multiplicity','Multiplicity_vs_Formation', 'Multiplicity_Time_Evolution']
+        Plot_key = ['Mass Ratio','System Mass','Primary Mass','Multiplicity', 'Semi Major Axis', 'Angle', 'YSO Multiplicity', 'Multiplicity vs Formation', 'Multiplicity Time Evolution']
         
         for plot_type,plot_key in zip(Plot_name,Plot_key):
             new_file = output_dir+'/'+plot_type
@@ -124,9 +124,11 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             if plot_key == 'Mass Ratio' or plot_key == 'Multiplicity':
                 multiplicity = 'Properties'
                 filters = [None]; only_filter = True; plot_intermediate_filters=False
+            if plot_key == 'Multiplicity vs Formation' :
+                multiplicity = 'MF'
             for n in tqdm(range(len(Files)),position = 0,desc = plot_type):
                 plt.figure(figsize = (6,6))
-                Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters) 
+                Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters, time_norm='Myr') 
                 plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
                 if plot_key in ['Semi Major Axis', 'Angle']:
                     plt.figure(figsize = (6,6))
