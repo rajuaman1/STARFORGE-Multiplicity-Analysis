@@ -4007,7 +4007,7 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         plt.ylim([0,1])
     elif multiplicity == 'CF':
         plt.ylabel('Companion Frequency')
-        plt.ylim([0,3])
+        plt.ylim([0,np.clip(plt.ylim()[1]+0.2,1,3)])
     adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 
 def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,rolling_avg = False,rolling_window_Myr = 0.1,adaptive_binning = True,adaptive_no = 20,description = None, label=None):
@@ -4126,8 +4126,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     times = np.array(times)
     new_stars_co = np.insert(new_stars_co,0,0)
     plt.step(times,new_stars_co)
+    ylim = plt.ylim()
     for i in range(len(T_list)):
-        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],plt.ylim()[0],plt.ylim()[1],alpha  = 0.3,label = '%g Myr'%(round(T_list[i],1)))
+        plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],ylim[0],ylim[1],alpha  = 0.3,label = '%g Myr'%(round(T_list[i],1)))
     plt.legend(fontsize=14)
     # if filename is not None:
     #     plt.text(max(times)/2,max(new_stars_co),path.basename(filename))
