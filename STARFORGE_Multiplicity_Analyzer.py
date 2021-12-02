@@ -10,7 +10,7 @@ from tqdm import tqdm
 from get_sink_data import sinkdata
 from pandas.core.common import flatten
 import re
-from scipy.special import gamma as Gamma,gammaincc as GammaInc
+from scipy.special import gamma as Gamma,gammaincc as GammaInc_up, gammainc as GammaInc_low
 import random 
 import matplotlib
 import matplotlib.patches as mpatches
@@ -292,9 +292,13 @@ def last_snap_finder(ID,file_data):
             return i
     return 0 
  
-def IGamma(k,n):
-    '''The Incomplete Gamma Function'''
-    return GammaInc(k,n)*Gamma(k)
+def IGamma_up(k,n):
+    '''The Upper Incomplete Gamma Function'''
+    return GammaInc_up(k,n)*Gamma(k)
+
+def IGamma_low(k,n):
+    '''The lower Incomplete Gamma Function'''
+    return GammaInc_low(k,n)*Gamma(k)
 
 def sigmabinom(n,k):
     '''The Binomial Error Function'''
@@ -304,23 +308,28 @@ def sigmabinom(n,k):
 def Psigma(n,k,limit=10):
     '''Complex Binomial Error Function'''
     if np.isnan(n) or np.isnan(k) or n==0: return np.nan
-    if n<limit:
-        return np.sqrt( (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n)) )
-    else:
-        if k==n: k=n-1 #so that we get nonzero estimate
-        if k==0: k=1 #so that we get nonzero estimate
-        return sigmabinom(n,k) #use binomial apprximation
+    # if n<limit:
+    #     #return np.sqrt( (-Gamma(2+n)**2*Gamma(2+k)**2)/(Gamma(3+n)**2*Gamma(1+k)**2)+(Gamma(3+k)*Gamma(2+n))/(Gamma(1+k)*Gamma(4+n)) 
+    # else:
+    #     if k==n: k=n-1 #so that we get nonzero estimate
+    #     if k==0: k=1 #so that we get nonzero estimate
+    #     return sigmabinom(n,k) #use binomial apprximation
+    return np.sqrt( (n-k+1)*(k+1)/((n+3)*(n+2)*(n+2)) )
 
 
-def Lsigma(n,k,limit=10):
+def Lsigma(n,k,limit=50):
     '''Companion Frequency Error Function'''
     if np.isnan(n) or np.isnan(k) or n==0: return np.nan
-    if n<limit:
-        return np.sqrt(-((Gamma(2+k)-IGamma(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma(1+k,3*n))**2))+((Gamma(3+k)-IGamma(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma(1+k,3*n)))))
+    if k<limit:
+        #return np.sqrt(-((Gamma(2+k)-IGamma_up(2+k,3*n))**2/(n**2*(Gamma(1+k)-IGamma_up(1+k,3*n))**2))+((Gamma(3+k)-IGamma_up(3+k,3*n))/(n**2*(Gamma(1+k)-IGamma_up(1+k,3*n)))))
+        return np.sqrt( IGamma_low(k+3,3*n)/(n*n*IGamma_low(k+1,3*n)) - (IGamma_low(k+2,3*n)/(n*IGamma_low(k+1,3*n)))**2 )
     else:
         #Use Poisson to estimate
-        if k==0: k=1 #so that we get nonzero estimate
+        #if k==0: k=1 #so that we get nonzero estimate
         return np.sqrt(k)/n
+
+
+
 
 def load_files(filenames,brown_dwarfs = False):
     '''
