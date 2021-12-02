@@ -5470,7 +5470,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         if which_plot == 'Angle':
             if bins is None:
                 bins = np.linspace(0,180,10)
-            plt.xlabel('Mismatch Angle [°]')
+            plt.xlabel('Misalignment Angle [°]')
             plt.ylabel(normal_str+'Number of Systems')
         if which_plot == 'Mass Ratio':
             if bins is None:
@@ -5499,7 +5499,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         if which_plot == 'Mass Ratio':
             offsets = 0.01*np.array(offsets)
         elif which_plot == 'Angle':
-            offsets = 0.02*np.array(offsets)
+            offsets = 2*np.array(offsets)
         else:
             offsets = 0.1*np.array(offsets)
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
