@@ -3691,11 +3691,14 @@ def distance_tracker_binaries(file,Master_File,system_ids,plot = True,rolling_av
     elif plot == False:
         return distances,times
 
-def formation_distance(id_list,file_name,log = True):
+def formation_distance(id_list,file_name,log = True, file=None):
     '''The formation distance between two ids with the original file name provided as a string.'''
-    pickle_file = open(file_name +'.pickle','rb')
-    Brown_Dwarf_File = pickle.load(pickle_file)
-    pickle_file.close()
+    if (file_name is None):
+        Brown_Dwarf_File = file
+    else:
+        pickle_file = open(file_name +'.pickle','rb')
+        Brown_Dwarf_File = pickle.load(pickle_file)
+        pickle_file.close()
     
     logdist = []
     first_snap1 = first_snap_finder(id_list[0],Brown_Dwarf_File)
@@ -3815,6 +3818,156 @@ def hist(x,bins = 'auto',log =False,shift = False):
     else:
         xvals = bins
     return xvals,weights
+
+
+def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=None,\
+                            msize=30, capsize=5, markers='o', colors='k',cmap='viridis',\
+                            overtext=None,overtextcoord=[0.5,0.5], loghist=False,\
+                            histx_color='b',histy_color='b',\
+                            colorbar=False, cbar_limits=None,cbar_tick_labels=None,cbar_label='', fontsize=14,saveplot=True, vlines=[], hlines=[] ): 
+    #copied from gdplot
+    from matplotlib.ticker import NullFormatter
+    # Start making the plot
+    # definitions for the axes, sets size of subfigures
+    left, width = 0.1, 0.65
+    bottom, height = 0.1, 0.65
+    bottom_h = left_h = left + width + 0.02
+    rect_scatter = [left, bottom, width, height]
+    rect_histx = [left, bottom_h, width, 0.2]
+    rect_histy = [left_h, bottom, 0.2, height]
+    #Limits
+    if not hasattr(xlim, "__iter__"):
+        xlim=np.array([np.min(X),np.max(X)])
+        ylim=np.array([np.min(Y),np.max(Y)])
+    # creates the axes
+    fig = plt.figure(1, figsize=(8, 8))
+    axScatter = plt.axes(rect_scatter)
+    axHistx = plt.axes(rect_histx)
+    axHisty = plt.axes(rect_histy)# We want plots and no labels on the overlapping part of the histograms
+    nullfmt = NullFormatter()
+    #Set log scale for histogram if needed
+    if loghist:
+        axHistx.set_yscale("log")
+        axHisty.set_xscale("log")
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+#    # diagonal line
+#    axScatter.plot([xlim[0],xlim[1]],[ylim[0],ylim[1]],'--',c='black',lw=1.5,alpha=0.25)
+    #Scatter plot
+    im = axScatter.scatter(X , Y ,marker=markers, c=colors,edgecolors='black',cmap=cmap);
+    #Set limits
+    axScatter.set_xlim((xlim[0]-np.ptp(xlim)/40), xlim[1]+np.ptp(xlim)/40); axScatter.set_ylim((ylim[0]-np.ptp(ylim)/40, ylim[1]+np.ptp(ylim)/40))
+    #Set label
+    axScatter.set_xlabel(xlabel, fontsize=fontsize); axScatter.set_ylabel(ylabel, fontsize=fontsize);
+    for vline in vlines:
+        axScatter.axvline(x=vline,alpha = 0.3,color='k')
+    for hline in hlines:
+        axScatter.axhline(y=hline,alpha = 0.3,color='k')
+#    #Add colorbar
+    if colorbar:
+        if not hasattr(cbar_limits, "__iter__"):
+            cbar_limits=np.array([np.min(colors),np.max(colors)])
+        cb = plt.colorbar(im,boundaries=np.linspace(cbar_limits[0], cbar_limits[1], 100, endpoint=True)) # 'boundaries' is so the drawn colorbar ranges between the limits you want (rather than the limits of the data)
+        #cb.set_clim(cbar_limits[0],cbar_limits[1]) # this only redraws the colors of the points, the range shown on the colorbar itself will not change with just this line alone (see above line)
+        if hasattr(cbar_tick_labels, "__iter__"):
+            nticks=len(cbar_tick_labels)
+            cb.set_ticks(np.linspace(cbar_limits[0], cbar_limits[1], nticks, endpoint=True))
+            cb.set_ticklabels(cbar_tick_labels)
+        else:
+            cb.set_ticks(np.linspace(cbar_limits[0], cbar_limits[1], 5, endpoint=True))
+        if (cbar_label != '' and cbar_label != None):
+            cb.set_label(cbar_label, fontsize=fontsize)
+    axHistx.hist(X, bins=np.linspace(xlim[0],xlim[1],nbins),edgecolor='white',color=histx_color);
+    axHisty.hist(Y, bins=np.linspace(ylim[0],ylim[1],nbins),edgecolor='white',color=histy_color, orientation='horizontal');
+    axHistx.set_xlim(axScatter.get_xlim())
+    axHisty.set_ylim(axScatter.get_ylim())
+    #Plot overtext
+    if (overtext!=None):
+        plt.text(overtextcoord[0], overtextcoord[1], overtext, horizontalalignment='left', verticalalignment='center', transform=axScatter.transAxes, fontsize=fontsize)
+    #Save figure
+    if saveplot:
+        fig.savefig(filename+'.png',dpi=150, bbox_inches='tight')
+
+
+def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_limit = 0.7,plot = True,cmap='viridis', apply_filters=True, outfilename='separation_dist', y_axis='final_dist'):
+    '''
+    Shows the distribution of distances between primary and companions at formation and when they form a system, done for systems that exist in the last snapshot
+
+    Inputs
+    ----------
+    file: list of sinkdata objects
+    The original file before system assignment.
+
+    Master_File: list of list of star system objects
+    All of the systems for the original file.
+
+    Parameters
+    ----------
+
+    upper_limit: int,float,optional
+    The upper limit of the target mass range
+
+    lower_limit: int,float,optional
+    The lower limit of the target mass range
+    
+    plot: bool,optional
+    Plot or return the values
+    
+    '''  
+    if apply_filters and ( not (file is None)) :
+        Master_File = q_filter(Master_File)
+        Master_File[-1]=full_simple_filter(Master_File,file,selected_snap=-1, filter_in_class = False)
+    form_distances = []
+    sys_form_distances = []
+    q_vals = []
+    final_sep = []
+    for system in Master_File[-1]:
+        if (system.primary>=lower_limit) and (system.primary<=upper_limit) :
+            for comp_id in system.ids:
+                if comp_id!=system.primary_id:
+                    q_vals.append(system.m[system.ids==comp_id][0]/system.primary) #store mass ratio
+                    x1 = np.squeeze(system.x[system.ids==system.primary_id])
+                    x2 = np.squeeze(system.x[system.ids==comp_id])
+                    final_sep.append(np.linalg.norm(x1-x2))
+                    #Find the at formation separation 
+                    form_distances.append(formation_distance([system.primary_id,comp_id ],None,log = False, file=file)) #this is already AU
+                    #Find the separation when they become a system
+                    dist = None
+                    for snap_systems in Master_File:
+                        for snap_system in snap_systems:
+                            if (comp_id in snap_system.ids) and (system.primary_id in snap_system.ids):
+                                x1 = np.squeeze(snap_system.x[snap_system.ids==system.primary_id])
+                                x2 = np.squeeze(snap_system.x[snap_system.ids==comp_id])
+                                dist = np.linalg.norm(x1-x2)
+                        if not (dist is None):
+                            sys_form_distances.append(dist) 
+                            break
+    form_distances = np.log10(form_distances); sys_form_distances = np.log10(sys_form_distances)+np.log10(pc_to_AU);
+    q_vals = np.array(q_vals); final_sep = np.log10(final_sep)+np.log10(pc_to_AU);
+    #Now we have a list of distances at sink and system formation
+    
+    if plot == True:
+        #Plotting the multiplicity over age
+        plt.figure(figsize = (6,6))
+        if upper_limit<=50:
+            overtext = 'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$'
+        else:
+            overtext = None
+        if y_axis == 'final_dist':
+            ylabel='Log Distance [AU]'
+            yvals=final_sep
+        else:
+            ylabel='Log Distance at system formation [AU]'
+            yvals=sys_form_distances
+        scatter_with_histograms(form_distances,yvals,'Log Distance at star formation [AU]',ylabel,'',nbins=10, msize=30, capsize=5, markers='x', colors=q_vals,cmap=cmap, histx_color='b',histy_color='b',\
+                            colorbar=True, cbar_limits=[0.0,1.0],cbar_tick_labels=None,cbar_label='Mass ratio', xlim=[0.5,5.5], ylim=[0.5,5.5], fontsize=14,saveplot=False,overtext=overtext,overtextcoord=[0.01,0.9],vlines=[np.log10(20)],hlines=[np.log10(20)] ) 
+        adjust_font(fig=plt.gcf(), ax_fontsize=14)
+        plt.savefig(outfilename+'.png',dpi = 150, bbox_inches='tight')
+        plt.show()
+        plt.close()
+  
+    return  form_distances, sys_form_distances, q_vals 
+
 
 def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,adaptive_no = 20,x_axis = 'time',plot = True,label=None, color = 'k'):
     '''
@@ -4480,7 +4633,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             # if filename is not None:
             #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,horizontalalignment = 'left')
             # plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')
-            adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         else:
             return x_vals,y_vals
     if which_plot == 'Mass Ratio':
@@ -4519,7 +4672,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 else:
                     plt.step(x_vals+0.01,(Weighted_IMF*sum(y_vals)/sum(Weighted_IMF))+0.01,label = 'Weighted IMF')
             plt.legend(fontsize=14,labelspacing=0)
-            adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if log == True:
                 plt.yscale('log')
         else:
@@ -4542,7 +4695,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             plt.legend(fontsize=14,labelspacing=0,loc=3)
             if log == True:
                 plt.yscale('log')
-            adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         else:
             return x_vals,y_vals
     if which_plot == 'Semi Major Axis':
@@ -4615,7 +4768,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         plt.scatter(np.log10(smaxes)-np.log10(m_to_AU),q)
         # if filename is not None:
         #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
-        adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14,adjust_ticks=adjust_ticks)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,adjust_ticks=adjust_ticks)
 
 def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,filename = None,plot = True,multiplicity = 'MF',mass_break=2,bins = 'observer',filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,only_filter = True,label=None,filter_in_class = True,style = 'line'):
     '''
@@ -4875,7 +5028,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.ylabel(r'Number Density [$\mathrm{pc}^{-3}$]')
             elif multiplicity == 'Mass Density':
                 plt.ylabel(r'Mass Density [$\frac{\mathrm{M_\odot}}{pc^3}$]')
-            adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if filename is not None:
                 plt.text(0.7,0.7,filename,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
@@ -4936,7 +5089,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
             plt.legend(handles = handles,fontsize=14)
-            adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+            adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             plt.figure(figsize=(6,6))
         else:
             return logmasslist,o1,o2,o3
@@ -5130,7 +5283,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif time_norm == 'atff':
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
         plt.ylabel('YSO Multiplicity Fraction')
-        adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.xlim((left_limit,right_limit))
         plt.savefig('YSO_MF_'+label+'.png',dpi = 150, bbox_inches='tight')
         
@@ -5146,7 +5299,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif time_norm == 'atff':
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
         plt.ylabel('Log Number of YSOs')
-        adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         #plt.legend(fontsize=14)
         plt.savefig('YSO_count_'+label+'.png',dpi = 150, bbox_inches='tight')
         
@@ -5162,7 +5315,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif time_norm == 'atff':
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
         plt.ylabel(r'Log Average YSO Mass [$\mathrm{M_\odot}$]')
-        adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.savefig('YSO_avg_mass_'+label+'.png',dpi = 150, bbox_inches='tight')
 
 #Function that contains all the plots
@@ -5381,7 +5534,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             bottom,top = plt.ylim()
             if top >3:
                 plt.ylim(bottom,3)
-        adjust_font(fig=plt.gcf(), ax_fontsize=16, labelfontsize=14)
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.legend(fontsize = 14,labelspacing=0)
         
 def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,log = False,upper_limit = 1.3,lower_limit = 0.7,target_mass = 1,target_age = 0.5,min_age = 0,multiplicity = 'MF',steps = 1,read_in_result = True,all_companions = True,start = 0,select_by_time = True,filters = ['q_filter','time_filter'],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = True,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window=0.1,time_norm = 'tff',adaptive_no = [20],adaptive_binning = True,x_axis = 'mass density',zero = 'Formation',description = None,labels=None,filter_in_class = True, colors=None):

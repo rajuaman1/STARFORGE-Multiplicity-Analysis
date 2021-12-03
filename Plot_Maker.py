@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles, Seperation_Tracking,Primordial_separation_distribution
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -66,7 +66,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
     pickle.dump(output,outfile)
     outfile.close()
 
-def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 1,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None, plots_to_do=['All']):
+def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 0.5,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None, plots_to_do=['All']):
     Filenames = orig_filenames.copy()
     print(Filenames)
     timer = Timer()
@@ -81,6 +81,17 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     output_dir = description
     mkdir_p(output_dir)
     timer.dt(text='File initialization')
+    
+    if plots_to_do[0]=='All' or 'Primordial separation' in plots_to_do:
+        for n in tqdm(range(len(Files)),position = 0,desc = 'Making primordial separation distribution'):
+            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=50,lower_limit = 5.0, apply_filters=True, outfilename='separation_dist_'+orig_filenames[n]+'_massive')
+            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=2.0,lower_limit = 0.1, apply_filters=True, outfilename='separation_dist_'+orig_filenames[n]+'_lowmass')
+        timer.dt(text='Primordial separation distributions')
+    
+    
+    # for n in tqdm(range(len(Files)),position = 0,desc = 'Separation tracking'):
+    #     Seperation_Tracking(Files[n],Systems[n],rolling_avg = False)
+    # timer.dt(text='Separation tracking')
     
     Plot_name = ['Multiplicity','Semi Major Axis','Mass Ratio','Angle']
     
@@ -131,12 +142,18 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
                 multiplicity = 'MF'
             for n in tqdm(range(len(Files)),position = 0,desc = plot_type):
                 plt.figure(figsize = (6,6))
-                Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters, time_norm='Myr') 
+                Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,target_age=target_age, q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters, time_norm='Myr') 
                 plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
                 if plot_key in ['Semi Major Axis', 'Angle']:
                     plt.figure(figsize = (6,6))
-                    Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,upper_limit = 1e4,lower_limit=0,plot_intermediate_filters = plot_intermediate_filters) 
+                    Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,target_age=target_age,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,upper_limit = 1e4,lower_limit=0,plot_intermediate_filters = plot_intermediate_filters) 
                     plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'_all.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
+                if plot_key in ['Angle', 'Semi Major Axis']:
+                    for filelabel,lowlim,uplim in zip(['massive', 'lowmass'],[5,0.1],[50,2.0]):
+                        plt.figure(figsize = (6,6))
+                        Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,target_age=target_age,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,upper_limit = uplim,lower_limit=lowlim,plot_intermediate_filters = plot_intermediate_filters) 
+                        #plt.text(0.99,0.9,'Primary Mass = '+str(lowlim)+' - '+str(uplim)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right',fontsize=14)
+                        plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'_'+filelabel+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
                     
             timer.dt(text= plot_type+' figures')
     
@@ -203,32 +220,37 @@ sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequent
 sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 #plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
-#plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+#plots_to_do = ['YSO' ]
+plots_to_do = ['All' ]
 
-# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+#alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
+#alpha_labels = [r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
+
+redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
+redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
+redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 
 
 all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
-# all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
-# all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
+all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 
 
 
