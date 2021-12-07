@@ -77,9 +77,12 @@ def rolling_average(List,rolling_window = 10):
     x = List
     N = rolling_window
     valid_ind1=(int)((N-1)/2);valid_ind2=len(x)-(int)((N-1)/2)
-    x_avg=np.convolve(x, np.ones((N,))/N, mode='same')
+    #x_avg=np.convolve(x, np.ones((N,))/N, mode='same')
+    x_avg=np.convolve(x, np.ones((N,))/N, mode='valid')
+    x_return = np.array(x)
+    x_return[valid_ind1:valid_ind2]=x_avg
     #return x_avg, valid_ind1, valid_ind2
-    return x_avg
+    return x_return
 
 
 def advanced_binning(data,target_size, min_bin_pop=0,max_bin_size=1e100,dx=1e-10,allow_empty_bins=True):
@@ -1247,7 +1250,7 @@ def q_filter_one_snap(systems,min_q = 0.1,filter_in_class = False):
                         if j.no == 1:
                             j.secondary = 0
                         else:
-                            j.secondary = np.max(j.m[j.m!=j.primary])
+                            j.secondary = np.max(j.m[j.ids!=j.primary_id])
                         j.mass_ratio = j.secondary/j.primary
                         j.tot_m = sum(j.m)
                         if j.no == 1:
@@ -1289,6 +1292,75 @@ def q_filter(Master_File):
         appending = q_filter_one_snap(i)
         New_Master_File.append(appending)
     return New_Master_File
+
+#Modified version of the q filter to account for solar type star incompleteness in Raghavan
+def Raghavan_filter_one_snap(systems):
+    min_q1 = 0.1; min_q2=0.4; min_semimajor_AU=100
+    '''The q filter as applied to one snapshot'''
+    Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
+    for i,j in enumerate(Filtered_Master_File):
+        if j.no>1:
+            for k in j.m:
+                q = k/j.primary
+                a = j.smaxis/m_to_AU #not at all accurate for multiple systems but Solar type stars rarely have higher order systems
+                if (q<min_q1) or ( (a<min_semimajor_AU) and (q<min_q2) ):
+                    if j.no == 4:
+                        state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
+                        for idd in j.structured_ids:
+                            if isinstance(idd,list):
+                                state += len(idd)
+                    remove_id = np.array(j.ids)[j.m == k] #The id that we have to remove
+                    j.ids = j.ids[j.m != k]
+                    j.x = j.x[j.m != k]
+                    j.v = j.v[j.m != k]
+                    j.no -= 1
+                    j.age_Myr = j.age_Myr[j.m != k]
+                    j.final_masses = j.final_masses[j.m != k]
+                    j.formation_time_Myr = j.formation_time_Myr[j.m != k]
+                    j.init_star_vol_density = j.init_star_vol_density[j.m != k]
+                    j.init_star_mass_density = j.init_star_mass_density[j.m != k]
+                    j.init_density = {'number': j.init_star_vol_density, 'mass': j.init_star_mass_density}
+                    j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
+                    j.ZAMS_age = j.ZAMS_age[j.m != k]
+                    j.multip_state = j.multip_state[j.m != k] 
+                    j.m = j.m[j.m != k]
+                    if j.no == 1:
+                        j.secondary = 0
+                    else:
+                        j.secondary = np.max(j.m[j.ids!=j.primary_id])
+                    j.mass_ratio = j.secondary/j.primary
+                    j.tot_m = sum(j.m)
+                    if j.no == 1:
+                        j.mass_ratio = 0
+                        j.secondary = 0 #Remove the secondary if the remaining star is solitary
+                        j.structured_ids = [j.ids]
+                    if j.no == 2:
+                        j.structured_ids = list(j.ids) #The secondary isn't going to be removed if there's 2 stars remaining
+                    if j.no == 3:
+                        removed_list = copy.deepcopy(j.structured_ids) 
+                        checker = remove_id[0] #The remove ID is in an array so we make it single
+                        checker = float(checker) #It is an np float so we make it a float
+                        nested_remove(removed_list,checker)
+                        if state == 4:
+                            for index,value in enumerate(removed_list):
+                                if isinstance(value,list):
+                                    if len(value) == 1:
+                                        removed_list[index] = value[0]
+                        elif state == 2:
+                            if len(removed_list) == 1:
+                                removed_list = removed_list[0]
+                            if len(removed_list) == 2:
+                                for index,value in enumerate(removed_list):
+                                    if isinstance(value,list) and len(value) == 1:
+                                        removed_list[index] = value[0]
+                                    elif isinstance(value,list) and len(value) == 2:
+                                        removed_list[index] = list(flatten(value)) 
+                        j.structured_ids = removed_list
+                    j.smaxis = smaxis(j)
+                    j.smaxis_all = smaxis_all(j)
+                    Filtered_Master_File[i] = j
+    return Filtered_Master_File
+
 
 def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
     'Working the simple filter onto one system'
@@ -2966,7 +3038,9 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
             fraction1 = rolling_average(fraction1,rolling_window)
             fraction1_err = rolling_average(fraction1+fraction1_err,rolling_window)- rolling_average(fraction1,rolling_window)
         plt.plot(time,fraction,label = 'All stars', linestyle='-')
+        plt.fill_between(time, fraction-fraction_err, y2=fraction+fraction_err,alpha=0.25)
         plt.plot(time,fraction1,label = 'Stars no longer accreting', linestyle='--')
+        plt.fill_between(time, fraction1-fraction1_err, y2=fraction1+fraction1_err,alpha=0.25)
         if target_mass == 1:
             if multiplicity == 'MF':
                 plt.errorbar(max(time)*0.9,0.46,yerr=0.03,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
@@ -4506,11 +4580,17 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         if 'q_filter' in filters:
             filtered_systems.append(q_filter_one_snap(systems,min_q=q_filt_min,filter_in_class=filter_in_class))
             filters_done.append(r'q>%3.2g'%(q_filt_min))
+        if 'Raghavan' in filters:
+            filtered_systems.append(Raghavan_filter_one_snap(systems))
+            filters_done.append(r'MDS 2017')
         if 'time_filter' in filters:
             filtered_systems.append(full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class))
             filters_done.append(r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min))
         if ('time_filter' in filters) and ('q_filter' in filters):
             filtered_systems.append(q_filter_one_snap(filtered_systems[-1],min_q=q_filt_min,filter_in_class=filter_in_class))
+            filters_done.append(filters_done[-2]+' & '+filters_done[-1])
+        if ('Raghavan' in filters) and ('time_filter' in filters):
+            filtered_systems.append(Raghavan_filter_one_snap(filtered_systems[-1]))
             filters_done.append(filters_done[-2]+' & '+filters_done[-1])
         if only_filter is True:
             systems = filtered_systems[-1]    
@@ -4621,7 +4701,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.step(tot_m+0.01,vals,label = 'All stars (IMF)')
                 plt.legend(fontsize=14)
             elif only_filter is False:
-                plt.step(x_vals,y_vals,label = 'Simulation Data')
+                plt.step(x_vals,y_vals,label = 'Simulation')
                 #plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
@@ -4638,7 +4718,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             return x_vals,y_vals
     if which_plot == 'Mass Ratio':
         if plot == True:
-            plt.step(x_vals,y_vals,label = 'Companions')
+            plt.step(x_vals,y_vals,label = 'Simulation')
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
@@ -4648,7 +4728,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.98,0.7,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right')
+                plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right')
             if compare == True:
                 if snapshot is None:
                     print('Please provide snapshots')
@@ -4662,10 +4742,10 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 0.3)
                     plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
                     plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
-                if only_filter is False:
-                    plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),linestyles=':',color = '#ff7f0e')
-                    plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]+0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),linestyles=':',color = '#ff7f0e')
-                    plt.vlines((x_vals_filt[filters_to_plot[-1]][1]+x_vals_filt[filters_to_plot[-1]][2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][2]-np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),y_vals_filt[filters_to_plot[-1]][2]+np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),linestyles=':',color = '#ff7f0e')
+                    if only_filter is False:
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),linestyles=':',color = '#ff7f0e')
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]+0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),linestyles=':',color = '#ff7f0e')
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][1]+x_vals_filt[filters_to_plot[-1]][2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][2]-np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),y_vals_filt[filters_to_plot[-1]][2]+np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),linestyles=':',color = '#ff7f0e')
                 plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'All stars (IMF)')
                 if all_companions == True:
                     plt.ylabel('Number of stars')
@@ -4679,7 +4759,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             return x_vals,y_vals
     if which_plot == 'Angle':
         if plot == True:
-            plt.step(x_vals,y_vals,label = 'Simulation Data')
+            plt.step(x_vals,y_vals,label = 'Simulation')
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
@@ -4702,7 +4782,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         if plot == True:
             fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
-            ax1.step(x_vals,y_vals,label = 'Simulation Data')
+            ax1.step(x_vals,y_vals,label = 'Simulation')
             if only_filter is False:
                 #ax1.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
@@ -4713,6 +4793,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 if i.no>1 and lower_limit<=i.primary<=upper_limit:
                     pands.append(i.primary+i.secondary)
             average_pands = np.average(pands)*1.9891e30 
+            ax1.set_ylim([0,max(y_vals)+1])
             ax1.set_xlabel('Log Semi Major Axis [AU]')
             plt.ylabel('Number of Systems')
             ax2 = ax1.twiny()
@@ -4750,10 +4831,10 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             ax1.set_ylabel('Number of Systems')
             if all_companions == True:
                 ax1.set_ylabel('Number of Sub Systems')
-            ax1.legend(fontsize = 14,labelspacing=0, loc=3)
+            ax1.legend(fontsize = 14,labelspacing=0, loc=1)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if upper_limit<1000:
-                fig.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)  
+                fig.text(0.99,0.675,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right',fontsize=14)  
             # if filename is not None:
             #     fig.text(0.5,0.7,str(filename),transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14) 
         else:
@@ -5486,7 +5567,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             only_filter = False
         Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
     else:
-        filter_labels = ['Simulation Data',r'q>%3.2g'%(q_filt_min),r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min)]
+        filter_labels = ['Simulation',r'q>%3.2g'%(q_filt_min),r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min)]
         filter_labels.append(filter_labels[-2]+' & '+filter_labels[-1])
         filter_names = [[None],['q_filter'],['time_filter'],['q_filter','time_filter']]
         linestyles = ['-',':','--','-.']
@@ -5500,7 +5581,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
                     error.append(Lsigma(o3_err,o2_err))
             error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
             if include_error is True:
-                if filter_labels[i] == 'Simulation Data' or filter_labels[i] == filter_labels[-1]:
+                if filter_labels[i] == 'Simulation' or filter_labels[i] == filter_labels[-1]:
                     plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
             plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
@@ -5716,10 +5797,9 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             elif which_plot == 'Multiplicity Time Evolution':
                 time,fraction,fraction_err,cons_frac,cons_frac_err = MFCF_Time_Evolution(Files[i],Systems[i],Filenames[i],steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = False,time_norm = time_norm,multiplicity=multiplicity)
                 if rolling_avg is True:
-                    rolling_window = time_to_snaps(og_rolling_window,Files[i])
+                    rolling_window = int(time_to_snaps(og_rolling_window,Files[i]))
                     if rolling_window%2 == 0:
                         rolling_window -= 1
-                    rolling_window = int(rolling_window)
                     #time = rolling_average(time,rolling_window)
                     fraction_err = rolling_average(fraction+fraction_err,rolling_window) - rolling_average(fraction,rolling_window)
                     fraction = rolling_average(fraction,rolling_window)
@@ -5844,7 +5924,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                     plt.fill_between(times[i], cons_fracs[i]-cons_fracs_err[i],y2=cons_fracs[i]+cons_fracs_err[i], alpha=0.3, color=colors[i])
                 elif time_plot == 'all':
                     plt.plot(times[i],fractions[i],label = labels[i], color=colors[i])
-                    plt.fill_between(times[i], fractions[i]-fraction_err[i],y2=fractions[i]+fraction_err[i], alpha=0.3, color=colors[i])
+                    plt.fill_between(times[i], fractions[i]-fractions_err[i],y2=fractions[i]+fractions_err[i], alpha=0.3, color=colors[i])
             plt.text(0.01,0.03,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
