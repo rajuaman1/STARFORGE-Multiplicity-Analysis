@@ -1295,7 +1295,9 @@ def q_filter(Master_File):
 
 #Modified version of the q filter to account for solar type star incompleteness in Raghavan
 def Raghavan_filter_one_snap(systems):
-    min_q1 = 0.1; min_q2=0.4; min_semimajor_AU=100
+    qlim1 = [0, 0.1]; completeness1 = 0.0; semimajor_limits1=[0, 1e10]
+    qlim2 = [0.1, 0.5]; completeness2 = 0.25; semimajor_limits2=[0, 30]
+    qlim3 = [0.1, 0.2]; completeness3 = 0.0; semimajor_limits3=[150, 400]
     '''The q filter as applied to one snapshot'''
     Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
     for i,j in enumerate(Filtered_Master_File):
@@ -1303,7 +1305,14 @@ def Raghavan_filter_one_snap(systems):
             for k in j.m:
                 q = k/j.primary
                 a = j.smaxis/m_to_AU #not at all accurate for multiple systems but Solar type stars rarely have higher order systems
-                if (q<min_q1) or ( (a<min_semimajor_AU) and (q<min_q2) ):
+                remove_flag = False
+                if (q<=qlim1[1]) and (q>=qlim1[0]) and (a<=semimajor_limits1[1]) and (a>=semimajor_limits1[0]):
+                    remove_flag = np.random.rand()<(1-completeness1)
+                elif  (q<=qlim2[1]) and (q>=qlim2[0]) and (a<=semimajor_limits2[1]) and (a>=semimajor_limits2[0]):
+                    remove_flag = np.random.rand()<(1-completeness2)
+                elif  (q<=qlim3[1]) and (q>=qlim3[0]) and (a<=semimajor_limits3[1]) and (a>=semimajor_limits3[0]):
+                    remove_flag = np.random.rand()<(1-completeness3)
+                if remove_flag:
                     if j.no == 4:
                         state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
                         for idd in j.structured_ids:
@@ -4573,6 +4582,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     if label is None: label=filename
     if systems is None: systems = Master_File[snapshot]
     filtered_systems = []; filters_done = []; filters_to_plot = []
+    #linestyle_list = [':','--','-.','-']
+    linestyle_list = ['-','-','-','-','-','-']
     if not (filters[0] is None or filters[0]=='None'):
         # if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
         #     filtered_systems = [get_q_and_time(filtered_systems)]
@@ -4585,13 +4596,15 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             filters_done.append(r'MDS 2017')
         if 'time_filter' in filters:
             filtered_systems.append(full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class))
-            filters_done.append(r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min))
+            filters_done.append(r'$t_\mathrm{comp}$>%3.2g Myr'%(time_filt_min))
         if ('time_filter' in filters) and ('q_filter' in filters):
             filtered_systems.append(q_filter_one_snap(filtered_systems[-1],min_q=q_filt_min,filter_in_class=filter_in_class))
-            filters_done.append(filters_done[-2]+' & '+filters_done[-1])
+            #filters_done.append(filters_done[-2]+' & '+filters_done[-1])
+            filters_done.append('All corrections')
         if ('Raghavan' in filters) and ('time_filter' in filters):
             filtered_systems.append(Raghavan_filter_one_snap(filtered_systems[-1]))
-            filters_done.append(filters_done[-2]+' & '+filters_done[-1])
+            #filters_done.append(filters_done[-2]+' & '+filters_done[-1])
+            filters_done.append('All corrections')
         if only_filter is True:
             systems = filtered_systems[-1]    
         else:
@@ -4599,6 +4612,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 filters_to_plot = filters_done
             else:
                 filters_to_plot = [filters_done[-1]]
+        colorlist, _ = set_colors_and_styles(None, None, len(filters_to_plot)+1, dark=True, sequential=True)
     property_dist = primary_total_ratio_axis(systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
     if which_plot == 'Mass Ratio':
         if bins is None:
@@ -4634,48 +4648,6 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         property_dist_filt = primary_total_ratio_axis(f_systems,lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file)
         x_vals_filt[filter_label], y_vals_filt[filter_label] = hist(transform_func(property_dist_filt),bins = bins)
         y_vals_filt[filter_label]=np.insert(y_vals_filt[filter_label],0,0)
-
-    
-    
-    # if only_filter is False or 'average_filter' in filters:
-    #     property_dist_filt = []
-    #     for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
-    #         property_dist_filt.append(primary_total_ratio_axis(filtered_systems[-1],lower_limit=lower_limit,upper_limit=upper_limit,all_companions=all_companions,attribute=which_plot,file = file))
-    #     x_vals_all = []
-    #     y_vals_all = []
-    #     count = 0
-    #     for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
-    #         if (which_plot == 'Mass Ratio') or (which_plot == 'Angle'):
-    #             x_vals_all.append(hist(property_dist_filt[count],bins = bins)[0])
-    #             the_y = (hist(property_dist_filt[count],bins = bins)[1])
-    #         elif which_plot == 'Semi Major Axis':
-    #             x_vals_all.append(hist(np.log10(property_dist_filt[count])-np.log10(m_to_AU),bins = bins)[0])
-    #             the_y = (hist(np.log10(property_dist_filt[count])-np.log10(m_to_AU),bins = bins)[1])
-    #         else:
-    #             x_vals_all.append(hist(np.log10(property_dist_filt[count]),bins = bins)[0])
-    #             the_y = (hist(np.log10(property_dist_filt[count]),bins = bins)[1])
-    #         the_y = np.insert(the_y,0,0)
-    #         y_vals_all.append(the_y)
-    #         count = count+1
-    #     if 'average_filter' in filters:
-    #         x_vals_filt = np.zeros_like(x_vals_all[-1])
-    #         y_vals_filt = np.zeros_like(y_vals_all[-1])
-    #         count = 0
-    #         for i in range(snapshot+1-avg_filter_snaps_no,snapshot+1):
-    #             for j in range(len(x_vals)):
-    #                 x_vals_filt[j] += x_vals_all[count][j]
-    #                 y_vals_filt[j] += y_vals_all[count][j]
-    #             count += 1
-    #         x_vals_filt = x_vals_filt/avg_filter_snaps_no
-    #         y_vals_filt = y_vals_filt/avg_filter_snaps_no
-    #         if only_filter is True:
-    #             x_vals = x_vals_filt
-    #             y_vals = y_vals_filt
-    #     else:
-    #         x_vals_filt = x_vals_all[-1]
-    #         y_vals_filt = y_vals_all[-1]
-    
- 
     
     if which_plot == 'System Mass' or which_plot == 'Primary Mass':
         if plot == True:
@@ -4698,13 +4670,13 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 else:
                     plt.step(x_vals,y_vals,label = 'Primary stars')
                     plt.ylabel('Number of stars')
-                plt.step(tot_m+0.01,vals,label = 'All stars (IMF)')
+                plt.step(tot_m+0.01,vals,label = 'All stars (IMF)',linestyle='--')
                 plt.legend(fontsize=14)
             elif only_filter is False:
-                plt.step(x_vals,y_vals,label = 'Simulation')
+                plt.step(x_vals,y_vals,label = 'Simulation', color = colorlist[0])
                 #plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
-                for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
+                for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle,color=linecolor)
                 plt.legend(fontsize=14)
             else:
                 plt.step(x_vals,y_vals)
@@ -4718,17 +4690,17 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             return x_vals,y_vals
     if which_plot == 'Mass Ratio':
         if plot == True:
-            plt.step(x_vals,y_vals,label = 'Simulation')
+            plt.step(x_vals,y_vals,label = 'Simulation',color=colorlist[0])
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
-                for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle)
+                for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle,color=linecolor)
             plt.ylabel('Number of Systems')
             plt.xlabel(r'q ($M/M_\mathrm{p}$)')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')  
             if upper_limit<1000:
-                plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right')
+                plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right', fontsize=14)
             if compare == True:
                 if snapshot is None:
                     print('Please provide snapshots')
@@ -4739,14 +4711,14 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 Weighted_IMF,IMF = randomly_distributed_companions(systems,file,snapshot,mass_ratio=bins,plot = False,upper_limit=upper_limit,lower_limit=lower_limit,target_mass=target_mass)
                 IMF = np.insert(IMF,0,0)
                 if len(x_vals)>4:
-                    plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 0.3)
-                    plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 0.3)
-                    plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 0.3)
+                    plt.vlines((x_vals[-1]+x_vals[-2])/2,y_vals[-1]-np.sqrt(y_vals[-1]),y_vals[-1]+np.sqrt(y_vals[-1]),alpha = 1.0,color=colorlist[0])
+                    plt.vlines((x_vals[4]+x_vals[3])/2,y_vals[4]-np.sqrt(y_vals[4]),y_vals[4]+np.sqrt(y_vals[4]),alpha = 1.0,color=colorlist[0])
+                    plt.vlines((x_vals[1]+x_vals[2])/2,y_vals[2]-np.sqrt(y_vals[2]),y_vals[2]+np.sqrt(y_vals[2]),alpha = 1.0,color=colorlist[0])
                     if only_filter is False:
-                        plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),linestyles=':',color = '#ff7f0e')
-                        plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]+0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),linestyles=':',color = '#ff7f0e')
-                        plt.vlines((x_vals_filt[filters_to_plot[-1]][1]+x_vals_filt[filters_to_plot[-1]][2]+0.02)/2,y_vals_filt[filters_to_plot[-1]][2]-np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),y_vals_filt[filters_to_plot[-1]][2]+np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),linestyles=':',color = '#ff7f0e')
-                plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'All stars (IMF)')
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][-1]+x_vals_filt[filters_to_plot[-1]][-2]-0.02)/2,y_vals_filt[filters_to_plot[-1]][-1]-np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),y_vals_filt[filters_to_plot[-1]][-1]+np.sqrt(y_vals_filt[filters_to_plot[-1]][-1]),color = colorlist[-1])
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][4]+x_vals_filt[filters_to_plot[-1]][3]-0.02)/2,y_vals_filt[filters_to_plot[-1]][4]-np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),y_vals_filt[filters_to_plot[-1]][4]+np.sqrt(y_vals_filt[filters_to_plot[-1]][4]),color = colorlist[-1])
+                        plt.vlines((x_vals_filt[filters_to_plot[-1]][1]+x_vals_filt[filters_to_plot[-1]][2]-0.02)/2,y_vals_filt[filters_to_plot[-1]][2]-np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),y_vals_filt[filters_to_plot[-1]][2]+np.sqrt(y_vals_filt[filters_to_plot[-1]][2]),color = colorlist[-1])
+                plt.step(x_vals+0.01,(IMF*sum(y_vals)/sum(IMF))+0.01,label = 'All stars (IMF)', linestyle='--')
                 if all_companions == True:
                     plt.ylabel('Number of stars')
                 else:
@@ -4759,11 +4731,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             return x_vals,y_vals
     if which_plot == 'Angle':
         if plot == True:
-            plt.step(x_vals,y_vals,label = 'Simulation')
+            plt.step(x_vals,y_vals,label = 'Simulation', color=colorlist[0])
             if only_filter is False:
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
-                for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle)
+                for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
+                    plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle, color = linecolor)
             plt.ylabel('Number of Systems')
             plt.xlabel('Misalignment Angle [°]')
             x_pected = np.linspace(0,180,31)
@@ -4782,12 +4754,12 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         if plot == True:
             fig = plt.figure(figsize = (6,6))
             ax1 = fig.add_subplot(111)
-            ax1.step(x_vals,y_vals,label = 'Simulation')
+            ax1.step(x_vals,y_vals,label = 'Simulation', color=colorlist[0])
             if only_filter is False:
                 #ax1.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
-                for i, (filter_label,linestyle) in enumerate(zip(filters_to_plot,[':','--','-.','-'])):
-                    ax1.step(x_vals_filt[filter_label]-0.05*(i+1),y_vals_filt[filter_label]+0.1*(i+1),label = filter_label, linestyle = linestyle)
-            ax1.vlines(np.log10(20),0,max(y_vals))
+                for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
+                    ax1.step(x_vals_filt[filter_label]-0.05*(i+1),y_vals_filt[filter_label]+0.1*(i+1),label = filter_label, linestyle = linestyle, color = linecolor)
+            ax1.vlines(np.log10(20),0,max(y_vals),color='k',linestyle=':')
             pands = []
             for i in systems:
                 if i.no>1 and lower_limit<=i.primary<=upper_limit:
@@ -4824,8 +4796,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                     obs_y_error = np.array([0.05, 0.08, 0.07, 0.04])
                 obs_smaxes = logperiod_day_to_logsmaxes_AU(obs_periods) 
                 #obs_norm_factor = np.interp(obs_smaxes[np.argmax(obs_y)],x_vals,y_vals)/np.max(obs_y)
-                obs_norm_factor = np.max(y_vals[x_vals>np.log10(20)+0.2])/np.max(obs_y)
-                ax1.errorbar(obs_smaxes,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+                obs_norm_factor = np.max(y_vals[x_vals>np.log10(20)+0.2])/np.max(obs_y*0.98)
+                ax1.errorbar(obs_smaxes-0.01,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
             if log == True:
                 plt.yscale('log')
             ax1.set_ylabel('Number of Systems')
@@ -5031,11 +5003,12 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
     if multiplicity == 'Properties' or multiplicity == 'Density Separate' or multiplicity == 'Mass Density Separate':
         if plot == True:
             if multiplicity == 'Properties':
-                plt.plot(logmasslist,o1,marker = '*',label = 'Unbound Stars')
-                plt.plot(logmasslist,o2,marker = 'o', label = 'Primary Stars')
-                plt.plot(logmasslist,o3,marker = '^',label = 'Non-Primary Stars')
+                markersize = 10; linewidth = 2.0
+                plt.plot(logmasslist,o1,marker = '*',label = 'Single Stars', markersize=markersize, linewidth=linewidth)
+                plt.plot(logmasslist,o2,marker = 'o', label = 'Primary Stars', markersize=markersize, linewidth=linewidth)
+                plt.plot(logmasslist,o3,marker = '^',label = 'Non-primary Stars', markersize=markersize, linewidth=linewidth)
             else:
-                plt.plot(logmasslist,np.log10(o1),marker = '*',label = 'Unbound Stars')
+                plt.plot(logmasslist,np.log10(o1),marker = '*',label = 'Single Stars')
                 plt.fill_between(logmasslist,np.log10(o1+o4),np.log10(o1)-(np.log10(o1+o4)-np.log10(o1)),alpha = 0.3)
                 plt.plot(logmasslist,np.log10(o2),marker = 'o', label = 'Primary Stars')
                 plt.fill_between(logmasslist,np.log10(o2+o5),np.log10(o2)-(np.log10(o2+o5)-np.log10(o2)),alpha = 0.3)
@@ -5043,7 +5016,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.fill_between(logmasslist,np.log10(o3+o6),np.log10(o3)-(np.log10(o3+o6)-np.log10(o3)),alpha = 0.3)
             if only_filter is False:
                 plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary Stars Filt',linestyle = ':')
-                plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound Stars Filt',linestyle = ':')
+                plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Single Stars Filt',linestyle = ':')
                 plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-Primary Stars Filt',linestyle = ':')
             plt.legend(fontsize=14)
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
@@ -5567,10 +5540,13 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             only_filter = False
         Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = plot,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,label=label,filter_in_class = filter_in_class)
     else:
-        filter_labels = ['Simulation',r'q>%3.2g'%(q_filt_min),r'$t_\mathrm{companion}$>%3.2g Myr'%(time_filt_min)]
-        filter_labels.append(filter_labels[-2]+' & '+filter_labels[-1])
+        filter_labels = ['Simulation',r'q>%3.2g'%(q_filt_min),r'$t_\mathrm{comp}$>%3.2g Myr'%(time_filt_min)]
+        #filter_labels.append(filter_labels[-2]+' & '+filter_labels[-1])
+        filter_labels.append('All corrections')
         filter_names = [[None],['q_filter'],['time_filter'],['q_filter','time_filter']]
-        linestyles = ['-',':','--','-.']
+        #linestyles = ['-',':','--','-.']
+        linestyles = ['-','-','-','-','-','-']
+        colorlist, _ = set_colors_and_styles(None, None, len(filter_names), dark=True, sequential=True)
         for i in range(len(filter_names)):
             logmasslist,o1,o2,o3 = Multiplicity_One_Snap_Plots(Master_File,file,systems = systems,snapshot = snapshot,filename = filename,plot = False,multiplicity = multiplicity,mass_break=mass_break,bins = bins,filters = filter_names[i],avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = True,label=label,filter_in_class = filter_in_class)
             error = []
@@ -5582,8 +5558,8 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             error = np.array(error, dtype=float);o1 = np.array(o1, dtype=float)
             if include_error is True:
                 if filter_labels[i] == 'Simulation' or filter_labels[i] == filter_labels[-1]:
-                    plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.15)
-            plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i])
+                    plt.fill_between(logmasslist,o1+error,o1-error,alpha = 0.2, color=colorlist[i])
+            plt.plot(logmasslist,o1,linestyle = linestyles[i],label = filter_labels[i], color=colorlist[i])
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
         if multiplicity == 'MF':
             observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]

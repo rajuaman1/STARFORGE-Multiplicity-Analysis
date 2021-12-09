@@ -69,6 +69,7 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
 def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 0.5,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None, plots_to_do=['All']):
     Filenames = orig_filenames.copy()
     print(Filenames)
+    np.random.seed(137) #reset RNG
     timer = Timer()
     timer.start()
     if datafolder!='':
@@ -224,14 +225,14 @@ sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequent
 sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 #plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
-#plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
-plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
+#plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
 
 
-# alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
-# alpha_labels = [r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
+#alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
+#alpha_labels = [r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
@@ -250,12 +251,12 @@ plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ]
 # redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 
 
-# all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
-# all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-#all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
+all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
+all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
 all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 
 
