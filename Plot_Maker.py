@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles, Seperation_Tracking,Primordial_separation_distribution
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles, Seperation_Tracking,Primordial_separation_distribution,smaxis_all_func
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -50,11 +50,13 @@ ISRF_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_ISRFx10_2e7','M2e4_C_M_
 ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
 alt_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2']
 alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
+test_filenames = ['M2e3_C_M_J_RT_W_2e7']
+test_labels = ['M2e3']
 plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 
 datafolder='D:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
-def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10, redo_all=False,L = None):
+def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subdivision_for_last_snaps=10, redo_all=False,L = None, post_process=False):
     file_path = filename
     if datafolder !='': file_path = datafolder + '/' + filename
     file = load_files(file_path)[0]
@@ -62,6 +64,11 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
     #Saving to file
     outfilename=filename+'_Systems'
     if datafolder !='': outfilename = datafolder + '/' + outfilename
+    if post_process:
+        for i in tqdm(range(len(output)),position = 0,desc = 'Post-processing snapshots'):
+            for j in range(len(output[i])):
+                smaxis_all, ecc_all, orbits = smaxis_all_func(output[i][j], return_all=True)
+                output[i][j].smaxis_all = smaxis_all; output[i][j].ecc_all = ecc_all; output[i][j].orbits = orbits
     outfile = open(outfilename,'wb')
     pickle.dump(output,outfile)
     outfile.close()
@@ -221,6 +228,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     timer.list_times()
 
 redo_all_main=False
+post_process=False
 sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequential=True)
 sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
@@ -234,23 +242,25 @@ plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ]
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
 #alpha_labels = [r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
 
-# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
-# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
+# redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt1',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx01_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_Zx001_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx10_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_ISRFx100_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_hiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_vhiB_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_alpha1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_alpha4_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 
-
+#all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
 #all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
 all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)

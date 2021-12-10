@@ -719,7 +719,7 @@ def smaxis(system):
         if k.m[i] < primary_mass and k.m[i]> secondary_mass:
             secondary_mass = k.m[i]
             sec_ind = i
-    if k.no == 2: #If there's two stars, only one possible semi major axis 
+    if k.no >= 2: #If there's two stars, only one possible semi major axis 
         vel_prim = k.v[np.argmax(k.m)]
         x_prim = k.x[np.argmax(k.m)]
         vel_sec = k.v[sec_ind]
@@ -890,32 +890,36 @@ def eccentricity(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec):
     dvx = vel_prim[0]-vel_sec[0];dvy = vel_prim[1]-vel_sec[1];dvz = vel_prim[2]-vel_sec[2]
     h = np.linalg.norm(np.cross([dx,dy,dz],[dvx,dvy,dvz])*pc_to_m)
     ecc = np.sqrt(1+2*binding_energy/mu/(gravparam**2)*(h**2))
+    # a=semi_major_axis(primary_mass,secondary_mass,x_prim,x_sec,vel_prim,vel_sec)
+    # ecc_alt = np.sqrt( 1- (h**2)/a/gravparam )
     if isinstance(ecc,np.ndarray):
         ecc = ecc[0]
-    
-    if ecc>1.01:
-        print(ecc)
-    
+
     return ecc
 
 def ecc_smaxis_in_system(id1,id2,system):
-    semimajor_all, eccentricity_all, members_all = smaxis_all(system, return_all=True)
+    #semimajor_all, eccentricity_all, members_all = smaxis_all_func(system, return_all=True)
     tot_objects = 1e10; ecc = np.nan; semimajor=np.nan
-    for i, pairings in enumerate(members_all):
-        if ( (id1 in pairings[0]) and (id2 in pairings[1]) ) or ( (id1 in pairings[1]) and (id2 in pairings[0]) ):
+    if (id2 is None) and (not (id1 is None)): id2=id1; id1=None
+    for i, pairings in enumerate(system.orbits):
+        both_in = ( (id1 in pairings[0]) and (id2 in pairings[1]) ) or ( (id1 in pairings[1]) and (id2 in pairings[0]) )
+        one_in_other_none = (id1 is None) and ( (id2 in pairings[1])  or (id2 in pairings[0])  )                                                             
+        if both_in or one_in_other_none:
            if (tot_objects>(len(pairings[0])+len(pairings[1]))):
                tot_objects = len(pairings[0])+len(pairings[1])
-               ecc = eccentricity_all[i]
-               semimajor = semimajor_all[i]
+               ecc = system.ecc_all[i]
+               semimajor = system.smaxis_all[i]
     return ecc, semimajor
                                                   
 
 
 #Calculating the semi major axis for every possible configuration of these systems
-def smaxis_all(system, return_all=False):
+def smaxis_all_func(system, return_all=False):
     '''Calculate the semimajor axis between all subsystems in a system'''
     k = system
-    if k.no == 1: #Single star has no smaxis
+    # if k.no!=len(k.m):
+    #     print("Size mismatch", k.no, k.m, k.ids)
+    if len(k.m) == 1: #Single star has no smaxis
         if return_all:
             return np.array([0]), np.array([0]), [k.ids]
         else:
@@ -1092,7 +1096,7 @@ class star_system:
         self.mass_ratio = secondary_mass/primary_mass #The companion mass ratio (secondary/primary)
         #Note: The semi major axis is in m and is between the sub-systems with the primary & secondary
         self.smaxis = smaxis(self)
-        self.smaxis_all = smaxis_all(self)
+        self.smaxis_all, self.ecc_all, self.orbits = smaxis_all_func(self, return_all=True)
         #Get at formation density info
         self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None)[0] for ID in self.ids])
         self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None)[0] for ID in self.ids])
@@ -1308,73 +1312,77 @@ def system_initialization(file,file_name,read_in_result = True,seperation_param 
 #This is a filter for minimum q for one snapshot
 def q_filter_one_snap(systems,min_q = 0.1,filter_in_class = False):
     '''The q filter as applied to one snapshot'''
-    if filter_in_class is True:
-        filtered_systems = []
-        for system_no,system in enumerate(systems):
-            filtered_systems.append(system.filter['q'])
-        return filtered_systems
-    else:
-        Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
-        for i,j in enumerate(Filtered_Master_File):
-            if j.no>1:
-                for k in j.m:
-                    if k/j.primary < min_q:
-                        if j.no == 4:
-                            state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
-                            for idd in j.structured_ids:
-                                if isinstance(idd,list):
-                                    state += len(idd)
-                        remove_id = np.array(j.ids)[j.m == k] #The id that we have to remove
-                        j.ids = j.ids[j.m != k]
-                        j.x = j.x[j.m != k]
-                        j.v = j.v[j.m != k]
-                        j.no -= 1
-                        j.age_Myr = j.age_Myr[j.m != k]
-                        j.final_masses = j.final_masses[j.m != k]
-                        j.formation_time_Myr = j.formation_time_Myr[j.m != k]
-                        j.init_star_vol_density = j.init_star_vol_density[j.m != k]
-                        j.init_star_mass_density = j.init_star_mass_density[j.m != k]
-                        j.init_density = {'number': j.init_star_vol_density, 'mass': j.init_star_mass_density}
-                        j.stellar_evol_stages = j.stellar_evol_stages[j.m != k]
-                        j.ZAMS_age = j.ZAMS_age[j.m != k]
-                        j.multip_state = j.multip_state[j.m != k] 
-                        j.m = j.m[j.m != k]
-                        if j.no == 1:
-                            j.secondary = 0
-                        else:
-                            j.secondary = np.max(j.m[j.ids!=j.primary_id])
-                        j.mass_ratio = j.secondary/j.primary
-                        j.tot_m = sum(j.m)
-                        if j.no == 1:
-                            j.mass_ratio = 0
-                            j.secondary = 0 #Remove the secondary if the remaining star is solitary
-                            j.structured_ids = [j.ids]
-                        if j.no == 2:
-                            j.structured_ids = list(j.ids) #The secondary isn't going to be removed if there's 2 stars remaining
-                        if j.no == 3:
-                            removed_list = copy.deepcopy(j.structured_ids) 
-                            checker = remove_id[0] #The remove ID is in an array so we make it single
-                            checker = float(checker) #It is an np float so we make it a float
-                            nested_remove(removed_list,checker)
-                            if state == 4:
+    Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
+    for i,sys in enumerate(Filtered_Master_File):
+        sys_orig = copy.deepcopy(sys)
+        if sys.no>1:
+            for ind, p_id in enumerate(sys_orig.ids):
+                q = sys_orig.m[ind]/sys_orig.primary
+                if q<min_q:
+                    if sys.no == 4:
+                        state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
+                        for idd in sys.structured_ids:
+                            if isinstance(idd,list):
+                                state += len(idd)
+                    remove_id = np.array(sys.ids)[sys.ids == p_id] #The id that we have to remove
+                    sys.x = sys.x[sys.ids != p_id]
+                    sys.v = sys.v[sys.ids != p_id]
+                    sys.no -= 1
+                    sys.age_Myr = sys.age_Myr[sys.ids != p_id]
+                    sys.final_masses = sys.final_masses[sys.ids != p_id]
+                    sys.formation_time_Myr = sys.formation_time_Myr[sys.ids != p_id]
+                    sys.init_star_vol_density = sys.init_star_vol_density[sys.ids != p_id]
+                    sys.init_star_mass_density = sys.init_star_mass_density[sys.ids != p_id]
+                    sys.init_density = {'number': sys.init_star_vol_density, 'mass': sys.init_star_mass_density}
+                    sys.stellar_evol_stages = sys.stellar_evol_stages[sys.ids != p_id]
+                    sys.ZAMS_age = sys.ZAMS_age[sys.ids != p_id]
+                    sys.multip_state = sys.multip_state[sys.ids != p_id] 
+                    sys.m = sys.m[sys.ids != p_id]
+                    sys.ids = sys.ids[sys.ids != p_id] #need to do this last
+                    if sys.no == 1:
+                        sys.secondary = 0
+                        sys.smaxis = 0
+                    else:
+                        secondary_id = sys.ids[np.argmax(sys.m[sys.ids!=sys.primary_id])]
+                        sys.secondary = sys.m[sys.ids==secondary_id][0]
+                        sys.smaxis = ecc_smaxis_in_system(secondary_id, sys_orig.primary_id, sys_orig)[1]
+                    sys.mass_ratio = sys.secondary/sys.primary
+                    sys.tot_m = sum(sys.m)
+                    if sys.no == 1:
+                        sys.mass_ratio = 0
+                        sys.secondary = 0 #Remove the secondary if the remaining star is solitary
+                        sys.structured_ids = [sys.ids]
+                    if sys.no == 2:
+                        sys.structured_ids = list(sys.ids) #The secondary isn't going to be removed if there's 2 stars remaining
+                    if sys.no == 3:
+                        removed_list = copy.deepcopy(sys.structured_ids) 
+                        checker = remove_id[0] #The remove ID is in an array so we make it single
+                        checker = float(checker) #It is an np float so we make it a float
+                        nested_remove(removed_list,checker)
+                        if state == 4:
+                            for index,value in enumerate(removed_list):
+                                if isinstance(value,list):
+                                    if len(value) == 1:
+                                        removed_list[index] = value[0]
+                        elif state == 2:
+                            if len(removed_list) == 1:
+                                removed_list = removed_list[0]
+                            if len(removed_list) == 2:
                                 for index,value in enumerate(removed_list):
-                                    if isinstance(value,list):
-                                        if len(value) == 1:
-                                            removed_list[index] = value[0]
-                            elif state == 2:
-                                if len(removed_list) == 1:
-                                    removed_list = removed_list[0]
-                                if len(removed_list) == 2:
-                                    for index,value in enumerate(removed_list):
-                                        if isinstance(value,list) and len(value) == 1:
-                                            removed_list[index] = value[0]
-                                        elif isinstance(value,list) and len(value) == 2:
-                                            removed_list[index] = list(flatten(value)) 
-                            j.structured_ids = removed_list
-                        j.smaxis = smaxis(j)
-                        j.smaxis_all = smaxis_all(j)
-                        Filtered_Master_File[i] = j
-        return Filtered_Master_File
+                                    if isinstance(value,list) and len(value) == 1:
+                                        removed_list[index] = value[0]
+                                    elif isinstance(value,list) and len(value) == 2:
+                                        removed_list[index] = list(flatten(value)) 
+                        sys.structured_ids = removed_list
+                    kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
+                    for i in range(len(sys.orbits)):
+                        if not ( ( (p_id in sys.orbits[i][0]) and len(sys.orbits[i][0])==1 ) or ( (p_id in sys.orbits[i][1]) and len(sys.orbits[i][1])==1 ) ):
+                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); kept_orbits.append(sys.orbits[i])
+                    sys.smaxis_all = np.array(kept_smaxes)
+                    sys.ecc_all = np.array(kept_ecc)
+                    sys.orbits = kept_orbits
+                    Filtered_Master_File[i] = sys
+    return Filtered_Master_File
 
 #This function applies the q filter to all snapshots
 def q_filter(Master_File):
@@ -1388,7 +1396,7 @@ def q_filter(Master_File):
 #Modified version of the q filter to account for solar type star incompleteness in Raghavan
 def Raghavan_filter_one_snap(systems):
     qlim1 = [0, 0.1]; completeness1 = 0.0; semimajor_limits1=[0, 1e10]
-    qlim2 = [0.1, 0.5]; completeness2 = 0.25; semimajor_limits2=[0, 30]
+    qlim2 = [0.1, 0.5]; completeness2 = 0.0; semimajor_limits2=[0, 30]
     qlim3 = [0.1, 0.2]; completeness3 = 0.0; semimajor_limits3=[150, 400]
     '''The q filter as applied to one snapshot'''
     Filtered_Master_File = copy.deepcopy(systems) #Creating a new copy of the master file
@@ -1398,7 +1406,7 @@ def Raghavan_filter_one_snap(systems):
             for ind, p_id in enumerate(sys_orig.ids):
                 q = sys_orig.m[ind]/sys_orig.primary
                 ###a = sys.smaxis/m_to_AU #not at all accurate for multiple systems but Solar type stars rarely have higher order systems
-                a = ecc_smaxis_in_system(p_id, sys_orig.primary_id, sys_orig)[1]/m_to_AU
+                a = ecc_smaxis_in_system(p_id, sys_orig.primary_id, sys_orig)[1]/m_to_AU #this needs to be relative to primary
                 remove_flag = False
                 if (q<=qlim1[1]) and (q>=qlim1[0]) and (a<=semimajor_limits1[1]) and (a>=semimajor_limits1[0]):
                     remove_flag = np.random.rand()<(1-completeness1)
@@ -1429,8 +1437,11 @@ def Raghavan_filter_one_snap(systems):
                     sys.ids = sys.ids[sys.ids != p_id] #need to do this last
                     if sys.no == 1:
                         sys.secondary = 0
+                        sys.smaxis = 0
                     else:
-                        sys.secondary = np.max(sys.m[sys.ids!=sys.primary_id])
+                        secondary_id = sys.ids[np.argmax(sys.m[sys.ids!=sys.primary_id])]
+                        sys.secondary = sys.m[sys.ids==secondary_id][0]
+                        sys.smaxis = ecc_smaxis_in_system(secondary_id, sys_orig.primary_id, sys_orig)[1]
                     sys.mass_ratio = sys.secondary/sys.primary
                     sys.tot_m = sum(sys.m)
                     if sys.no == 1:
@@ -1459,8 +1470,13 @@ def Raghavan_filter_one_snap(systems):
                                     elif isinstance(value,list) and len(value) == 2:
                                         removed_list[index] = list(flatten(value)) 
                         sys.structured_ids = removed_list
-                    sys.smaxis = smaxis(sys)
-                    sys.smaxis_all = smaxis_all(sys)
+                    kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
+                    for i in range(len(sys.orbits)):
+                        if not ( ( (p_id in sys.orbits[i][0]) and len(sys.orbits[i][0])==1 ) or ( (p_id in sys.orbits[i][1]) and len(sys.orbits[i][1])==1 ) ):
+                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); kept_orbits.append(sys.orbits[i])
+                    sys.smaxis_all = np.array(kept_smaxes)
+                    sys.ecc_all = np.array(kept_ecc)
+                    sys.orbits = kept_orbits
                     Filtered_Master_File[i] = sys
     return Filtered_Master_File
 
@@ -1495,30 +1511,31 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
         new_system.tot_m = new_system.primary
         new_system.structured_ids = np.array([new_system.primary_id])
         new_system.smaxis = 0
+        smaxis_all, ecc_all, orbits = smaxis_all_func(new_system, return_all=True)
+        new_system.smaxis_all = smaxis_all; new_system.ecc_all = ecc_all; new_system.orbits = orbits
         return new_system
-    og_system = system
-    for ides in og_system.ids: #Checking all the ids in the snap
+    for ides in system.ids: #Checking all the ids in the snap
         if ides not in previous_target_system.ids and ides != system.primary_id: #If any of the companions arent there
             if system.no == 4:
                 state = 0 #We need to see if its a [[1,2],[3,4]] or [1,[2,[3,4]]] system
-                for idd in og_system.structured_ids:
+                for idd in system.structured_ids:
                     if isinstance(idd,list):
                         state += len(idd)
-            remove_mass = new_system.m[np.array(new_system.ids) == ides]
-            new_system.ids = new_system.ids[new_system.m != remove_mass]
-            new_system.x = new_system.x[new_system.m != remove_mass]
-            new_system.v = new_system.v[new_system.m != remove_mass]
+            keep_ind = (np.array(new_system.ids) != ides)
+            new_system.ids = new_system.ids[keep_ind]
+            new_system.x = new_system.x[keep_ind]
+            new_system.v = new_system.v[keep_ind]
             new_system.no -= 1
-            new_system.age_Myr = new_system.age_Myr[new_system.m != remove_mass]
-            new_system.final_masses = new_system.final_masses[new_system.m != remove_mass]
-            new_system.formation_time_Myr = new_system.formation_time_Myr[new_system.m != remove_mass]
-            new_system.init_star_vol_density= new_system.init_star_vol_density[new_system.m != remove_mass]
-            new_system.init_star_mass_density = new_system.init_star_mass_density[new_system.m != remove_mass]
+            new_system.age_Myr = new_system.age_Myr[keep_ind]
+            new_system.final_masses = new_system.final_masses[keep_ind]
+            new_system.formation_time_Myr = new_system.formation_time_Myr[keep_ind]
+            new_system.init_star_vol_density= new_system.init_star_vol_density[keep_ind]
+            new_system.init_star_mass_density = new_system.init_star_mass_density[keep_ind]
             new_system.init_density = {'number': new_system.init_star_vol_density, 'mass': new_system.init_star_mass_density}
-            new_system.stellar_evol_stages = new_system.stellar_evol_stages[new_system.m != remove_mass]
-            new_system.ZAMS_age = new_system.ZAMS_age[new_system.m != remove_mass]
-            new_system.multip_state = new_system.multip_state[new_system.m != remove_mass]
-            new_system.m = new_system.m[new_system.m != remove_mass]
+            new_system.stellar_evol_stages = new_system.stellar_evol_stages[keep_ind]
+            new_system.ZAMS_age = new_system.ZAMS_age[keep_ind]
+            new_system.multip_state = new_system.multip_state[keep_ind]
+            new_system.m = new_system.m[keep_ind]
             new_system.tot_m = sum(new_system.m)
             if new_system.no == 1:
                 new_system.mass_ratio = 0
@@ -1556,9 +1573,16 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                         secondary = j
                 new_system.secondary = secondary
                 new_system.mass_ratio = secondary/system.primary
-                new_system.smaxis = smaxis(system)
-                new_system.smaxis_all = smaxis_all(system)
-                #Add secondary
+                
+                
+                kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
+                for i in range(len(new_system.orbits)):
+                    if not ( ( (ides in new_system.orbits[i][0]) and len(new_system.orbits[i][0])==1 ) or ( (ides in new_system.orbits[i][1]) and len(new_system.orbits[i][1])==1 ) ):
+                        kept_smaxes.append(new_system.smaxis_all[i]); kept_ecc.append(new_system.ecc_all[i]); kept_orbits.append(new_system.orbits[i])
+                new_system.smaxis_all = np.array(kept_smaxes)
+                new_system.ecc_all = np.array(kept_ecc)
+                new_system.orbits = kept_orbits
+                new_system.smaxis = smaxis(new_system)
     return new_system
 
 def full_simple_filter(Master_File,file,selected_snap = -1,long_ago = 0.1,no_of_orbits = 2,filter_in_class = True):
@@ -2464,14 +2488,15 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
             primary_masses.append(i.primary)
             if lower_limit<=i.primary<=upper_limit:
                 if all_companions == False:
-                    semi_major_axes.append(smaxis(i))
+                    semi_major_axes.append(i.smaxis)
                     mass_ratios.append(i.mass_ratio)
                     snapshot = i.snapshot_num
                     secondary_id = i.ids[i.m == i.secondary][0]
                     angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
-                    eccentricities.append(ecc_smaxis_in_system(i.primary_id,secondary_id,i)[0])
+                    eccentricities.append(ecc_smaxis_in_system(i.primary_id,secondary_id,i))
                 elif all_companions == True: #If you want to look at all companions or subsystems.
-                    semi_major_axes.append(smaxis_all(i))
+                    semi_major_axes = semi_major_axes +list(i.smaxis_all)
+                    eccentricities = eccentricities + list(i.ecc_all)
                     snapshot = i.snapshot_num
                     snapshot = -1
                     for j in i.m:
@@ -2479,7 +2504,7 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
                             mass_ratios.append(j/i.primary)
                             secondary_id = i.ids[i.m == j][0]
                             angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
-                            eccentricities.append(ecc_smaxis_in_system(i.primary_id,secondary_id,i)[0])
+                            
     if attribute == 'System Mass':
         return masses
     elif attribute == 'Primary Mass':
@@ -4681,6 +4706,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
     '''
     adjust_ticks=True
     if label is None: label=filename
+    if snapshot<0: snapshot = len(Master_File)+snapshot
     if systems is None: systems = Master_File[snapshot]
     filtered_systems = []; filters_done = []; filters_to_plot = []
     #linestyle_list = [':','--','-.','-']
@@ -4689,21 +4715,18 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
         # if 'time_filter' in filters and 'q_filter' in filters and filter_in_class is True:
         #     filtered_systems = [get_q_and_time(filtered_systems)]
         # else:
+        if 'time_filter' in filters:
+            filtered_systems.append(full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class))
+            filters_done.append(r'$t_\mathrm{comp}$>%3.2g Myr'%(time_filt_min))
         if 'q_filter' in filters:
             filtered_systems.append(q_filter_one_snap(systems,min_q=q_filt_min,filter_in_class=filter_in_class))
             filters_done.append(r'q>%3.2g'%(q_filt_min))
         if 'Raghavan' in filters:
             filtered_systems.append(Raghavan_filter_one_snap(systems))
             filters_done.append(r'MDS17 correction')
-        if 'time_filter' in filters:
-            filtered_systems.append(full_simple_filter(Master_File,file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class))
-            filters_done.append(r'$t_\mathrm{comp}$>%3.2g Myr'%(time_filt_min))
-        if ('time_filter' in filters) and ('q_filter' in filters):
-            filtered_systems.append(q_filter_one_snap(filtered_systems[-1],min_q=q_filt_min,filter_in_class=filter_in_class))
-            #filters_done.append(filters_done[-2]+' & '+filters_done[-1])
-            filters_done.append('All corrections')
-        if ('Raghavan' in filters) and ('time_filter' in filters):
-            filtered_systems.append(Raghavan_filter_one_snap(filtered_systems[-1]))
+        if ('time_filter' in filters) and ( ('q_filter' in filters) or ('Raghavan' in filters) ):
+            filtered_systems.append(full_simple_filter(Master_File[:snapshot]+[filtered_systems[-1]]+Master_File[(snapshot+1):],file,snapshot,long_ago = time_filt_min,filter_in_class=filter_in_class))
+            #filtered_systems.append(q_filter_one_snap(filtered_systems[-1],min_q=q_filt_min,filter_in_class=filter_in_class))
             #filters_done.append(filters_done[-2]+' & '+filters_done[-1])
             filters_done.append('All corrections')
         if only_filter is True:
