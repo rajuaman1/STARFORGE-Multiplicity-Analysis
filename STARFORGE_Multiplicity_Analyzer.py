@@ -1377,7 +1377,11 @@ def q_filter_one_snap(systems,min_q = 0.1,filter_in_class = False):
                     kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
                     for i in range(len(sys.orbits)):
                         if not ( ( (p_id in sys.orbits[i][0]) and len(sys.orbits[i][0])==1 ) or ( (p_id in sys.orbits[i][1]) and len(sys.orbits[i][1])==1 ) ):
-                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); kept_orbits.append(sys.orbits[i])
+                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); 
+                            sys_orbits = copy.deepcopy(sys.orbits[i])
+                            if (p_id in sys.orbits[i][0]): sys_orbits[0].remove(p_id)
+                            elif (p_id in sys.orbits[i][1]): sys_orbits[1].remove(p_id)
+                            kept_orbits.append(sys_orbits)
                     sys.smaxis_all = np.array(kept_smaxes)
                     sys.ecc_all = np.array(kept_ecc)
                     sys.orbits = kept_orbits
@@ -1473,7 +1477,11 @@ def Raghavan_filter_one_snap(systems):
                     kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
                     for i in range(len(sys.orbits)):
                         if not ( ( (p_id in sys.orbits[i][0]) and len(sys.orbits[i][0])==1 ) or ( (p_id in sys.orbits[i][1]) and len(sys.orbits[i][1])==1 ) ):
-                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); kept_orbits.append(sys.orbits[i])
+                            kept_smaxes.append(sys.smaxis_all[i]); kept_ecc.append(sys.ecc_all[i]); 
+                            sys_orbits = copy.deepcopy(sys.orbits[i])
+                            if (p_id in sys.orbits[i][0]): sys_orbits[0].remove(p_id)
+                            elif (p_id in sys.orbits[i][1]): sys_orbits[1].remove(p_id)
+                            kept_orbits.append(sys_orbits)
                     sys.smaxis_all = np.array(kept_smaxes)
                     sys.ecc_all = np.array(kept_ecc)
                     sys.orbits = kept_orbits
@@ -1578,7 +1586,11 @@ def simple_filter_one_system(system,Master_File,comparison_snapshot = -2):
                 kept_smaxes = []; kept_ecc = []; kept_orbits=[] 
                 for i in range(len(new_system.orbits)):
                     if not ( ( (ides in new_system.orbits[i][0]) and len(new_system.orbits[i][0])==1 ) or ( (ides in new_system.orbits[i][1]) and len(new_system.orbits[i][1])==1 ) ):
-                        kept_smaxes.append(new_system.smaxis_all[i]); kept_ecc.append(new_system.ecc_all[i]); kept_orbits.append(new_system.orbits[i])
+                            kept_smaxes.append(new_system.smaxis_all[i]); kept_ecc.append(new_system.ecc_all[i]); 
+                            sys_orbits = copy.deepcopy(new_system.orbits[i])
+                            if (ides in new_system.orbits[i][0]): sys_orbits[0].remove(ides)
+                            elif (ides in new_system.orbits[i][1]): sys_orbits[1].remove(ides)
+                            kept_orbits.append(sys_orbits)
                 new_system.smaxis_all = np.array(kept_smaxes)
                 new_system.ecc_all = np.array(kept_ecc)
                 new_system.orbits = kept_orbits
