@@ -3184,8 +3184,8 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
             fraction_err = rolling_average(fraction+fraction_err,rolling_window) -rolling_average(fraction,rolling_window)
             fraction1 = rolling_average(fraction1,rolling_window)
             fraction1_err = rolling_average(fraction1+fraction1_err,rolling_window)- rolling_average(fraction1,rolling_window)
-        plt.plot(time,fraction,label = 'All stars', linestyle='-')
-        plt.fill_between(time, fraction-fraction_err, y2=fraction+fraction_err,alpha=0.25)
+        #plt.plot(time,fraction,label = 'All stars', linestyle='-')
+        #plt.fill_between(time, fraction-fraction_err, y2=fraction+fraction_err,alpha=0.25)
         plt.plot(time,fraction1,label = 'Stars no longer accreting', linestyle='--')
         plt.fill_between(time, fraction1-fraction1_err, y2=fraction1+fraction1_err,alpha=0.25)
         if target_mass == 1:
@@ -4835,6 +4835,13 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             plt.xlabel(r'q ($M/M_\mathrm{p}$)')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')  
+            #Raghavan 2010 mass ratio data for Solar type binaries
+            x_obs = np.linspace(0.05,0.95,10)
+            x_obs_errs = 0.05*np.ones_like(x_obs)
+            y_obs = np.array([4,6,12,16,11,12,12,9,11,17]) #for binaries only
+            y_obs_err = np.sqrt(y_obs) #Poisson error
+            obs_norm_factor = np.mean(y_vals)/np.mean(y_obs)*0.9
+            plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',linestyle = '')           
             if upper_limit<1000:
                 plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right', fontsize=14)
             if compare == True:
@@ -4872,11 +4879,20 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle, color = linecolor)
+            #Raghavan 2010 eccentricity data
+            x_obs = np.linspace(0.05,0.95,10)
+            x_obs_errs = 0.05*np.ones_like(x_obs)
+            y_obs1 = np.array([4,12,11,14,14,16,10,11,4,5])*82/100 #for log P<3
+            y_obs2 = np.array([12,15,15,18,6,21,6,3,3,3])*35/100 #for log P<3
+            y_obs = y_obs1+y_obs2 #Let's take all
+            y_obs_err = np.sqrt(y_obs) #Poisson error
+            obs_norm_factor = np.mean(y_vals)/np.mean(y_obs*1.2)
+            plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',linestyle = '')
             plt.ylabel('Number of Systems')
             plt.xlabel('Eccentricity') 
             if upper_limit<1000:
-                plt.text(0.02,0.95,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
-            plt.legend(fontsize=14,labelspacing=0,loc=3)
+                plt.text(0.02,0.02,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14,verticalalignment = 'bottom')
+            plt.legend(fontsize=14,labelspacing=0,loc=2)
             if log == True:
                 plt.yscale('log')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)

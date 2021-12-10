@@ -260,7 +260,7 @@ plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ]
 # redo_system_assignment('M2e4_C_M_J_RT_W_alpha1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_alpha4_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 
-#all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
+##all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
 #all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
 all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
@@ -268,6 +268,7 @@ all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots
 # all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
 # all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+
 
 
 
