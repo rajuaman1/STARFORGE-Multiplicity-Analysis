@@ -129,22 +129,22 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
             Snapshots = [[-1]]*len(Filenames)
         Snapshots = list(flatten(Snapshots))
         
-        Plot_name = ['Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties', 'Semi_Major_Axis', 'Angle', 'YSO_Multiplicity','Multiplicity_vs_Formation', 'Multiplicity_Time_Evolution']
-        Plot_key = ['Mass Ratio','System Mass','Primary Mass','Multiplicity', 'Semi Major Axis', 'Angle', 'YSO Multiplicity', 'Multiplicity vs Formation', 'Multiplicity Time Evolution']
+        Plot_name = ['Eccentricity','Random_Sampling','System_Mass_Dist','Primary_Mass_Dist','Multiplicity_Properties', 'Semi_Major_Axis', 'Angle', 'YSO_Multiplicity','Multiplicity_vs_Formation', 'Multiplicity_Time_Evolution']
+        Plot_key = ['Eccentricity','Mass Ratio','System Mass','Primary Mass','Multiplicity', 'Semi Major Axis', 'Angle', 'YSO Multiplicity', 'Multiplicity vs Formation', 'Multiplicity Time Evolution']
         
         for plot_type,plot_key in zip(Plot_name,Plot_key):
             new_file = output_dir+'/'+plot_type
             mkdir_p(new_file)
-            only_filter = False; plot_intermediate_filters=True
-            #filters = ['q_filter','time_filter']; 
-            filters = ['Raghavan','time_filter'] 
-            #if plot_key == 'Multiplicity vs Formation' :
-            multiplicity = 'MF'
-            if  plot_key == 'Multiplicity':
-                multiplicity = 'Properties'
-                filters = [None]; only_filter = True; plot_intermediate_filters=False
             for n in tqdm(range(len(Files)),position = 0,desc = plot_type):
                 plt.figure(figsize = (6,6))
+                only_filter = False; plot_intermediate_filters=True
+                #filters = ['q_filter','time_filter']; 
+                filters = ['Raghavan','time_filter'] 
+                #if plot_key == 'Multiplicity vs Formation' :
+                multiplicity = 'MF'
+                if  plot_key == 'Multiplicity':
+                    multiplicity = 'Properties'
+                    filters = [None]; only_filter = True; plot_intermediate_filters=False
                 Plots(plot_key,Systems[n],Files[n],Filenames[n],compare=True,snapshot = Snapshots[n],bins = bins,label=labels[n],log = log,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,target_age=target_age, q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter = only_filter,multiplicity=multiplicity,filter_in_class = filter_in_class,plot_intermediate_filters = plot_intermediate_filters, time_norm='Myr') 
                 plt.savefig(new_file+'/'+plot_type+'_'+orig_filenames[n]+'.png',dpi = 150,bbox_inches="tight"); plt.close('all') ; plt.close('all')
                 if plot_key in ['Semi Major Axis', 'Angle']:
@@ -225,10 +225,10 @@ sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequent
 sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 #plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
-plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+#plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
-#plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
+plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
 
 
 #alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
@@ -251,13 +251,13 @@ plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 # redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main)
 
 
-all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
+#all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
 all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
-all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
-all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+# all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+# all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
+# all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+# all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
+# all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 
 
 
