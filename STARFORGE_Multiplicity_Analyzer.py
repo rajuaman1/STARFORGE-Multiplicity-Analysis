@@ -3205,7 +3205,7 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
     elif plot == False:
         return time,np.array(fraction),np.array(fraction_err), np.array(fraction1),np.array(fraction1_err)
 
-def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 0.5,start = 1000):
+def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 0.5,start = 1000, return_all=False):
     '''
     The multiplicity fraction of all objects in a certain age range.
 
@@ -3249,6 +3249,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 0.5,start = 1000)
     multiplicity = []
     multiplicity_err = []
     bin_count = []
+    bound_count=[]
     average_mass = []
     for k in tqdm(range(len(Master_File)),position = 0):
         current_time = file[k].t*code_time_to_Myr
@@ -3285,7 +3286,11 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 0.5,start = 1000)
             multiplicity_err.append(Psigma(pcount+ubcount,pcount))
             average_mass.append(tot_mass/(pcount+ubcount))
         bin_count.append(pcount+ubcount) 
-    return np.array(multiplicity),np.array(multiplicity_err),np.array(bin_count),np.array(average_mass)
+        bound_count.append(pcount)
+    if return_all:
+        return np.array(multiplicity),np.array(multiplicity_err),np.array(bin_count),np.array(average_mass), np.array(bound_count)
+    else:
+        return np.array(multiplicity),np.array(multiplicity_err),np.array(bin_count),np.array(average_mass)
 
 #This function tracks the evolution of different stars over their lifetime
 def star_multiplicity_tracker(file,Master_File,T = 2,dt = 0.5,read_in_result = True,plot = False,target_mass = 1,upper_limit = 1.3,lower_limit = 0.7,zero = 'Formation',steps = 1,select_by_time = True,random_override = False,manual_random = False,sample_size = 20):
@@ -5454,7 +5459,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             return
         if filename is None:
             print('Please Provide filename')
-        mul1,mul1_err,cou1,av1 = YSO_multiplicity(file,Master_File,target_age = target_age,min_age=min_age)
+        mul1,mul1_err,cou1,av1, pcount = YSO_multiplicity(file,Master_File,target_age = target_age,min_age=min_age, return_all=True)
         times = []
         prop_times = []
         start_snap = Mass_Creation_Finder(file,min_mass = 0)
@@ -5463,7 +5468,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             times.append(file[i].t*code_time_to_Myr - start_time)
         for i in range(len(file)):
             prop_times.append(file[i].t)
-        end_snap = closest(prop_times,prop_times[-1]-target_age,param = 'index')
+        #end_snap = closest(prop_times,prop_times[-1]-target_age,param = 'index')
 
         rolling_window = time_to_snaps(rolling_window,file)
         if rolling_window%2 == 0:
@@ -5487,6 +5492,27 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             mul1 = rolling_average(mul1,rolling_window)
             cou1 = rolling_average(cou1,rolling_window)
             av1 = rolling_average(av1,rolling_window)
+        
+        # if rolling_avg is True:
+        #     # print("Overwriting rolling average window to 0.5 Myr for single YSO plot")
+        #     # rolling_window=0.5
+        #     time_edges = np.linspace(np.min(prop_times),np.max(prop_times),num=int(len(prop_times)/time_to_snaps(rolling_window,file)+1))
+        #     time_bins = (time_edges[1:]+time_edges[:-1])/2
+        #     tot_mass = av1*cou1
+        #     all_in_bin,_,_ = stats.binned_statistic(prop_times,cou1,statistic='sum',bins = time_edges)
+        #     primary_in_bin,_,_ = stats.binned_statistic(prop_times,pcount,statistic='sum',bins = time_edges)
+        #     mass_in_bin,_,_ = stats.binned_statistic(prop_times,tot_mass,statistic='sum',bins = time_edges)
+        #     #replace values
+        #     mul1 = primary_in_bin/all_in_bin
+        #     mul1_err = np.array([ Psigma(all_in_bin[i],primary_in_bin[i]) for i in range(len(primary_in_bin)) ])
+        #     print(mul1)
+        #     print(mul1_err)
+        #     print(all_in_bin)
+        #     prop_times = time_bins
+        #     cou1 = all_in_bin
+        #     av1=mass_in_bin/all_in_bin
+            
+            
         
         plt.plot(prop_times,mul1,label = '< '+str(target_age)+' Myr stars')
         plt.fill_between(prop_times, np.clip(mul1-mul1_err,0,1),y2=np.clip(mul1+mul1_err,0,1),alpha=0.3)

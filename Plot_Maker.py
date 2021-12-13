@@ -1,5 +1,5 @@
 import pickle
-from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles, Seperation_Tracking,Primordial_separation_distribution,smaxis_all_func
+from STARFORGE_Multiplicity_Analyzer import load_files,system_initialization,Plots,Multi_Plot,star_system,Plots_key,mkdir_p,system_creation,flatten,Multiplicity_One_Snap_Plots_Filters,set_colors_and_styles, Seperation_Tracking,Primordial_separation_distribution,smaxis_all_func,adjust_font
 from get_sink_data import sinkdata
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -237,10 +237,13 @@ colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
 plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
+plots_to_do = ['Multiplicity Filters' ] 
+plots_to_do = ['Single Plots' ]
 
 
-#alpha_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
-#alpha_labels = [r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
+
+alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
+alpha_labels = [r'$\alpha_\mathrm{turb}=2$']
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
@@ -262,15 +265,74 @@ plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ]
 
 ##all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
 #all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
-all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
+#all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
 # all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
+#all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
 # all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
 
 
 
 
 
+# plt.figure(figsize = (6,6))
+# #Bate 2019 simulation MF
+# logm_Bate = np.array([-1.70,	-1.19,	-0.82,	-0.47,	-0.08,	0.48])
+# logm_errplus_Bate = np.array([ 0.18,	0.19,	0.13,	0.16,	0.15,	0.21 ])
+# logm_errminus_Bate = np.array([ 0.30,	0.33,	0.19,	0.24,	0.23,	0.41 ])
+# MF_Bate = np.array([ 0.00	,0.08,	0.20,	0.52,	0.690, 0.70 ])
+# MF_errplus_Bate = np.array([ 0.05	,0.04,	0.07	,0.09,	0.11,	0.15 ])
+# MF_errminus_Bate = np.array([ 0.00,	0.03,	0.07,	0.09,	0.11,	0.14 ])
+
+
+# for i in range(len(logm_Bate)):
+#     plt.fill_between([logm_Bate[i]-logm_errminus_Bate[i],logm_Bate[i]+logm_errplus_Bate[i]],MF_Bate[i]-MF_errminus_Bate[i],MF_Bate[i]+MF_errplus_Bate[i] ,alpha = 0.3,color = '#ff7f0e')
+# plt.scatter(logm_Bate,MF_Bate,color = '#ff7f0e', label = 'Bate 2019',marker = 's')
+
+
+# #Guszejnov 2017 simulation MF
+# logm_DG = np.log10([0.02,	0.05,	0.10,	0.20,	0.50,	1.00,	2.00,	5.00,	10.00,	20.00,	50.00])
+# logm_errplus_DG = np.append(np.diff(logm_DG)/2,0.15)
+# logm_errminus_DG = np.append([0.15],np.diff(logm_DG)/2)
+# MF_DG = np.array([0.17,	0.05,	0.08,	0.24,	0.53,	0.69,	0.81,	0.93,	0.98,	0.99,1.0 ])
+# MF_DG_q01 = np.array([0.17,	0.04,	0.02,	0.17,	0.46,	0.63,	0.78,	0.92,	0.97,	0.99,0.995 ])
+# plt.errorbar(logm_DG,MF_DG,yerr=None, xerr=np.vstack((logm_errminus_DG,logm_errplus_DG)),marker = '^',capsize = 0,color = 'blue',label = 'Guszejnov+2017', linewidth=0,elinewidth=1)
+
+
+# #Observations
+# observation_mass_center = [0.0875,0.1125,0.225,0.45,0.875,1.125,1.175,2,4.5,6.5,12.5]
+# observation_mass_width = [0.0075,0.0375,0.075,0.15,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
+# observation_MF = [0.19,0.20,0.19,0.3,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
+# observation_MF_err = [0.07,0.03,0.02,0.02,0.03,0.04,0.03,0.07,0.06,0.05,0.04]
+# plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
+# plt.ylabel('Multiplicity Fraction')
+# for i in range(len(observation_mass_center)):
+#     if i == 0:
+#         temp_label = 'Observations'
+#     else:
+#         temp_label = None
+#     plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 0,color = 'black',label = temp_label)
+    
+    
+# #STARFORGE results
+# logmass = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 ,   0.20748667,  0.60205999,  1.06676945,  1.48305448])
+# MF = np.array([0.01785714, 0.01176471, 0.05014749, 0.14814815, 0.29752066, 0.49180328, 0.62352941, 1.        , 0.90909091])
+# MF_error =np.array([0.023755  , 0.00995297, 0.01209122, 0.02165448, 0.04118453, 0.06249213, 0.05172414, 0.06236096, 0.09642818])
+# MF_low = np.clip(MF-MF_error,0,1); MF_high= np.clip(MF+MF_error,0,1);
+# plt.plot(logmass, MF, color='darkgreen', label='Sphere')
+# plt.fill_between(logmass,MF_low,MF_high ,alpha = 0.3,color = 'darkgreen')
+# #STARFORGE Box results
+# logmass_box = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 ,  0.20748667,  0.60205999,  1.06676945,  1.26166774])
+# MF_box = np.array([0.        , 0.02267003, 0.10510949, 0.23822715, 0.49586777,  0.74468085, 0.97560976, 1.        , 1.        ])
+# MF_error_box =np.array([0.00666652, 0.00781577, 0.01174883, 0.02237468, 0.04489984,  0.06243697, 0.03174769, 0.12371791, 0.23570226])
+# MF_low = np.clip(MF_box-MF_error_box,0,1); MF_high= np.clip(MF_box+MF_error_box,0,1);
+# plt.plot(logmass_box, MF_box, color='magenta', label='Box')
+# plt.fill_between(logmass,MF_low,MF_high ,alpha = 0.3,color = 'magenta')
+
+# plt.xlim([-1.2,1.5])
+# plt.legend(fontsize=14, labelspacing=0)
+# plt.ylim([0,1])
+# adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
+# plt.savefig('MF_comparison.png',dpi = 150, bbox_inches='tight')
 
