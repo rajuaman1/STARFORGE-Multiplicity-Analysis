@@ -236,14 +236,15 @@ colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 #plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
-plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
-plots_to_do = ['Multiplicity Filters' ] 
-plots_to_do = ['Single Plots' ]
+# plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
+# plots_to_do = ['Multiplicity Filters' ] 
+# plots_to_do = ['Single Plots' ]
+# plots_to_do = ['Multi_Plot figures' ]
 
 
 
-alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
-alpha_labels = [r'$\alpha_\mathrm{turb}=2$']
+# alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
+# alpha_labels = [r'$\alpha_\mathrm{turb}=2$']
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)

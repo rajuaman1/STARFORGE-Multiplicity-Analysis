@@ -133,6 +133,8 @@ def set_colors_and_styles(colors, styles, N, multiples=1, dark=False, cmap=None,
     #                colors=Dark1_5.mpl_colors[:N]
     #            else:
                     colors=Set1_5.mpl_colors[:N]
+                    if N==3:
+                        colors=['k', 'r', 'b']
             elif (N<=8):
                 if dark:
                     colors=Dark2_8.mpl_colors[:N]
@@ -3184,20 +3186,20 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
             fraction_err = rolling_average(fraction+fraction_err,rolling_window) -rolling_average(fraction,rolling_window)
             fraction1 = rolling_average(fraction1,rolling_window)
             fraction1_err = rolling_average(fraction1+fraction1_err,rolling_window)- rolling_average(fraction1,rolling_window)
-        #plt.plot(time,fraction,label = 'All stars', linestyle='-')
+        #plt.plot(time,fraction,label = 'All stars', linestyle='--')
         #plt.fill_between(time, fraction-fraction_err, y2=fraction+fraction_err,alpha=0.25)
-        plt.plot(time,fraction1,label = 'Stars no longer accreting', linestyle='--')
+        plt.plot(time,fraction1,label = 'Stars no longer accreting', linestyle='-')
         plt.fill_between(time, fraction1-fraction1_err, y2=fraction1+fraction1_err,alpha=0.25)
         if target_mass == 1:
             if multiplicity == 'MF':
-                plt.errorbar(max(time)*0.9,0.46,yerr=0.03,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(time)*0.9,0.46,yerr=0.03,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
             elif multiplicity == 'CF':
-                plt.errorbar(max(time)*0.9,0.6,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(time)*0.9,0.6,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         elif target_mass == 10:
             if multiplicity == 'MF':
-                plt.errorbar(max(time)*0.9,0.93,lolims = True,yerr = 0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(time)*0.9,0.93,lolims = True,yerr = 0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
             elif multiplicity == 'CF':
-                plt.errorbar(max(time)*0.9,1.8,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(time)*0.9,1.8,lolims = True,yerr = 0.4,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         plt.legend(loc=3,fontsize = 14)
         plt.text(0.99,0.9,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right',fontsize=14)
         #plt.text(0.7,0.4,str(filename),transform = plt.gca().transAxes,fontsize = 12,horizontalalignment = 'left')
@@ -4312,14 +4314,14 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
         #Observations
         if target_mass == 1:
             if multiplicity == 'MF':
-                plt.errorbar(max(bins)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(bins)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
             elif multiplicity == 'CF':
-                plt.errorbar(max(bins)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(bins)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         elif target_mass == 10:
             if multiplicity == 'MF':
-                plt.errorbar(max(bins)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(bins)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
             elif multiplicity == 'CF':
-                plt.errorbar(max(bins)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+                plt.errorbar(max(bins)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         plt.text(0.01,0.01,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
         plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -4595,9 +4597,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             index = xvals<(max(times)-T_list[i]-dt_list[i]/2) # conservative cut to keep things representative
             plt.plot(xvals[index],np.array(mul_list[i])[index],label =  '%g Myr'%(round(T_list[i],1)))
         if target_mass == 1:
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         elif target_mass == 10:
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         plt.legend(fontsize=14)
         plt.xlabel('Age [Myr]')
         plt.ylabel('Multiplicity Fraction')
@@ -4620,9 +4622,9 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
             index = xvals<(max(times)-T_list[i]-dt_list[i]/2) # conservative cut to keep things representative
             plt.plot(xvals[index],np.array(mul_list[i])[index],label =  '%g Myr'%(round(T_list[i],1)))
         if target_mass == 10:
-             plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+             plt.errorbar(max(list(flatten(time_list)))*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         elif target_mass == 1:
-            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations')
+            plt.errorbar(max(list(flatten(time_list)))*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
         plt.legend(fontsize=14)
         plt.xlabel('Age [Myr]')
         plt.ylabel('Companion Frequency')
@@ -4846,7 +4848,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             y_obs = np.array([4,6,12,16,11,12,12,9,11,17]) #for binaries only
             y_obs_err = np.sqrt(y_obs) #Poisson error
             obs_norm_factor = np.mean(y_vals)/np.mean(y_obs)*0.9
-            plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',linestyle = '')           
+            plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',ls='none')           
             if upper_limit<1000:
                 plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right', fontsize=14)
             if compare == True:
@@ -4884,15 +4886,22 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle, color = linecolor)
-            #Raghavan 2010 eccentricity data
-            x_obs = np.linspace(0.05,0.95,10)
-            x_obs_errs = 0.05*np.ones_like(x_obs)
-            y_obs1 = np.array([4,12,11,14,14,16,10,11,4,5])*82/100 #for log P<3
-            y_obs2 = np.array([12,15,15,18,6,21,6,3,3,3])*35/100 #for log P<3
-            y_obs = y_obs1+y_obs2 #Let's take all
-            y_obs_err = np.sqrt(y_obs) #Poisson error
-            obs_norm_factor = np.mean(y_vals)/np.mean(y_obs*1.2)
-            plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',linestyle = '')
+            # #Raghavan 2010 eccentricity data
+            # x_obs = np.linspace(0.05,0.95,10)
+            # x_obs_errs = 0.05*np.ones_like(x_obs)
+            # y_obs1 = np.array([4,12,11,14,14,16,10,11,4,5])*82/100 #for log P<3
+            # y_obs2 = np.array([12,15,15,18,6,21,6,3,3,3])*35/100 #for log P<3
+            # y_obs = y_obs1+y_obs2 #Let's take all
+            # y_obs_err = np.sqrt(y_obs) #Poisson error
+            # obs_label = 'Raghavan 2010'
+            #Tokovinin 2016 eccentricity data
+            x_obs = np.linspace(0.1,0.9,5)
+            x_obs_errs = 0.1*np.ones_like(x_obs)
+            y_obs = np.array([0.08,0.17,0.25,0.28,0.25])   
+            y_obs_err = 0.05*np.ones_like(y_obs)
+            obs_label = 'Tokovinin+2016'
+            obs_norm_factor = np.mean(y_vals)/np.mean(y_obs)
+            plt.errorbar(x_obs+0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = obs_label,ls='none')
             plt.ylabel('Number of Systems')
             plt.xlabel('Eccentricity') 
             if upper_limit<1000:
@@ -5254,7 +5263,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                         temp_label = 'Observations'
                     else:
                         temp_label = None
-                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
             elif multiplicity == 'Density':
                 plt.ylabel(r'Number Density [$\mathrm{pc}^{-3}$]')
             elif multiplicity == 'Mass Density':
@@ -5310,7 +5319,7 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                     temp_label = 'Observations'
                 else:
                     temp_label = None
-                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
             if label is not None:
                 plt.text(0.7,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')
             handles, labels = plt.gca().get_legend_handles_labels()
@@ -5492,6 +5501,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             mul1 = rolling_average(mul1,rolling_window)
             cou1 = rolling_average(cou1,rolling_window)
             av1 = rolling_average(av1,rolling_window)
+            pcount = rolling_average(pcount,rolling_window)
         
         # if rolling_avg is True:
         #     # print("Overwriting rolling average window to 0.5 Myr for single YSO plot")
@@ -5514,7 +5524,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             
             
         
-        plt.plot(prop_times,mul1,label = '< '+str(target_age)+' Myr stars')
+        plt.plot(prop_times,mul1,label = '< '+str(target_age)+' Myr stars', color='b')
         plt.fill_between(prop_times, np.clip(mul1-mul1_err,0,1),y2=np.clip(mul1+mul1_err,0,1),alpha=0.3)
         
         left_limit = plt.xlim()[0]
@@ -5523,9 +5533,10 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         plt.fill_betweenx(np.linspace(0.35,0.5,100),left_limit,right_limit,color = 'orange',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.3,0.4,100),left_limit,right_limit,color = 'black',alpha = 0.3)
         plt.fill_betweenx(np.linspace(0.25,0.15,100),left_limit,right_limit,color = 'purple',alpha = 0.3)
-        plt.text(0.1+left_limit,0.45,'Class 0 Perseus',fontsize = 16,horizontalalignment = 'left')
-        plt.text(0.1+left_limit,0.32,'Class 0 Orion',fontsize = 16,horizontalalignment = 'left')
-        plt.text(0.1+left_limit,0.2,'Class 1 Orion',fontsize = 16,horizontalalignment = 'left')
+        textshift = 0.2*np.ptp(plt.xlim())
+        plt.text(0.1+left_limit+textshift,0.45,'Class 0 Perseus',fontsize = 16,horizontalalignment = 'left',zorder=10)
+        plt.text(0.1+left_limit+textshift,0.32,'Class 0 Orion',fontsize = 16,horizontalalignment = 'left',zorder=10)
+        plt.text(0.1+left_limit+textshift,0.2,'Class I Orion',fontsize = 16,horizontalalignment = 'left',zorder=10)
         plt.ylim([0,np.min([1.0,plt.ylim()[1]+0.05])])
         
         if time_norm == 'Myr':
@@ -5534,9 +5545,16 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
             plt.xlabel(r'Time [$t_\mathrm{ff}$]')
         elif time_norm == 'atff':
             plt.xlabel(r'Time [$\sqrt{\alpha}t_\mathrm{ff}$]')
-        plt.ylabel('YSO Multiplicity Fraction')
-        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
+        plt.ylabel('YSO Multiplicity Fraction', color='b')
+
         plt.xlim((left_limit,right_limit))
+        ax1 = plt.gca()
+        ax1.tick_params(axis='y', labelcolor='b')
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('Log Number of YSOs', color='r')
+        ax2.plot(prop_times, np.log10(cou1), color='r',zorder=0)
+        ax2.tick_params(axis='y', labelcolor='r')
+        adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.savefig('YSO_MF_'+label+'.png',dpi = 150, bbox_inches='tight')
         
         plt.figure(figsize = (6,6))
@@ -5769,7 +5787,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
                     temp_label = 'Observations'
                 else:
                     temp_label = None
-                plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
             plt.ylabel('Multiplicity Fraction')
             bottom,top = plt.ylim()
             if top >1:
@@ -5784,7 +5802,7 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
                     temp_label = 'Observations'
                 else:
                     temp_label = None
-                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
             plt.ylabel('Companion Frequency')
             bottom,top = plt.ylim()
             if top >3:
@@ -6079,7 +6097,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                         temp_label = 'Observations'
                     else:
                         temp_label = None
-                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_MF[i],yerr = observation_MF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
                 plt.ylim([-0.01,1.01])
             elif multiplicity == 'CF':
                 for i in range(len(observation_mass_center)):
@@ -6087,7 +6105,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                         temp_label = 'Observations'
                     else:
                         temp_label = None
-                    plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label)
+                    plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
                 plt.ylim([-0.01,3.01])
             plt.legend(fontsize=14)
         elif which_plot == 'Multiplicity Time Evolution':
