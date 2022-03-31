@@ -195,8 +195,8 @@ def Remove_Brown_Dwarfs(data,minmass = 0.08):
         data[i].v = data[i].v[data[i].m>minmass]
         data[i].id = data[i].id[data[i].m>minmass]
         data[i].formation_time = data[i].formation_time[data[i].m>minmass]
-        for label_no in range(len(data[i].extra_data_labels)):
-                data[i].extra_data[label_no] = data[i].extra_data[label_no][data[i].m>minmass]
+        for label in data[i].extra_data.keys():
+            data[i].extra_data[label] = data[i].extra_data[label][data[i].m>minmass]
         data[i].m = data[i].m[data[i].m>minmass]
 
     return data
@@ -269,16 +269,6 @@ def checkIfDuplicates(listOfElems):
 #This function finds the first snapshot that a star is in
 def first_snap_finder(ide,file):
     'Find the first snapshot where an id is present in the file.'
-    # if 'ProtoStellarAge' in file[-1].extra_data_labels:
-    #     last_age = file[-1].val('ProtoStellarAge')[file[-1].id == ide]
-    #     times = []
-    #     for i in range(len(file)):
-    #         times.append(file[i].t)
-    #     snap = closest(times,last_age,param = 'index')
-    #     for i in range(snap,len(file)):
-    #         if ide in file[i].id:
-    #             return i
-    # else:
     for i,j in enumerate(file):
             if ide in j.id:
                 return i
@@ -1103,10 +1093,14 @@ class star_system:
         self.init_star_vol_density = np.array([initial_local_density(ID,data,density = 'number',boxsize = None)[0] for ID in self.ids])
         self.init_star_mass_density = np.array([initial_local_density(ID,data,density = 'mass',boxsize = None)[0] for ID in self.ids])
         self.init_density = {'number': self.init_star_vol_density, 'mass': self.init_star_mass_density}
-        #Get stellar evolution stage of stars
-        self.stellar_evol_stages = np.array([data[n].val('ProtoStellarStage')[data[n].id==ID] for ID in self.ids],dtype=np.int64)
-        #Get formation times of stars
-        self.formation_time_Myr = np.array([data[n].val('ProtoStellarAge')[data[n].id==ID][0] for ID in self.ids])*code_time_to_Myr
+        if 'ProtoStellarAge' in data[n].extra_data.keys():
+            #Get stellar evolution stage of stars
+            self.stellar_evol_stages = np.array([data[n].extra_data['ProtoStellarStage'][data[n].id==ID] for ID in self.ids],dtype=np.int64)
+            #Get formation times of stars
+            self.formation_time_Myr = np.array([data[n].extra_data['ProtoStellarAge'][data[n].id==ID][0] for ID in self.ids])*code_time_to_Myr
+        else:
+            self.stellar_evol_stages = np.array([5 for ID in self.ids],dtype=np.int64)
+            self.formation_time_Myr = np.array([data[first_snap_finder(ID,data)].t for ID in self.ids])*code_time_to_Myr
         self.age_Myr =  data[n].t*code_time_to_Myr - self.formation_time_Myr
         #Zero-age main-sequence (ZAMS) info
         self.ZAMS_age = ( data[n].t-np.array([data[n].formation_time[data[n].id==ID] for ID in self.ids]) ) * code_time_to_Myr
@@ -1868,7 +1862,7 @@ def formation_time_histogram(file,systems = None,upper_limit=1.3,lower_limit = 0
             this_id = file[-1].id[i]
             this_mass = file[-1].m[i]
             if lower_limit<=this_mass<=upper_limit:
-                birth_time = file[-1].val('ProtoStellarAge')[file[-1].id == this_id][0]*code_time_to_Myr
+                birth_time = file[-1].extra_data['ProtoStellarAge'][file[-1].id == this_id][0]*code_time_to_Myr
                 birth_times.append(birth_time)
     times = time_array(file,'Myr')
     birth_times = np.array(birth_times)
@@ -2382,8 +2376,8 @@ def momentum_angle(id1,id2,file,snapshot):
     if id1 == id2:
         return 0
     else:
-        momentum1 = file[snapshot].val('BH_Specific_AngMom')[file[snapshot].id == id1][0]
-        momentum2 = file[snapshot].val('BH_Specific_AngMom')[file[snapshot].id == id2][0]
+        momentum1 = file[snapshot].extra_data['BH_Specific_AngMom'][file[snapshot].id == id1][0]
+        momentum2 = file[snapshot].extra_data['BH_Specific_AngMom'][file[snapshot].id == id2][0]
         dot_product = np.dot(momentum1,momentum2)
         normal1 = np.linalg.norm(momentum1);normal2 = np.linalg.norm(momentum2)
         cosangle = dot_product/(normal1*normal2)
@@ -3244,7 +3238,7 @@ def YSO_multiplicity(file,Master_File,min_age = 0,target_age = 0.5,start = 1000,
     '''    
     form = []
     for i in range(0,len(file)):
-        if 'ProtoStellarAge' in file[i].extra_data_labels and file[i].val('ProtoStellarAge') is not None:
+        if 'ProtoStellarAge' in file[i].extra_data.keys():
             form.append(-1)
         else:
             form.append(1)
