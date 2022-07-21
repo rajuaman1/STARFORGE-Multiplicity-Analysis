@@ -42,6 +42,8 @@ s_to_yr = 3.154e7
 #The length for the given box plot
 L = (4/3*np.pi)**(1/3)*10
 
+global_minmass=0.08
+
 #List of Plot Names for Plots() and Multi_Plot()
 Plots_key = ['System Mass','Primary Mass','Mass Ratio','Semi Major Axis','Multiplicity','Multiplicity Time Evolution',
 'Multiplicity Lifetime Evolution','Multiplicity vs Formation','YSO Multiplicity','Semi-Major Axis vs q']
@@ -71,6 +73,21 @@ def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelf
             ax1.minorticks_on()
             if adjust_ticks:
                 ax1.tick_params(axis='both',which='both', direction='in',top=top,right=right)
+
+# def adjust_font(lgnd=None, lgnd_handle_size=49, fig=None, ax_fontsize=14, labelfontsize=14,do_ticks=True ):
+#     if not (lgnd is None):
+#         for handle in lgnd.legendHandles:
+#             handle.set_sizes([lgnd_handle_size])
+#     if not (fig is None):
+#         ax_list = fig.axes
+#         for ax1 in ax_list:
+#             ax1.tick_params(axis='both', labelsize=ax_fontsize)
+#             ax1.set_xlabel(ax1.get_xlabel(),fontsize=labelfontsize)
+#             ax1.set_ylabel(ax1.get_ylabel(),fontsize=labelfontsize)
+#             if do_ticks:
+#                 ax1.minorticks_on()
+#                 ax1.tick_params(axis='both',which='both', direction='in',top=True,right=True)
+
 
 def rolling_average(List,rolling_window = 10):
     '''Rolling Average function'''
@@ -160,7 +177,7 @@ def set_colors_and_styles(colors, styles, N, multiples=1, dark=False, cmap=None,
     return colors, styles
 
 #Remove the brown dwarfs for a data
-def Remove_Brown_Dwarfs(data,minmass = 0.08):
+def Remove_Low_Mass_Stars(data,minmass = 0.08):
     '''
     Remove the Brown Dwarfs from the initial data file
 
@@ -181,7 +198,7 @@ def Remove_Brown_Dwarfs(data,minmass = 0.08):
 
     Example
     -------
-    M2e4_C_M_J_2e7 = Remove_Brown_Dwarfs(M2e4_C_M_J_2e7,minmass = 0.08)
+    M2e4_C_M_J_2e7 = Remove_Low_Mass_Stars(M2e4_C_M_J_2e7,minmass = 0.08)
     '''
     #Get the lowest snapshot in which there are any stars.
     lowest = 0
@@ -358,7 +375,7 @@ def load_files(filenames,brown_dwarfs = False):
         data_file = pickle.load(pickle_file)
         pickle_file.close()
         if brown_dwarfs == False:
-            filtered_data_file = Remove_Brown_Dwarfs(data_file)
+            filtered_data_file = Remove_Low_Mass_Stars(data_file)
         else:
             filtered_data_file = data_file
         Files_List.append(filtered_data_file) 
@@ -379,25 +396,23 @@ def Binding_Energy(m1,m2,x1,x2,v1,v2,L = None):
             dy = L - dy
         if dz > L/2:
             dz = L - dz
-    PE = (msun_to_kg**2*G*(m1+m2)*mu)/(pc_to_m*np.sqrt(dx**2+dy**2+dz**2))
+    PE = (msun_to_kg**2/pc_to_m) * G*(m1+m2)*mu/np.sqrt(dx**2+dy**2+dz**2)
     E = KE - PE
     return E
 
 #This function is able to calculate the binding energy matrix of a set of nodes
 def Binding_Energy_Matrix(m,x,v,L = None):
     'Calculate the Binding Energy Matrix (in J) from a list of masses,positions and velocities. If using Box run, provide the edge lengths.'
-    Binding_energy_matrix = np.zeros((len(m),len(m)))
+    E_binding_mtx = np.zeros((len(m),len(m)))
     for i in range(len(m)):
-        for j in range(len(m)):
-            if Binding_energy_matrix[i,j] == 0: 
-                E = 0
+        for j in range(i,len(m)):
                 if i == j:
                     E = float('inf')
                 else:
                     E = Binding_Energy(m[i],m[j],x[i],x[j],v[i],v[j],L = L) 
-                Binding_energy_matrix[i][j] = E                
-                Binding_energy_matrix[j][i] = E
-    return Binding_energy_matrix
+                E_binding_mtx[i][j] = E                
+                E_binding_mtx[j][i] = E
+    return E_binding_mtx
 
 
 def find_bin_edges(xvals,target_binsize, minbinsize=0,verbose=False,dx=1e-10):
@@ -467,7 +482,7 @@ def Splitting_Data(file,snapshot,seperation_param,L = None):
     return subregion_IDs
 
 ## Most crucial function of the program (Program's runtime comes mainly from here)
-def remove_and_replace(matrix,m,x,v,ids,L = None): 
+def remove_and_replace(matrix,m,x,v,ids,L = None, qmin=0.0): 
     '''
     Find the minimum value in the Binding Energy Matrix and changes the masses, positions, velocities and ids of that node.
 
@@ -490,6 +505,9 @@ def remove_and_replace(matrix,m,x,v,ids,L = None):
 
     L: int,float,optional
     The size of periodic box, None if not periodic
+    
+    qmin: float, optional
+    Minimum mass ratio allowed
 
     Returns
     -------
@@ -534,7 +552,8 @@ def remove_and_replace(matrix,m,x,v,ids,L = None):
             flag = 1
         most_bound_element_indices = list(np.unravel_index(comp_matrix.argmin(), comp_matrix.shape))
         most_bound_element_indices.sort()
-        if (len(list(flatten(list([indexes[most_bound_element_indices[0]],indexes[most_bound_element_indices[1]]])))))>4:
+        q = np.min(m[most_bound_element_indices[:2]])/np.max(m[most_bound_element_indices[:2]])
+        if ( (len(list(flatten(list([indexes[most_bound_element_indices[0]],indexes[most_bound_element_indices[1]]])))))>4 ) or (q<qmin):
             comp_matrix[most_bound_element_indices[0]][most_bound_element_indices[1]] = np.inf
             comp_matrix[most_bound_element_indices[1]][most_bound_element_indices[0]] = np.inf
         else:
@@ -1682,7 +1701,7 @@ def time_array(file,unit = 'code',t_ff = 1):
 def initial_local_density(ID,file,des_ngb = 32,density = 'number',boxsize = None):
     '''Find the initial number of stars around a selected star, within a distance, when it was first formed'''
     first_snap = first_snap_finder(ID,file)
-    formation_pos = file[first_snap].x[file[first_snap].id == ID]
+    #formation_pos = file[first_snap].x[file[first_snap].id == ID]
     if 1<len(file[first_snap].m)<=des_ngb:
         des_ngb = len(file[first_snap].m)
     elif len(file[first_snap].m) == 1:
@@ -1695,7 +1714,7 @@ def initial_local_density(ID,file,des_ngb = 32,density = 'number',boxsize = None
     #print("Estimated box size: %g pc. This is a temporary hack, in the future this should be a parameter."%(boxsize))
     tree = cKDTree(x, boxsize=boxsize)
     ngbdist, ngb = tree.query(x, des_ngb) #note that it will count the particle itself as its a neighbor
-    ngb_ids =  ids[ngb]
+    #ngb_ids =  ids[ngb]
     ngb_vol =  4*np.pi/3 * (ngbdist[:,-1]**3)
     ngb_vol_density = des_ngb / ngb_vol
     ngb_mass_density = np.sum(m[ngb],axis=1) / ngb_vol
@@ -2358,7 +2377,7 @@ def density_evolution(densities,times,bins = 10,plot = True,filename = None,dens
     
     if plot == True:
         plt.plot((binned_times[1:]+binned_times[:-1])/2,means,marker = 'o',color = 'indianred')
-        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,val75,val25,alpha = 0.15,color = 'indianred')
+        plt.fill_between((binned_times[1:]+binned_times[:-1])/2,val75,val25,alpha = 0.2,color = 'indianred')
         plt.xlabel('Formation Time [Myr]')
         if density == 'number':
             plt.ylabel(r'Log Local Stellar Density [$\mathrm{pc}^{-3}$]')
@@ -2437,7 +2456,7 @@ def Seperation_Tracking(file,systems,rolling_avg = False):
 
 #Getting the total masses, primary masses, smaxes and companion mass ratio. Also gets the target primary masses for 
 #smaxes and companion mass ratios.
-def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio',file = False):
+def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_companions = False,attribute = 'Mass Ratio',file = False, age_limit_Myr=1e10):
     '''
     Returns a list of the property you chose for systems with primaries in a certain mass range.
 
@@ -2462,6 +2481,9 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     
     file: list of star system objects
     The file that the systems are from. Only temp use for angles
+    
+    age_limit_Myr: float, optional
+    If set only systems younger than this value are considered
 
     Returns
     -------
@@ -2492,26 +2514,27 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     eccentricities = []
     for i in systems:
         if len(i.m)>1: #Make sure you only consider the multi star systems.
-            masses.append(i.tot_m)
-            primary_masses.append(i.primary)
-            if lower_limit<=i.primary<=upper_limit:
-                if all_companions == False:
-                    semi_major_axes.append(i.smaxis)
-                    mass_ratios.append(i.mass_ratio)
-                    snapshot = i.snapshot_num
-                    secondary_id = i.ids[i.m == i.secondary][0]
-                    angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
-                    eccentricities.append(ecc_smaxis_in_system(i.primary_id,secondary_id,i))
-                elif all_companions == True: #If you want to look at all companions or subsystems.
-                    semi_major_axes = semi_major_axes +list(i.smaxis_all)
-                    eccentricities = eccentricities + list(i.ecc_all)
-                    snapshot = i.snapshot_num
-                    snapshot = -1
-                    for j in i.m:
-                        if j!= i.primary:
-                            mass_ratios.append(j/i.primary)
-                            secondary_id = i.ids[i.m == j][0]
-                            angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
+            if (i.age_Myr<=age_limit_Myr):
+                masses.append(i.tot_m)
+                primary_masses.append(i.primary)
+                if lower_limit<=i.primary<=upper_limit:
+                    if all_companions == False:
+                        semi_major_axes.append(i.smaxis)
+                        mass_ratios.append(i.mass_ratio)
+                        snapshot = i.snapshot_num
+                        secondary_id = i.ids[i.m == i.secondary][0]
+                        angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
+                        eccentricities.append(ecc_smaxis_in_system(i.primary_id,secondary_id,i))
+                    elif all_companions == True: #If you want to look at all companions or subsystems.
+                        semi_major_axes = semi_major_axes +list(i.smaxis_all)
+                        eccentricities = eccentricities + list(i.ecc_all)
+                        snapshot = i.snapshot_num
+                        snapshot = -1
+                        for j in i.m:
+                            if j!= i.primary:
+                                mass_ratios.append(j/i.primary)
+                                secondary_id = i.ids[i.m == j][0]
+                                angles.append(momentum_angle(i.primary_id,secondary_id,file,snapshot))
                             
     if attribute == 'System Mass':
         return masses
@@ -2598,9 +2621,9 @@ def multiplicity_fraction(systems,mass_break = 2,selection_ratio = 0,attribute =
     if bins == 'continous':
         logmasslist= np.linspace(np.log10(minmass),np.log10(maxmass+1),num = int((np.log10(maxmass+1)-np.log10(minmass))/(np.log10(mass_break))))
     elif bins == 'observer':
-        #masslist = np.array([0.08,0.1,0.7,1.5,5,8,16,maxmass+1])
-        masslist = np.array([0.08, 0.1, 0.15,0.3,0.7,1.3,2,8,17 ])
-        if maxmass>17:
+        #masslist = np.array([0.1,0.7,1.5,5,8,16,maxmass+1])
+        masslist = np.array([0.08,0.1, 0.15,0.3,0.7,1.3,2,8,16 ])
+        if maxmass>16:
             masslist = np.append(masslist, maxmass+1)
         logmasslist = np.log10(masslist)
     log_m = np.log10(m)
@@ -2694,12 +2717,12 @@ def multiplicity_fraction_with_density(systems,file,mass_break = 2,selection_rat
     state = np.concatenate(state)
     m = np.concatenate(m)
 
-    minmass= 0.08 # Because we dont want brown dwarfs
+    minmass= 0.1 # Because we dont want brown dwarfs
     maxmass = max(m)
     if bins == 'continous':
         logmasslist= np.linspace(np.log10(minmass),np.log10(maxmass+1),num = int((np.log10(maxmass+1)-np.log10(minmass))/(np.log10(mass_break))))
     elif bins == 'observer':
-        #masslist = np.array([0.08,0.1,0.7,1.5,5,8,16,maxmass+1])
+        #masslist = np.array([0.1,0.7,1.5,5,8,16,maxmass+1])
         masslist = np.array([0.08,0.1,0.7,1.5,5,16,maxmass+1])
         if maxmass<16:
             masslist = np.array([0.08,0.1,0.7,1.5,5,16])
@@ -2902,9 +2925,10 @@ def companion_frequency(systems,mass_break = 2,selection_ratio = 0,attribute = '
     if bins == 'continous':
         logmasslist= np.linspace(np.log10(minmass),np.log10(maxmass),num = int((np.log10(maxmass)-np.log10(minmass))/(np.log10(mass_break))))
     elif bins == 'observer':
-        #masslist = np.array([0.08,0.1,0.7,1.5,5,8,16,maxmass+1])
-        masslist = np.array([0.08, 0.1, 0.15,0.3,0.7,1.3,2,8,17 ])
-        if maxmass>17:
+        #masslist = np.array([0.1,0.7,1.5,5,8,16,maxmass+1])
+        masslist = np.array([0.08,0.1, 0.15,0.3,0.7,1.3,2,8,16 ])
+        #if ( np.sum(np.array(m)>17) > 3 ):
+        if maxmass>16:
             masslist = np.append(masslist, maxmass+1)
         logmasslist = np.log10(masslist)
     ind = np.digitize(np.log10(m),logmasslist)
@@ -2914,7 +2938,8 @@ def companion_frequency(systems,mass_break = 2,selection_ratio = 0,attribute = '
         bins[i] = []
     for i in range(len(m)):
         bin_no = ind[i]-1 
-        bins[bin_no].append(companions[i])
+        if (bin_no<len(bins)) and (bin_no>=0) :
+            bins[bin_no].append(companions[i])
     companion_frequency = np.zeros_like(bins)
     companion_count = np.zeros_like(bins)
     sys_count = np.zeros_like(bins)
@@ -3099,7 +3124,6 @@ def MFCF_Time_Evolution(file,Master_File,filename,steps=1,read_in_result = True,
                 consistent_solar_mass_unb.append(i.primary_id)
     fraction = []; fraction_err = [] #This fraction comes without ignoring the primaries that change mass
     fraction1 = []; fraction1_err = []  #This fraction checks that the primaries are at a consistent mass
-    masses = []
     time = []
     start = Mass_Creation_Finder(file,min_mass = lower_limit)
     #this one gets the masses and finishes off the graph of the consistent primaries
@@ -4042,7 +4066,7 @@ def hist(x,bins = 'auto',log =False,shift = False):
     return xvals,weights
 
 
-def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=None,\
+def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=None,fig=None,\
                             msize=30, capsize=5, markers='o', colors='k',cmap='viridis',\
                             overtext=None,overtextcoord=[0.5,0.5], loghist=False,\
                             histx_color='b',histy_color='b',\
@@ -4062,7 +4086,8 @@ def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=N
         xlim=np.array([np.min(X),np.max(X)])
         ylim=np.array([np.min(Y),np.max(Y)])
     # creates the axes
-    fig = plt.figure(1, figsize=(8, 8))
+    if fig is None:
+        fig = plt.figure(1, figsize=(8, 8))
     axScatter = plt.axes(rect_scatter)
     axHistx = plt.axes(rect_histx)
     axHisty = plt.axes(rect_histy)# We want plots and no labels on the overlapping part of the histograms
@@ -4075,8 +4100,10 @@ def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=N
     axHisty.yaxis.set_major_formatter(nullfmt)
 #    # diagonal line
 #    axScatter.plot([xlim[0],xlim[1]],[ylim[0],ylim[1]],'--',c='black',lw=1.5,alpha=0.25)
+    if not hasattr(cbar_limits, "__iter__"):
+        cbar_limits=np.array([np.min(colors),np.max(colors)])
     #Scatter plot
-    im = axScatter.scatter(X , Y ,marker=markers, c=colors,edgecolors='black',cmap=cmap);
+    im = axScatter.scatter(X , Y ,marker=markers, c=colors,edgecolors='black',cmap=cmap,norm=matplotlib.colors.Normalize(vmin=cbar_limits[0], vmax=cbar_limits[1], clip=True));
     #Set limits
     axScatter.set_xlim((xlim[0]-np.ptp(xlim)/40), xlim[1]+np.ptp(xlim)/40); axScatter.set_ylim((ylim[0]-np.ptp(ylim)/40, ylim[1]+np.ptp(ylim)/40))
     #Set label
@@ -4087,8 +4114,6 @@ def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=N
         axScatter.axhline(y=hline,alpha = 0.3,color='k')
 #    #Add colorbar
     if colorbar:
-        if not hasattr(cbar_limits, "__iter__"):
-            cbar_limits=np.array([np.min(colors),np.max(colors)])
         cb = plt.colorbar(im,boundaries=np.linspace(cbar_limits[0], cbar_limits[1], 100, endpoint=True)) # 'boundaries' is so the drawn colorbar ranges between the limits you want (rather than the limits of the data)
         #cb.set_clim(cbar_limits[0],cbar_limits[1]) # this only redraws the colors of the points, the range shown on the colorbar itself will not change with just this line alone (see above line)
         if hasattr(cbar_tick_labels, "__iter__"):
@@ -4140,9 +4165,9 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
         Master_File = q_filter(Master_File)
         Master_File[-1]=full_simple_filter(Master_File,file,selected_snap=-1, filter_in_class = False)
     form_distances = []
-    sys_form_distances = []
+    sys_form_distances = []; sys_form_angles = []
     q_vals = []
-    final_sep = []
+    final_sep = []; final_angles = []
     for system in Master_File[-1]:
         if (system.primary>=lower_limit) and (system.primary<=upper_limit) :
             for comp_id in system.ids:
@@ -4151,6 +4176,7 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
                     x1 = np.squeeze(system.x[system.ids==system.primary_id])
                     x2 = np.squeeze(system.x[system.ids==comp_id])
                     final_sep.append(np.linalg.norm(x1-x2))
+                    final_angles.append( momentum_angle(system.primary_id,comp_id,file,system.snapshot_num) )
                     #Find the at formation separation 
                     form_distances.append(formation_distance([system.primary_id,comp_id ],None,log = False, file=file)) #this is already AU
                     #Find the separation when they become a system
@@ -4161,8 +4187,10 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
                                 x1 = np.squeeze(snap_system.x[snap_system.ids==system.primary_id])
                                 x2 = np.squeeze(snap_system.x[snap_system.ids==comp_id])
                                 dist = np.linalg.norm(x1-x2)
+                                angle = momentum_angle(system.primary_id,comp_id,file,snap_system.snapshot_num)
                         if not (dist is None):
                             sys_form_distances.append(dist) 
+                            sys_form_angles.append(angle)
                             break
     form_distances = np.log10(form_distances); sys_form_distances = np.log10(sys_form_distances)+np.log10(pc_to_AU);
     q_vals = np.array(q_vals); final_sep = np.log10(final_sep)+np.log10(pc_to_AU);
@@ -4187,8 +4215,22 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
         plt.savefig(outfilename+'.png',dpi = 150, bbox_inches='tight')
         plt.show()
         plt.close()
+        #Let's do a plot of the primordial separation angle
+        plt.figure(figsize = (6,6))
+        if upper_limit<=50:
+            overtext = 'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$'
+        else:
+            overtext = None
+        yvals=sys_form_distances
+        scatter_with_histograms(final_angles,sys_form_angles,'Misalignment angle [°]','Misalignment angle at system formation [°]','',nbins=10, msize=30, capsize=5, markers='x', colors=q_vals,cmap=cmap, histx_color='b',histy_color='b',\
+                            colorbar=True, cbar_limits=[0.0,1.0],cbar_tick_labels=None,cbar_label='Mass ratio', xlim=[0,180], ylim=[0,180], fontsize=14,saveplot=False,overtext=overtext,overtextcoord=[0.01,0.9] ) 
+        adjust_font(fig=plt.gcf(), ax_fontsize=14)
+        plt.savefig(outfilename+'_angle.png',dpi = 150, bbox_inches='tight')
+        plt.show()
+        plt.close()
+        
   
-    return  form_distances, sys_form_distances, q_vals 
+    return  form_distances, sys_form_distances,final_angles, sys_form_angles, q_vals
 
 
 def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lower_limit = 0.7,target_mass = None,zero = 'Formation',multiplicity = 'MF',filename = None,min_time_bin = 0.2,adaptive_no = 20,x_axis = 'time',plot = True,label=None, color = 'k'):
@@ -4270,9 +4312,10 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
         xvals = np.log10([s.init_density[density][np.argmax(s.m)] for s in Master_File[-1]])  
     primary_mass = np.array([s.primary for s in Master_File[-1]])
     index = (primary_mass>=lower_limit) & (primary_mass<=upper_limit) #the ones with the right primary masses
-    xvals = xvals[index]; 
+    xvals = xvals[index];
     companion_no = np.array([s.no-1 for s in Master_File[-1]])[index]
     is_multiple = np.array([np.clip(s.no-1,0,1) for s in Master_File[-1]])[index]   
+    finite_vals = np.isfinite(xvals); xvals=xvals[finite_vals]; companion_no=companion_no[finite_vals]; is_multiple=is_multiple[finite_vals]
     if edges is None: #if bins are not specified
         edges = advanced_binning(xvals,np.ptp(xvals)/(len(xvals)/adaptive_no), min_bin_pop=5,allow_empty_bins=False)
     bins = (edges[1:]+edges[:-1])/2 
@@ -4295,7 +4338,7 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
         plot_y = MF; plot_y_err = MF_error
     elif multiplicity == 'CF':
         y_label = 'Companion Frequency'
-        ylim=[0,np.clip(np.max(CF+CF_error)+0.5,1,3)]
+        ylim=[0,np.clip(np.max(CF+CF_error)+0.1,1,3)]
         plot_y = CF; plot_y_err = CF_error
     if plot == True:
         #Plotting the multiplicity over age
@@ -4306,16 +4349,21 @@ def multiplicity_vs_formation(file,Master_File,edges = None,upper_limit=1.3,lowe
         plt.ylabel(y_label)
         plt.ylim(ylim)      
         #Observations
+        obs_upper = None; obs_lower = None; 
         if target_mass == 1:
             if multiplicity == 'MF':
-                plt.errorbar(max(bins)*0.8,0.44,yerr=0.02,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
+                obs_upper = 0.46; obs_lower = 0.42;
             elif multiplicity == 'CF':
-                plt.errorbar(max(bins)*0.8,0.5,yerr=0.04,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
+                obs_upper = 0.54; obs_lower = 0.46;
         elif target_mass == 10:
             if multiplicity == 'MF':
-                plt.errorbar(max(bins)*0.8,0.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
+                obs_upper = 0.8; obs_lower = 0.4;
             elif multiplicity == 'CF':
-                plt.errorbar(max(bins)*0.8,1.6,yerr=0.2,lolims = True,marker = 'o',capsize = 5,color = 'black',label = 'Observations',ls='none')
+                obs_upper = 1.8; obs_lower = 1.4;
+        if not (obs_upper is None):
+            xlim = plt.xlim()
+            plt.fill_between(plt.xlim(),obs_upper,obs_lower,alpha = 0.3, color='k',label = 'Observations')
+            plt.xlim(xlim)
         plt.text(0.01,0.01,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
         plt.legend(fontsize = 14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
@@ -4396,8 +4444,9 @@ def multiplicity_vs_formation_multi(Files,Systems,Filenames,adaptive_no = [20],T
         x_label = r'Log Formation Density [$\mathrm{M_\odot}pc^{-3}$]'
     plt.figure(figsize = (6,6))
     for i in range(len(Files)):
-        plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3,label = labels[i], color=colors[i])
-        plt.plot(x_array[i],final_mul_list[i], color=colors[i])
+        if not ( (labels[i]=='') or (labels[min(i+1,len(Files)-1)]=='')):
+            plt.fill_between(x_array[i],final_mul_list[i]+yerrs[i],final_mul_list[i]-yerrs[i],alpha = 0.3, color=colors[i])
+        plt.plot(x_array[i],final_mul_list[i], color=colors[i],label = labels[i])
     plt.text(0.01,0.01,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
     plt.legend(fontsize=14)
     plt.xlabel(x_label)
@@ -4495,7 +4544,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         form_times = formation_time_histogram(file,Master_File,upper_limit=upper_limit,lower_limit=lower_limit,filename=filename,only_primaries_and_singles=True,plot = False,full_form_times=True,label=label)
         form_times = np.sort(form_times)
         indices = np.array(range(0,len(form_times)-5,adaptive_no))
-        adaptive_times = form_times[indices]; adaptive_times[-1] = max(adaptive_times[-2]+min_time_bin, np.max(form_times)-0.5 )
+        adaptive_times = form_times[indices]; adaptive_times[-1] = max(adaptive_times[-2]+min_time_bin, np.max(form_times)-1.0 )
         T_list = (adaptive_times[1:]+adaptive_times[:-1])/2
         dt_list =  (adaptive_times[1:]-adaptive_times[:-1])
     time_list = []
@@ -4554,7 +4603,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
     #the_times,the_mass_densities,the_mass_errors_up,the_mass_errors_down = density_evolution(mass_densities,times,filename = filename,plot = False)
     #Number density Plots
     plt.figure(figsize = (6,6))
-    density_evolution(number_densities,times,filename = filename,density= 'number',bins=adaptive_times)
+    density_evolution(number_densities,times,filename = filename,density= 'number',bins=np.linspace(np.percentile(form_times,1),np.percentile(form_times,99),num=9))
     # for i in range(len(T_list)):
     #     plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_number_densities)),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
     # plt.legend(fontsize=14)
@@ -4566,7 +4615,7 @@ def multiplicity_and_age_combined(file,Master_File,T_list = None,dt_list = None,
         plt.savefig(new_file+'/'+str(path.basename(filename))+'/Density_Evolution.png',dpi = 150, bbox_inches='tight')
     #Mass Density Plots
     plt.figure(figsize = (6,6))
-    density_evolution(mass_densities,times,filename = filename,density = 'mass',bins=adaptive_times)
+    density_evolution(mass_densities,times,filename = filename,density = 'mass',bins=np.linspace(np.percentile(form_times,1),np.percentile(form_times,99),num=9))
     # for i in range(len(T_list)):
     #     plt.fill_between([T_list[i]-dt_list[i]/2,T_list[i]+dt_list[i]/2],0,np.log10(max(the_mass_densities)),alpha  = 0.3,label = 'T = '+str(round(T_list[i],2))+', dt = '+str(round(dt_list[i],2)))
     # plt.legend(fontsize=14)
@@ -4793,7 +4842,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.xlabel('Log System Mass [$\mathrm{M_\odot}$]')
             else:
                 plt.xlabel('Log Primary Mass [$\mathrm{M_\odot}$]')
-            plt.ylabel('Number of Systems')
+            plt.ylabel('Number of systems')
             if compare == True: #If we want to compare the total mass function to the system mass function
                 if snapshot is None:
                     print('please provide snapshot')
@@ -4821,7 +4870,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 plt.yscale('log')
             # if filename is not None:
             #     plt.text(0.7,0.7,label,transform = plt.gca().transAxes,horizontalalignment = 'left')
-            # plt.text(0.7,0.3,'Total Number of Systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')
+            # plt.text(0.7,0.3,'Total Number of systems ='+str(sum(y_vals)),transform = plt.gca().transAxes,fontsize = 14,horizontalalignment = 'left')
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         else:
             return x_vals,y_vals
@@ -4832,7 +4881,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1),y_vals_filt[filter_label]+0.05*(i+1),label = filter_label, linestyle = linestyle,color=linecolor)
-            plt.ylabel('Number of Systems')
+            plt.ylabel('Number of systems')
             plt.xlabel(r'q ($M/M_\mathrm{p}$)')
             # if filename is not None:
             #     plt.text(0.5,0.7,label,transform = plt.gca().transAxes,fontsize=14,horizontalalignment = 'left')  
@@ -4896,7 +4945,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             obs_label = 'Tokovinin+2016'
             obs_norm_factor = np.mean(y_vals)/np.mean(y_obs)
             plt.errorbar(x_obs+0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = obs_label,ls='none')
-            plt.ylabel('Number of Systems')
+            plt.ylabel('Number of systems')
             plt.xlabel('Eccentricity') 
             if upper_limit<1000:
                 plt.text(0.02,0.02,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14,verticalalignment = 'bottom')
@@ -4916,7 +4965,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 # plt.step(x_vals_filt-0.01,y_vals_filt-0.1,label = 'After Corrections',linestyle = ':')
                 for i, (filter_label,linestyle,linecolor) in enumerate(zip(filters_to_plot,linestyle_list,colorlist[1:])):
                     plt.step(x_vals_filt[filter_label]-0.01*(i+1)*np.ptp(plt.xlim()),y_vals_filt[filter_label]+0.01*(i+1)*np.ptp(plt.ylim()),label = filter_label, linestyle = linestyle, color = linecolor)
-            plt.ylabel('Number of Systems')
+            plt.ylabel('Number of systems')
             plt.xlabel('Misalignment Angle [°]')
             x_pected = np.linspace(0,180,31)
             plt.plot(x_pected,max(y_vals)*np.sin(x_pected*np.pi/180),linestyle = '--',label = 'Random Alignment')
@@ -4947,7 +4996,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             average_pands = np.average(pands)*1.9891e30 
             ax1.set_ylim([0,max(y_vals)+1])
             ax1.set_xlabel('Log Semi Major Axis [AU]')
-            plt.ylabel('Number of Systems')
+            plt.ylabel('Number of systems')
             ax2 = ax1.twiny()
             adjust_ticks=False
             ax2.set_xlabel('Log Period [Days]')
@@ -4962,7 +5011,7 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 # error_values_big = np.array([18,27,31,23,21])
                 # error_values_comb = (error_values_small+error_values_big)
                 # dy_comb = np.sqrt(error_values_comb)
-                # ax1.errorbar(smaxes,np.array(error_values_comb)*max(y_vals)/max(error_values_comb),yerr=dy_comb*max(y_vals)/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+                # ax1.errorbar(smaxes,np.array(error_values_comb)*max(y_vals)/max(error_values_comb),yerr=dy_comb*max(y_vals)/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'MDS 2017',linestyle = '')
                 
                 #companion frequebcies across period bins
                 logperiod_day_to_logsmaxes_AU =  lambda x :  np.log10((((((10.0**x)*24*60*60)**2) * 6.67e-11 * average_pands / (4*np.pi**2))**0.333)/m_to_AU)  
@@ -4977,12 +5026,12 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
                 obs_smaxes = logperiod_day_to_logsmaxes_AU(obs_periods) 
                 #obs_norm_factor = np.interp(obs_smaxes[np.argmax(obs_y)],x_vals,y_vals)/np.max(obs_y)
                 obs_norm_factor = np.max(y_vals[x_vals>np.log10(20)+0.2])/np.max(obs_y*0.98)
-                ax1.errorbar(obs_smaxes-0.01,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+                ax1.errorbar(obs_smaxes-0.01,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'MDS 2017',linestyle = '')
             if log == True:
                 plt.yscale('log')
-            ax1.set_ylabel('Number of Systems')
+            ax1.set_ylabel('Number of systems')
             if all_companions == True:
-                ax1.set_ylabel('Number of Sub Systems')
+                ax1.set_ylabel('Number of subsystems')
             ax1.legend(fontsize = 14,labelspacing=0, loc=1)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if upper_limit<1000:
@@ -5184,20 +5233,20 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
         if plot == True:
             if multiplicity == 'Properties':
                 markersize = 10; linewidth = 2.0
-                plt.plot(logmasslist,o1,marker = '*',label = 'Single Stars', markersize=markersize, linewidth=linewidth)
-                plt.plot(logmasslist,o2,marker = 'o', label = 'Primary Stars', markersize=markersize, linewidth=linewidth)
-                plt.plot(logmasslist,o3,marker = '^',label = 'Non-primary Stars', markersize=markersize, linewidth=linewidth)
+                plt.plot(logmasslist,o1,marker = '*',label = 'Unbound stars', markersize=markersize, linewidth=linewidth)
+                plt.plot(logmasslist,o2,marker = 'o', label = 'Primary stars', markersize=markersize, linewidth=linewidth)
+                plt.plot(logmasslist,o3,marker = '^',label = 'Non-primary stars', markersize=markersize, linewidth=linewidth)
             else:
-                plt.plot(logmasslist,np.log10(o1),marker = '*',label = 'Single Stars')
+                plt.plot(logmasslist,np.log10(o1),marker = '*',label = 'Unbound stars')
                 plt.fill_between(logmasslist,np.log10(o1+o4),np.log10(o1)-(np.log10(o1+o4)-np.log10(o1)),alpha = 0.3)
-                plt.plot(logmasslist,np.log10(o2),marker = 'o', label = 'Primary Stars')
+                plt.plot(logmasslist,np.log10(o2),marker = 'o', label = 'Primary stars')
                 plt.fill_between(logmasslist,np.log10(o2+o5),np.log10(o2)-(np.log10(o2+o5)-np.log10(o2)),alpha = 0.3)
-                plt.plot(logmasslist,np.log10(o3),marker = '^',label = 'Non-Primary Stars')
+                plt.plot(logmasslist,np.log10(o3),marker = '^',label = 'Non-primary stars')
                 plt.fill_between(logmasslist,np.log10(o3+o6),np.log10(o3)-(np.log10(o3+o6)-np.log10(o3)),alpha = 0.3)
             if only_filter is False:
-                plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary Stars Filt',linestyle = ':')
-                plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Single Stars Filt',linestyle = ':')
-                plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-Primary Stars Filt',linestyle = ':')
+                plt.plot(logmasslist_filt,o1_filt,marker = '*',label = 'Primary stars, filtered',linestyle = ':')
+                plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound stars, filtered',linestyle = ':')
+                plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-primary stars, filtered',linestyle = ':')
             plt.legend(fontsize=14)
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             if multiplicity == 'Properties':
@@ -5441,6 +5490,7 @@ def Time_Evolution_Plots(which_plot,Master_File,file,steps = 1,target_mass = 1,T
         elif filename is None:
             print('Provide the filename')
         MFCF_Time_Evolution(file,Master_File,filename,steps = steps,target_mass=target_mass,read_in_result=read_in_result,start = start,upper_limit=upper_limit,lower_limit=lower_limit,plot = plot,time_norm = time_norm,multiplicity=multiplicity,rolling_avg=rolling_avg,rolling_window_Myr=rolling_window)
+    print('\n'+which_plot+'\n')
     if which_plot == 'Multiplicity Lifetime Evolution':
         if Master_File is None:
             print('provide master file')
@@ -5920,12 +5970,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             if bins is None:
                 bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log System Mass [$\mathrm{M_\odot}$]')
-            plt.ylabel(normal_str+'Number of Systems')
+            plt.ylabel(normal_str+'Number of systems')
         if which_plot == 'Primary Mass':
             if bins is None:
                 bins = np.linspace(floor,ceiling,int(ceiling-floor+1))
             plt.xlabel('Log Primary Mass [$\mathrm{M_\odot}$]')
-            plt.ylabel(normal_str+'Number of Systems')
+            plt.ylabel(normal_str+'Number of systems')
         if which_plot == 'Semi Major Axis':
             if bins is None:
                 bins = np.linspace(floor,ceiling,int((ceiling-floor)*3/2+1))
@@ -5933,12 +5983,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             if bins is None:
                 bins = np.linspace(0,180,10)
             plt.xlabel('Misalignment Angle [°]')
-            plt.ylabel(normal_str+'Number of Systems')
+            plt.ylabel(normal_str+'Number of systems')
         if which_plot == 'Mass Ratio':
             if bins is None:
                 bins = np.linspace(0,1,11)
             plt.xlabel('q (Companion Mass Ratio)')
-            plt.ylabel(normal_str+'Number of Systems')
+            plt.ylabel(normal_str+'Number of systems')
             if all_companions is True:
                 plt.ylabel('Number of Companions')
         if which_plot == 'Multiplicity':
@@ -5959,13 +6009,17 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
         nos = []
         avg_mass = []
         og_rolling_window = copy.copy(rolling_window)
-        offsets = range(0,len(Filenames))
+        offsets = [0]
+        for i in range(1,len(Filenames)):
+            inc = 0.2 if labels[i]=='' else 1
+            offsets += [offsets[-1]+inc]
+        offsets = np.array(offsets)
         if which_plot == 'Mass Ratio':
-            offsets = 0.01*np.array(offsets)
+            offsets = 0.01*offsets
         elif which_plot == 'Angle':
-            offsets = 2*np.array(offsets)
+            offsets = 2*offsets
         else:
-            offsets = 0.1*np.array(offsets)
+            offsets = 0.1*offsets  
         for i in tqdm(range(0,len(Filenames)),desc = 'Getting Data',position=0):
             if which_plot == 'Multiplicity':
                 a,b,c,d = Plots(which_plot,Systems[i],Files[i],Filenames[i],Systems[i][Snapshots[i]],log = False,plot = False,bins = bins,upper_limit = upper_limit,lower_limit = lower_limit,multiplicity = multiplicity,all_companions = all_companions,filters = filters,avg_filter_snaps_no = avg_filter_snaps_no,q_filt_min = q_filt_min,time_filt_min = time_filt_min,only_filter=True,snapshot = Snapshots[i],filter_in_class = filter_in_class)
@@ -6036,14 +6090,16 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             ax1 = fig.add_subplot(111)
             for i in range(len(Files)):
                 ax1.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i], color=colors[i])
-            ax1.vlines(np.log10(20),0,max(y[0]))
+            ax1.vlines(np.log10(20),plt.ylim()[0],plt.ylim()[1],colors='k',linestyles='dashed')
+            plt.text(np.log10(20)+0.1, 1, r'Grav. softening length', horizontalalignment='left',\
+                     verticalalignment='center', fontsize=11)#,rotation='vertical')
             pands = []
             for i in Systems[0][-1]:
                 if i.no>1 and lower_limit<=i.primary<=upper_limit:
                     pands.append(i.primary+i.secondary)
             average_pands = np.average(pands)*1.9891e30 
             ax1.set_xlabel('Log Semi Major Axis [AU]',fontsize=14)
-            ax1.set_ylabel(normal_str+'Number of Systems',fontsize=14)
+            ax1.set_ylabel(normal_str+'Number of systems',fontsize=14)
             if all_companions == True:
                 ax1.set_ylabel(normal_str+'Number of Sub-Systems',fontsize=14)
             ax2 = ax1.twiny(); adjust_ticks=False
@@ -6059,7 +6115,7 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 # error_values_big = np.array([18,27,31,23,21])
                 # error_values_comb = (error_values_small+error_values_big)
                 # dy_comb = np.sqrt(error_values_comb)
-                # ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+                # ax1.errorbar(smaxes,np.array(error_values_comb)*max(y[0])/max(error_values_comb),yerr=dy_comb*max(y[0])/max(error_values_comb),xerr = (2/3)*0.5*np.ones_like(len(smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'MDS 2017',linestyle = '')
                 #companion frequebcies across period bins
                 logperiod_day_to_logsmaxes_AU =  lambda x :  np.log10((((((10.0**x)*24*60*60)**2) * 6.67e-11 * average_pands / (4*np.pi**2))**0.333)/m_to_AU)  
                 if (upper_limit == 1.3 and lower_limit == 0.7): 
@@ -6073,12 +6129,13 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                 obs_smaxes = logperiod_day_to_logsmaxes_AU(obs_periods)  
                 # obs_norm_factor = np.interp(obs_smaxes[np.argmax(obs_y)],x[0],y[0])/np.max(obs_y)
                 obs_norm_factor = np.max(y[0][x[0]>np.log10(20)+0.2])/np.max(obs_y)
-                ax1.errorbar(obs_smaxes,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'Moe & Di Stefano 2017',linestyle = '')
+                ax1.errorbar(obs_smaxes,obs_y*obs_norm_factor,yerr=obs_y_error*obs_norm_factor,xerr = 0.5*np.ones_like(len(obs_smaxes)),marker = 'o',capsize = 5,color = 'black',label = 'MDS 2017',linestyle = '')
             ax1.legend(fontsize=14, labelspacing=0)
         elif which_plot == 'Multiplicity':
             for i in range(0,len(Filenames)):
                 plt.plot(x[i],y[i],label = labels[i],color=colors[i])
-                plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.15, color=colors[i])
+                if not ( (labels[i]=='') or (labels[min(i+1,len(Filenames)-1)]=='')): #(labels[i]=='Fiducial' and ('' in labels) ) ):
+                    plt.fill_between(x[i],np.array(y[i],dtype = np.float32)+error[i],np.array(y[i],dtype = np.float32)-error[i],alpha = 0.2, color=colors[i])
             observation_mass_center = [0.0875,0.205,0.1125,0.225,0.45,1,0.875,1.125,1.175,2,4.5,6.5,12.5]
             observation_mass_width = [0.0075,0.045,0.0375,0.075,0.15,0.25,0.125,0.125,0.325,0.4,1.5,1.5,4.5]
             observation_MF = [0.19,0.20,0.19,0.23,0.3,np.nan,0.42,0.5,0.47,0.68,0.81,0.89,0.93]
@@ -6107,10 +6164,12 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             for i in range(len(Files)):
                 if time_plot == 'consistent mass':
                     plt.plot(times[i],cons_fracs[i],label = labels[i], color=colors[i])
-                    plt.fill_between(times[i], cons_fracs[i]-cons_fracs_err[i],y2=cons_fracs[i]+cons_fracs_err[i], alpha=0.3, color=colors[i])
+                    if not ( (labels[i]=='') or (labels[min(i+1,len(Files)-1)]=='')):
+                        plt.fill_between(times[i], cons_fracs[i]-cons_fracs_err[i],y2=cons_fracs[i]+cons_fracs_err[i], alpha=0.3, color=colors[i])
                 elif time_plot == 'all':
                     plt.plot(times[i],fractions[i],label = labels[i], color=colors[i])
-                    plt.fill_between(times[i], fractions[i]-fractions_err[i],y2=fractions[i]+fractions_err[i], alpha=0.3, color=colors[i])
+                    if not ( (labels[i]=='') or (labels[min(i+1,len(Files)-1)]=='')):
+                        plt.fill_between(times[i], fractions[i]-fractions_err[i],y2=fractions[i]+fractions_err[i], alpha=0.3, color=colors[i])
             plt.text(0.01,0.03,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ r' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'left',fontsize=14)
             if time_norm == 'Myr':
                 plt.xlabel('Time [Myr]')
@@ -6181,12 +6240,15 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
             if save == True:
                 plt.savefig(new_file+'/YSO_Mass_'+description+'.png',dpi = 150, bbox_inches='tight')
         else:
+            if len(offsets)>1:
+                while np.ptp(y)<20*np.max(np.abs(np.diff(offsets))):
+                    offsets=offsets*0.5
             for i in range(0,len(Filenames)):
                 plt.step(x[i]-offsets[i],y[i]-offsets[i],label = labels[i],color=colors[i])
             if which_plot == 'Angle':
                 x_pected = np.linspace(0,180,31)
                 y_pected = max(flatten(y))*np.sin(x_pected*np.pi/180)
-                plt.plot(x_pected,y_pected,label = 'Random Distribution',linestyle = ':', color='k')
+                plt.plot(x_pected,y_pected,label = 'Random',linestyle = ':', color='k')
             plt.legend(fontsize=14)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14,adjust_ticks=adjust_ticks)
         if log == True:

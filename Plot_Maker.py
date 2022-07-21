@@ -36,23 +36,27 @@ class Timer():
             t_sum += self.dt_dict[key]
         print('Total time  : %4.2f s'%(t_sum))
 
-alpha_filenames = ['M2e4_C_M_J_RT_W_alpha1_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_alpha4_2e7']
-alpha_labels = [r'$\alpha_\mathrm{turb}=1$',r'$\alpha_\mathrm{turb}=2$',r'$\alpha_\mathrm{turb}=4$']
-sigma_filenames = ['M2e4_C_M_J_RT_W_R30_2e7','M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_R3_2e7']
-sigma_labels = [r'$\Sigma = 6.3\,M_\mathrm{\odot}/\mathrm{pc}^2$',r'$\Sigma = 63\,M_\mathrm{\odot}/\mathrm{pc}^2$', r'$\Sigma = 630\,M_\mathrm{\odot}/\mathrm{pc}^2$']
-BOX_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_2e7_BOX','M2e4_C_M_J_RT_W_nodriving_2e7_BOX']
-BOX_labels = [r'Sphere', r'Box', r'Box, decaying']
-metal_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_Zx01_2e7','M2e4_C_M_J_RT_W_Zx001_2e7']
-metal_labels = [r'$\mathrm{Z/Z_\odot}=1$',r'$\mathrm{Z/Z_\odot}=0.1$',r'$\mathrm{Z/Z_\odot}=0.01$']
-mu_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_hiB_2e7','M2e4_C_M_J_RT_W_vhiB_2e7'] 
-mu_labes = [r'$\mu=4.2$',r'$\mu=1.3$',r'$\mu=0.42$']
-ISRF_filenames = ['M2e4_C_M_J_RT_W_2e7','M2e4_C_M_J_RT_W_ISRFx10_2e7','M2e4_C_M_J_RT_W_ISRFx100_2e7']
-ISRF_labels = ['Solar-circle ISRF', '10x ISRF', '100x ISRF']
+alpha_filenames = ['M2e4_C_M_J_RT_W_alpha1_v1.1_2e7','M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_alpha4_v1.1_2e7']
+alpha_labels = [r'$\alpha_\mathrm{turb}=1$',r'$\alpha_\mathrm{turb}=2$','','', r'$\alpha_\mathrm{turb}=4$']
+sigma_filenames = ['M2e4_C_M_J_RT_W_R30_v1.1_2e7','M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_R3_v1.1_2e7']
+sigma_labels = [r'$\Sigma = 6.3\,M_\mathrm{\odot}/\mathrm{pc}^2$',r'$\Sigma = 63\,M_\mathrm{\odot}/\mathrm{pc}^2$','','', r'$\Sigma = 630\,M_\mathrm{\odot}/\mathrm{pc}^2$']
+BOX_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_2e7_BOX','M2e4_C_M_J_RT_W_nodriving_2e7_BOX']
+BOX_labels = [r'Sphere','','', r'Box', r'Box, decaying']
+metal_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_Zx01_2e7','M2e4_C_M_J_RT_W_Zx001_2e7']
+metal_labels = [r'$\mathrm{Z/Z_\odot}=1$','','',r'$\mathrm{Z/Z_\odot}=0.1$',r'$\mathrm{Z/Z_\odot}=0.01$']
+mu_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_hiB_2e7','M2e4_C_M_J_RT_W_vhiB_2e7'] 
+mu_labes = [r'$\mu=4.2$','','',r'$\mu=1.3$',r'$\mu=0.42$']
+ISRF_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_ISRFx10_2e7','M2e4_C_M_J_RT_W_ISRFx100_2e7']
+ISRF_labels = ['Solar-circle ISRF','','', '10x ISRF', '100x ISRF']
 alt_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2']
 alt_labels = [r'Random seed = 42',r'Random seed = 1',r'Random seed = 2']
 test_filenames = ['M2e3_C_M_J_RT_W_2e7']
 test_labels = ['M2e3']
 plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+turbsphere_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_turbsphere_2e7','M2e4_C_M_J_RT_W_turbsphere_noturb_2e7']
+turbsphere_labels = [r'Sphere','','', r'TurbSphere', r'TurbSphere, decaying']
+qtest_filenames = ['M2e4_C_M_J_RT_W_2e7_alt','M2e4_C_M_J_RT_W_2e7_alt1','M2e4_C_M_J_RT_W_2e7_alt2','M2e4_C_M_J_RT_W_2e7_temp']
+qtest_labels = [r'Bate','','', r'q<0.1 pre-filtered']
 
 datafolder='D:\Work\Projects\GMC Sim\Analyze\sinkdata' #use '' if in the same directory as script
 
@@ -72,6 +76,17 @@ def redo_system_assignment(filename,datafolder='',seperation_param=None, no_subd
     outfile = open(outfilename,'wb')
     pickle.dump(output,outfile)
     outfile.close()
+
+
+def get_adaptive_nos(Systems,adaptive_bin_no):
+    adaptive_nos = []
+    for i in Systems:
+        no_of_solar = 0
+        for j in i[-1]:
+            if 0.7<=j.primary<=1.3:
+                no_of_solar += 1
+        adaptive_nos.append(max(int((no_of_solar/adaptive_bin_no)),1))
+    return adaptive_nos
 
 def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,read_in_result=True,Snapshots = None,log = False,target_age = 0.5,min_age = 0,all_companions = True,filters = [None],avg_filter_snaps_no = 10,q_filt_min = 0.1,time_filt_min = 0.1,normalized = False,norm_no = 100,time_plot = 'consistent mass',rolling_avg=True,rolling_window_Myr=0.1,time_norm = 'tff',zero = 'Formation',filter_in_class = False, colors=None, plots_to_do=['All']):
     Filenames = orig_filenames.copy()
@@ -180,13 +195,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
 
     #Formation Density vs Multiplicity Plots
     if plots_to_do[0]=='All' or 'Formation Density vs Multiplicity Plots' in plots_to_do:
-        adaptive_nos = []
-        for i in Systems:
-            no_of_solar = 0
-            for j in i[-1]:
-                if 0.7<=j.primary<=1.3:
-                    no_of_solar += 1
-            adaptive_nos.append(max(int((no_of_solar/adaptive_bin_no)),1))
+        adaptive_nos=get_adaptive_nos(Systems,adaptive_bin_no)
         new_file = output_dir+'/Density_vs_Multiplicity'
         mkdir_p(new_file)
         for multiplicity in ['MF','CF']:
@@ -215,6 +224,7 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     
     #Multiplicity Lifetime Evolution
     if plots_to_do[0]=='All' or 'Multiplicity Lifetime Evolution' in plots_to_do:
+        adaptive_nos=get_adaptive_nos(Systems,adaptive_bin_no)
         new_file = output_dir+'/Multiplicity_Lifetime_Evolution'
         for i in Filenames:
             mkdir_p(new_file+'/'+path.basename(i))
@@ -231,20 +241,20 @@ redo_all_main=False
 post_process=False
 sequential_colors_2, _ = set_colors_and_styles(None, None, 2, dark=True, sequential=True)
 sequential_colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=True)
+sequential_colors_3_mid2repeat = sequential_colors_3[:2] + [sequential_colors_3[1]] + [sequential_colors_3[1]] + [sequential_colors_3[2]]
+sequentialcolors_3_first2repeat = [sequential_colors_3[0]] + [sequential_colors_3[0]] + sequential_colors_3
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
+colors_3_first2repeat = [colors_3[0]] + [colors_3[0]] + colors_3
 #plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
 # plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
 # plots_to_do = ['Multiplicity Filters' ] 
-# plots_to_do = ['Single Plots' ]
-# plots_to_do = ['Multi_Plot figures' ]
+#plots_to_do = ['Multiplicity Lifetime Evolution']
+#plots_to_do = ['Primordial separation' ]
+#plots_to_do = ['Multi_Plot figures', 'Formation Density vs Multiplicity Plots', 'Multiplicity Time Evolution']
 
-
-
-# alpha_filenames = ['M2e4_C_M_J_RT_W_2e7']
-# alpha_labels = [r'$\alpha_\mathrm{turb}=2$']
 
 # redo_system_assignment('M2e3_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_alt2',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
@@ -259,22 +269,31 @@ colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_nodriving_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122, post_process=post_process)
 # redo_system_assignment('M2e4_C_M_J_RT_W_2e7_BOX',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main,L= 16.1122, post_process=post_process)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R3_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
-# redo_system_assignment('M2e4_C_M_J_RT_W_R30_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
-# redo_system_assignment('M2e4_C_M_J_RT_W_alpha1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
-# redo_system_assignment('M2e4_C_M_J_RT_W_alpha4_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R3_v1.1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_R30_v1.1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_alpha1_v1.1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_alpha4_v1.1_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_turbsphere_noturb_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_turbsphere_2e7',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
+# redo_system_assignment('M2e4_C_M_J_RT_W_2e7_temp',datafolder=datafolder,seperation_param=2, redo_all=redo_all_main, post_process=post_process)
 
-##all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
+
+###all_plots(alt_filenames,'realizations',['Fiducial','',''],colors=['k','grey','grey'], plots_to_do=plots_to_do)
+#all_plots(['M2e4_C_M_J_RT_W_2e7_alt'],'fiducial',['Fiducial'],colors=['b'], plots_to_do=['All'])
+#all_plots(['M2e4_C_M_J_RT_W_2e7_alt'],'fiducial',['Fiducial'],colors=['b'], plots_to_do=['Formation Density vs Multiplicity Plots'])
+
+
+
+#all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
 #all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
-#all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(metal_filenames,'metal',metal_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(mu_filenames,'magnetic',mu_labes,colors=sequential_colors_3, plots_to_do=plots_to_do)
-# all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-#all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3, plots_to_do=plots_to_do)
-# all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3, plots_to_do=plots_to_do)
-
-
-
+#all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3_mid2repeat, plots_to_do=plots_to_do)
+# all_plots(metal_filenames,'metal',metal_labels,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(mu_filenames,'magnetic',mu_labes,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3_mid2repeat, plots_to_do=plots_to_do)
+# all_plots(turbsphere_filenames,'turbsphere',turbsphere_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(qtest_filenames,'qtest',qtest_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
 
 
 # plt.figure(figsize = (6,6))
@@ -317,16 +336,16 @@ colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
     
     
 # #STARFORGE results
-# logmass = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 ,   0.20748667,  0.60205999,  1.06676945,  1.48305448])
-# MF = np.array([0.01785714, 0.01176471, 0.05014749, 0.14814815, 0.29752066, 0.49180328, 0.62352941, 1.        , 0.90909091])
-# MF_error =np.array([0.023755  , 0.00995297, 0.01209122, 0.02165448, 0.04118453, 0.06249213, 0.05172414, 0.06236096, 0.09642818])
+# logmass = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 ,  0.20748667,  0.60205999,  1.05360498,  1.33110931])
+# MF = np.array([0.        , 0.00813008, 0.04157549, 0.18059299, 0.31944444,     0.51315789, 0.70238095, 0.82608696, 0.81818182])
+# MF_error = np.array([0.0120473 , 0.00692775, 0.00951822, 0.01996456, 0.03853497, 0.0562359 , 0.04923843, 0.07844645, 0.11260385])
 # MF_low = np.clip(MF-MF_error,0,1); MF_high= np.clip(MF+MF_error,0,1);
 # plt.plot(logmass, MF, color='darkgreen', label='Sphere')
 # plt.fill_between(logmass,MF_low,MF_high ,alpha = 0.3,color = 'darkgreen')
 # #STARFORGE Box results
-# logmass_box = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 ,  0.20748667,  0.60205999,  1.06676945,  1.26166774])
-# MF_box = np.array([0.        , 0.02267003, 0.10510949, 0.23822715, 0.49586777,  0.74468085, 0.97560976, 1.        , 1.        ])
-# MF_error_box =np.array([0.00666652, 0.00781577, 0.01174883, 0.02237468, 0.04489984,  0.06243697, 0.03174769, 0.12371791, 0.23570226])
+# logmass_box = np.array([-1.04845501, -0.91195437, -0.67339374, -0.33889035, -0.0204793 , 0.20748667,  0.60205999,  1.05360498,  1.24850327])
+# MF_box = np.array([0.        , 0.02267003, 0.10510949, 0.23822715, 0.49586777,   0.74468085, 0.97560976, 1.        , 1.        ])
+# MF_error_box =np.array([0.00666652, 0.00781577, 0.01174883, 0.02237468, 0.04489984, 0.06243697, 0.03174769, 0.12371791, 0.23570226])
 # MF_low = np.clip(MF_box-MF_error_box,0,1); MF_high= np.clip(MF_box+MF_error_box,0,1);
 # plt.plot(logmass_box, MF_box, color='magenta', label='Box')
 # plt.fill_between(logmass,MF_low,MF_high ,alpha = 0.3,color = 'magenta')
@@ -336,4 +355,6 @@ colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 # plt.ylim([0,1])
 # adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 # plt.savefig('MF_comparison.png',dpi = 150, bbox_inches='tight')
+
+
 
