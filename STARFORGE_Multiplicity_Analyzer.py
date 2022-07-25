@@ -4136,7 +4136,7 @@ def scatter_with_histograms(X,Y,xlabel,ylabel,filename,nbins=10,xlim=None,ylim=N
         fig.savefig(filename+'.png',dpi=150, bbox_inches='tight')
 
 
-def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_limit = 0.7,plot = True,cmap='viridis', apply_filters=True, outfilename='separation_dist', y_axis='final_dist'):
+def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_limit = 0.7,plot = True,cmap='viridis', apply_filters=True, outfilename='separation_dist', y_axis='final_dist', minmass_for_angle=0.08):
     '''
     Shows the distribution of distances between primary and companions at formation and when they form a system, done for systems that exist in the last snapshot
 
@@ -4180,17 +4180,19 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
                     #Find the at formation separation 
                     form_distances.append(formation_distance([system.primary_id,comp_id ],None,log = False, file=file)) #this is already AU
                     #Find the separation when they become a system
-                    dist = None
+                    dist = None; angle = None
                     for snap_systems in Master_File:
                         for snap_system in snap_systems:
                             if (comp_id in snap_system.ids) and (system.primary_id in snap_system.ids):
-                                x1 = np.squeeze(snap_system.x[snap_system.ids==system.primary_id])
-                                x2 = np.squeeze(snap_system.x[snap_system.ids==comp_id])
-                                dist = np.linalg.norm(x1-x2)
-                                angle = momentum_angle(system.primary_id,comp_id,file,snap_system.snapshot_num)
-                        if not (dist is None):
-                            sys_form_distances.append(dist) 
-                            sys_form_angles.append(angle)
+                                if (dist is None):
+                                    x1 = np.squeeze(snap_system.x[snap_system.ids==system.primary_id])
+                                    x2 = np.squeeze(snap_system.x[snap_system.ids==comp_id])
+                                    dist = np.linalg.norm(x1-x2)
+                                    sys_form_distances.append(dist) 
+                                if (angle is None) and (np.squeeze(snap_system.m[snap_system.ids==comp_id])>minmass_for_angle):
+                                    angle = momentum_angle(system.primary_id,comp_id,file,snap_system.snapshot_num)
+                                    sys_form_angles.append(angle)
+                        if (not (dist is None)) and (not (angle is None)):
                             break
     form_distances = np.log10(form_distances); sys_form_distances = np.log10(sys_form_distances)+np.log10(pc_to_AU);
     q_vals = np.array(q_vals); final_sep = np.log10(final_sep)+np.log10(pc_to_AU);
@@ -4222,7 +4224,7 @@ def Primordial_separation_distribution(file,Master_File,upper_limit=1.3,lower_li
         else:
             overtext = None
         yvals=sys_form_distances
-        scatter_with_histograms(final_angles,sys_form_angles,'Misalignment angle [°]','Misalignment angle at system formation [°]','',nbins=10, msize=30, capsize=5, markers='x', colors=q_vals,cmap=cmap, histx_color='b',histy_color='b',\
+        scatter_with_histograms(final_angles,sys_form_angles,'Misalignment angle [°]','Primordial misalignment angle','',nbins=10, msize=30, capsize=5, markers='x', colors=q_vals,cmap=cmap, histx_color='b',histy_color='b',\
                             colorbar=True, cbar_limits=[0.0,1.0],cbar_tick_labels=None,cbar_label='Mass ratio', xlim=[0,180], ylim=[0,180], fontsize=14,saveplot=False,overtext=overtext,overtextcoord=[0.01,0.9] ) 
         adjust_font(fig=plt.gcf(), ax_fontsize=14)
         plt.savefig(outfilename+'_angle.png',dpi = 150, bbox_inches='tight')
