@@ -107,8 +107,9 @@ def all_plots(orig_filenames,description,labels,bins = None,adaptive_bin_no = 5,
     
     if plots_to_do[0]=='All' or 'Primordial separation' in plots_to_do:
         for n in tqdm(range(len(Files)),position = 0,desc = 'Making primordial separation distribution'):
-            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=50,lower_limit = 5.0, apply_filters=True, outfilename='separation_dist_'+orig_filenames[n]+'_massive')
-            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=2.0,lower_limit = 0.1, apply_filters=True, outfilename='separation_dist_'+orig_filenames[n]+'_lowmass')
+            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=50,lower_limit = 5.0, apply_filters=False, outfilename='separation_dist_'+orig_filenames[n]+'_massive')
+            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=2.0,lower_limit = 0.1, apply_filters=False, outfilename='separation_dist_'+orig_filenames[n]+'_lowmass')
+            Primordial_separation_distribution(Files[n],Systems[n],upper_limit=200,lower_limit = 0.1, apply_filters=False, outfilename='separation_dist_'+orig_filenames[n]+'_all')
         timer.dt(text='Primordial separation distributions')
     
     
@@ -246,7 +247,7 @@ sequentialcolors_3_first2repeat = [sequential_colors_3[0]] + [sequential_colors_
 colors_3, _ = set_colors_and_styles(None, None, 3, dark=True, sequential=False)
 colors_3_first2repeat = [colors_3[0]] + [colors_3[0]] + colors_3
 #plots_to_do = ['Multiplicity Lifetime Evolution', 'Multiplicity Time Evolution','YSO','Formation Density vs Multiplicity Plots','Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
-#plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
+plots_to_do = ['Multiplicity Filters','Single Plots', 'Multi_Plot figures' ]
 #plots_to_do = ['YSO' ]
 #plots_to_do = ['All' ]
 # plots_to_do = ['Single Plots', 'Multiplicity Time Evolution' ] 
@@ -285,15 +286,15 @@ colors_3_first2repeat = [colors_3[0]] + [colors_3[0]] + colors_3
 
 
 #all_plots(test_filenames,'test',test_labels,colors=colors_3, plots_to_do=plots_to_do)
-#all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
-#all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
+# all_plots(alt_filenames,'realizations',alt_labels,colors=colors_3, plots_to_do=plots_to_do)
+# all_plots(BOX_filenames,'BOX',BOX_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
 # all_plots(alpha_filenames,'alpha',alpha_labels,colors=sequential_colors_3_mid2repeat, plots_to_do=plots_to_do)
 # all_plots(metal_filenames,'metal',metal_labels,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
 # all_plots(mu_filenames,'magnetic',mu_labes,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
 # all_plots(ISRF_filenames,'ISRF',ISRF_labels,colors=sequentialcolors_3_first2repeat, plots_to_do=plots_to_do)
 # all_plots(sigma_filenames,'sigma',sigma_labels,colors=sequential_colors_3_mid2repeat, plots_to_do=plots_to_do)
 # all_plots(turbsphere_filenames,'turbsphere',turbsphere_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
-# all_plots(qtest_filenames,'qtest',qtest_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
+#all_plots(qtest_filenames,'qtest',qtest_labels,colors=colors_3_first2repeat, plots_to_do=plots_to_do)
 
 
 # plt.figure(figsize = (6,6))
@@ -349,10 +350,12 @@ colors_3_first2repeat = [colors_3[0]] + [colors_3[0]] + colors_3
 # MF_low = np.clip(MF_box-MF_error_box,0,1); MF_high= np.clip(MF_box+MF_error_box,0,1);
 # plt.plot(logmass_box, MF_box, color='magenta', label='Box')
 # plt.fill_between(logmass,MF_low,MF_high ,alpha = 0.3,color = 'magenta')
-
 # plt.xlim([-1.2,1.5])
 # plt.legend(fontsize=14, labelspacing=0)
 # plt.ylim([0,1])
+# xlims = plt.xlim(); ylims = plt.ylim()
+# plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.15)
+# plt.xlim(xlims); plt.ylim(ylims)
 # adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14,lgnd_handle_size=14)
 # plt.savefig('MF_comparison.png',dpi = 150, bbox_inches='tight')
 

@@ -142,7 +142,13 @@ def set_colors_and_styles(colors, styles, N, multiples=1, dark=False, cmap=None,
         if sequential and (N<=4):
             #colors_base = ['#a1dab4', '#41b6c4', '#2c7fb8','#253494']
             colors_base = [(161/255,218/255,180/255),(65/255,182/255,196/255),(44/255,127/255,184/255),(37/255,52/255,148/255) ]
-            colors = [colors_base[int(i/N*len(colors_base))] for i in range(N)]
+            if N==1:
+                colors = [colors_base[0]]
+            elif N==2:
+                colors = [colors_base[0],colors_base[-1]]
+            else: 
+                base_length = np.arange(len(colors_base))/(len(colors_base)-1)
+                colors = [( np.interp(i/(N-1),base_length,np.array(colors_base)[:,0]) , np.interp(i/(N-1),base_length,np.array(colors_base)[:,1]), np.interp(i/(N-1),base_length,np.array(colors_base)[:,2])  ) for i in range(N)]
         else:
             if (N<=5):
                 #colors=['k', 'g', 'r', 'b', 'm', 'brown', 'orange', 'cyan', 'gray', 'olive']
@@ -2514,7 +2520,7 @@ def primary_total_ratio_axis(systems,lower_limit = 0,upper_limit = 10000,all_com
     eccentricities = []
     for i in systems:
         if len(i.m)>1: #Make sure you only consider the multi star systems.
-            if (i.age_Myr<=age_limit_Myr):
+            if (i.age_Myr[np.argmax(i.m)]<=age_limit_Myr):
                 masses.append(i.tot_m)
                 primary_masses.append(i.primary)
                 if lower_limit<=i.primary<=upper_limit:
@@ -4893,6 +4899,8 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             y_obs = np.array([4,6,12,16,11,12,12,9,11,17]) #for binaries only
             y_obs_err = np.sqrt(y_obs) #Poisson error
             obs_norm_factor = np.mean(y_vals)/np.mean(y_obs)*0.9
+            if len(filters_to_plot)>1:
+                obs_norm_factor = np.mean(y_vals_filt[filters_to_plot[-1]])/np.mean(y_obs)
             plt.errorbar(x_obs-0.01,y_obs*obs_norm_factor,yerr=y_obs_err*obs_norm_factor,xerr = x_obs_errs,marker = 'o',capsize = 5,color = 'black',label = 'Raghavan 2010',ls='none')           
             if upper_limit<1000:
                 plt.text(0.98,0.65,'Primary Mass = '+str(lower_limit)+' - '+str(upper_limit)+ ' $\mathrm{M_\odot}$',transform = plt.gca().transAxes,horizontalalignment = 'right', fontsize=14)
@@ -4922,6 +4930,11 @@ def One_Snap_Plots(which_plot,Master_File,file,systems = None,filename = None,sn
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             if log == True:
                 plt.yscale('log')
+            m_prim_guess = (lower_limit + upper_limit)/2
+            xlims = list(plt.xlim()); ylims = list(plt.ylim()); xlims[0] = max(xlims[0],-0.05); xlims[1] = min(xlims[1],1.05)
+            plt.fill_between(np.linspace(xlims[0],0.1/m_prim_guess,100),ylims[1],ylims[0],color = 'black',alpha = 0.1)
+            #plt.text(0,np.mean(ylims),'Incomplete',horizontalalignment = 'left',fontsize=14,verticalalignment = 'top', rotation='vertical')
+            plt.xlim(xlims); plt.ylim(ylims);
         else:
             return x_vals,y_vals
     if which_plot == 'Eccentricity':
@@ -5250,6 +5263,10 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 plt.plot(logmasslist_filt,o2_filt,marker = 'o', label = 'Unbound stars, filtered',linestyle = ':')
                 plt.plot(logmasslist_filt,o3_filt,marker = '^',label = 'Non-primary stars, filtered',linestyle = ':')
             plt.legend(fontsize=14)
+            xlims = plt.xlim(); ylims = plt.ylim()
+            plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.1)
+            #plt.text(0,np.mean(ylims),'Potentially Incomplete',horizontalalignment = 'right',fontsize=14,verticalalignment = 'top', rotation='vertical')
+            plt.xlim(xlims); plt.ylim(ylims);
             plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             if multiplicity == 'Properties':
                 plt.ylabel('Fraction')
@@ -5324,6 +5341,9 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
                 handles.extend([line1])
             if multiplicity == 'MF':
                 plt.legend(handles = handles,fontsize=14)
+                xlims = plt.xlim(); ylims = plt.ylim()
+                plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.1)
+                plt.xlim(xlims); plt.ylim(ylims);  plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
         else:
             return logmasslist,o1,o2,o3    
     if multiplicity == 'CF':
@@ -5373,6 +5393,9 @@ def Multiplicity_One_Snap_Plots(Master_File,file,systems = None,snapshot = -1,fi
             if only_filter is False:
                 line1 = mpatches.Patch(label = 'After Corrections',color='#1f77b4',alpha = 0.3, hatch=r"\\" )
                 handles.extend([line1])
+            xlims = plt.xlim(); ylims = plt.ylim()
+            plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.1)
+            plt.xlim(xlims); plt.ylim(ylims);  plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             plt.legend(handles = handles,fontsize=14)
             adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
             plt.figure(figsize=(6,6))
@@ -5853,6 +5876,9 @@ def Multiplicity_One_Snap_Plots_Filters(Master_File,file,systems = None,snapshot
             bottom,top = plt.ylim()
             if top >3:
                 plt.ylim(bottom,3)
+        xlims = plt.xlim(); ylims = plt.ylim()
+        plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.1)
+        plt.xlim(xlims); plt.ylim(ylims)
         adjust_font(fig=plt.gcf(), ax_fontsize=14, labelfontsize=14)
         plt.legend(fontsize = 14,labelspacing=0)
         
@@ -6160,6 +6186,10 @@ def Multi_Plot(which_plot,Systems,Files,Filenames,Snapshots = None,bins = None,l
                         temp_label = None
                     plt.errorbar(np.log10(observation_mass_center[i]),observation_CF[i],yerr = observation_CF_err[i],xerr = [[np.log10(observation_mass_center[i])-np.log10(observation_mass_center[i]-observation_mass_width[i])],[np.log10(observation_mass_center[i]+observation_mass_width[i])-np.log10(observation_mass_center[i])]],marker = 'o',capsize = 5,color = 'black',label = temp_label,ls='none')
                 plt.ylim([-0.01,3.01])
+            if (multiplicity == 'CF') or  (multiplicity == 'MF'):   
+                xlims = plt.xlim(); ylims = plt.ylim()
+                plt.fill_between(np.linspace(xlims[0],0,20),ylims[1],ylims[0],color = 'black',alpha = 0.2)
+                plt.xlim(xlims); plt.ylim(ylims);  plt.xlabel('Log Mass [$\mathrm{M_\odot}$]')
             plt.legend(fontsize=14)
         elif which_plot == 'Multiplicity Time Evolution':
             plt.figure(figsize = (6,6))
